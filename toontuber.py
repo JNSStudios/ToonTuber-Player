@@ -1,5 +1,3 @@
-# just an FYI a lot of this was done by chatgpt lol
-
 import pygame
 
 pygame.init()
@@ -53,6 +51,17 @@ def display_fps(clock):
 # Create a Pygame clock object to measure time between frames
 clock = pygame.time.Clock()
 
+# Load the sprites
+mic_base = pygame.image.load("micBase.png").convert_alpha()
+mic_fill = pygame.image.load("micFill.png").convert_alpha()
+
+# Resize the sprites
+mic_base = pygame.transform.smoothscale(mic_base, (int(0.07*height), int(0.07*height)))
+mic_fill = pygame.transform.smoothscale(mic_fill, (int(0.07*height), int(0.07*height)))
+
+# Get the original height of the mic_fill sprite
+mic_fill_height_orig = mic_fill.get_height()
+
 # Main Pygame loop
 running = True
 while running:
@@ -74,9 +83,15 @@ while running:
         draw_text_options()
         # Display the FPS counter in the bottom right corner
         display_fps(clock)
+        # Display the mic sprites
+        mic_fill_height = mic_fill_height_orig * (0.5) # Change this value depending on the audio level
+        screen.blit(mic_base, (0, height - mic_base.get_height()))
+        screen.blit(mic_fill, (0, height - mic_fill_height))
 
     # Update the Pygame window
     pygame.display.flip()
+
+#
 
 # Quit Pygame
 pygame.quit()
