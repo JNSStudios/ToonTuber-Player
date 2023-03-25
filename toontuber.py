@@ -2,51 +2,64 @@ import pygame
 
 pygame.init()
 
-# Set up the window
-size = (750, 750)
-screen = pygame.display.set_mode(size)
-pygame.display.set_caption("My Game")
+# Set up the Pygame window
+width, height = 750, 750
+screen = pygame.display.set_mode((width, height))
 
 # Define some colors
-GREEN = (0, 255, 0)
+WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
 
-# Set up the font
-font = pygame.font.SysFont(None, 48)
+# Define the font for the text options
+font = pygame.font.Font(None, 50)
 
-# Set up the text to be displayed
-text = font.render("Hello, world!", True, BLACK)
+text_settings = font.render("SETTINGS", True, BLACK)
 
-# Flag to determine if the P key has been pressed
-show_text = False
+# Define the clickable text options
+text_options = [
+    {"text": "New", "position": (0, 50)},
+    {"text": "Open", "position": (0, 100)},
+    {"text": "Edit", "position": (0, 150)}
+]
 
-# Main game loop
-done = False
-while not done:
+# Define a variable to keep track of whether the settings screen is active
+settings_active = False
+
+# Define a function to draw the text options on the screen
+def draw_text_options():
+    for option in text_options:
+        text = font.render(option["text"], True, WHITE)
+        text_rect = text.get_rect(left=option["position"][0], centery=option["position"][1])
+        screen.blit(text_settings, (0, 0))
+        screen.blit(text, text_rect)
+
+# Define a function to darken the screen
+def darken_screen():
+    darken_surface = pygame.Surface((width, height))
+    darken_surface.fill(BLACK)
+    darken_surface.set_alpha(128)
+    screen.blit(darken_surface, (0, 0))
+
+# Main Pygame loop
+running = True
+while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            done = True
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_p:
-                # Toggle the flag to show the text
-                show_text = not show_text
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+            settings_active = not settings_active
 
-    # Fill the background with green
+    # Draw the green background
     screen.fill(GREEN)
 
-    # If the P key has been pressed, darken the screen and display the text
-    if show_text:
-        # Create a surface to darken the screen
-        darken_surface = pygame.Surface(size)
-        darken_surface.fill(BLACK)
-        darken_surface.set_alpha(128)
-        screen.blit(darken_surface, (0, 0))
+    # If the settings screen is active, darken the screen and draw the text options
+    if settings_active:
+        darken_screen()
+        draw_text_options()
 
-        # Display the text on top of the darkened screen
-        screen.blit(text, (size[0] // 2 - text.get_width() // 2, size[1] // 2 - text.get_height() // 2))
-
-    # Update the screen
+    # Update the Pygame window
     pygame.display.flip()
 
-# Quit the game
+# Quit Pygame
 pygame.quit()
