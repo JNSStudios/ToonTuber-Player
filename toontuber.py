@@ -1,3 +1,5 @@
+# just an FYI a lot of this was done by chatgpt lol
+
 import pygame
 
 pygame.init()
@@ -41,9 +43,22 @@ def darken_screen():
     darken_surface.set_alpha(128)
     screen.blit(darken_surface, (0, 0))
 
+# Define a function to display the FPS counter
+def display_fps(clock):
+    fps = str(int(clock.get_fps()))
+    fps_text = font.render(fps, True, WHITE)
+    fps_rect = fps_text.get_rect(bottomright=(width, height))
+    screen.blit(fps_text, fps_rect)
+
+# Create a Pygame clock object to measure time between frames
+clock = pygame.time.Clock()
+
 # Main Pygame loop
 running = True
 while running:
+    # Measure the time between frames and limit the FPS to 60
+    delta_time = clock.tick(60) / 1000.0
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -57,6 +72,8 @@ while running:
     if settings_active:
         darken_screen()
         draw_text_options()
+        # Display the FPS counter in the bottom right corner
+        display_fps(clock)
 
     # Update the Pygame window
     pygame.display.flip()
