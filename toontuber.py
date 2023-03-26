@@ -14,6 +14,10 @@ width, height = 750, 750
 screen = pygame.display.set_mode((width, height))
 rms = 0
 
+# Set the window name
+pygame.display.set_caption("Toon Tuber Player")
+
+
 # audio stuff
 
 chunk_size = 256  # number of audio samples per chunk
