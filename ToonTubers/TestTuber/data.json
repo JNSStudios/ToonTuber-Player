@@ -1,8 +1,10 @@
 {
   "name": "Test Tuber",
+  "creator": "JNS",
   "last_modified": "2023-03-25T6:23:21Z",
   "loopAnims": [
     {
+
       "name": "Basic",
       "anims": [
         {
@@ -34,7 +36,17 @@
               "fps": 60
             }
           ],
-          "Transition": [
+          "TransitionIN": [
+            {
+              "frames": [
+                "tuber07.png",
+                "tuber08.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ], 
+          "TransitionOUT": [
             {
               "frames": [
                 "tuber07.png",
@@ -45,10 +57,15 @@
             }
           ]
         }
-      ]
+      ],
+      "hotkey": "NUMPAD5",
+      "requires": null,
+      "enables": null
     }, 
+
+
     {
-      "name": "Shocked",
+      "name": "Happy",
       "anims": [
         {
           "Idle": [
@@ -79,7 +96,17 @@
               "fps": 60
             }
           ],
-          "Transition": [
+          "TransitionIN": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ], 
+          "TransitionOUT": [
             {
               "frames": [
                 "tuber16.png",
@@ -90,12 +117,132 @@
             }
           ]
         }
-      ]
+      ],
+      "hotkey": "NUMPAD8",
+      "requires": null,
+      "enables": null
+    },
+
+    
+    {
+      "name": "Cheer",
+      "anims": [
+        {
+          "Idle": [
+            {
+              "frames": [
+                "tuber09.png",
+                "tuber10.png",
+                "tuber11.png"
+              ],
+              "fps": 0.1
+            }
+          ],
+          "Talk": [
+            {
+              "frames": [
+                "tuber12.png",
+                "tuber13.png",
+                "tuber14.png"
+              ],
+              "fps": 12
+            }
+          ],
+          "Peak": [
+            {
+              "frames": [
+                "tuber15.png"
+              ],
+              "fps": 60
+            }
+          ],
+          "TransitionIN": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ], 
+          "TransitionOUT": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ]
+        }
+      ],
+      "hotkey": "NUMPAD8",
+      "requires": "Happy"
+    },
+    {
+      "name": "Hidden",
+      "anims": [
+        {
+          "Idle": [
+            {
+              "frames": [
+                "tuber09.png",
+                "tuber10.png",
+                "tuber11.png"
+              ],
+              "fps": 0.1
+            }
+          ],
+          "Talk": [
+            {
+              "frames": [
+                "tuber12.png",
+                "tuber13.png",
+                "tuber14.png"
+              ],
+              "fps": 12
+            }
+          ],
+          "Peak": [
+            {
+              "frames": [
+                "tuber15.png"
+              ],
+              "fps": 60
+            }
+          ],
+          "TransitionIN": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ], 
+          "TransitionOUT": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ]
+        }
+      ],
+      "hotkey": null,
+      "requires": "Happy"
     }
   ],
+
   "cannedAnims": [
     {
-      "name": "Shaken",
+      "name": "Disappear",
       "anims": [
         {
           "frames": [
@@ -109,9 +256,36 @@
             "tuber25.png",
             "tuber26.png"
           ],
-          "fps": 8
+          "fps": 12
         }
-      ]
+      ],
+      "hotkey": "/",
+      "requires": null,
+      "result": "Hidden"
+    },
+
+    {
+      "name": "Appear",
+      "anims": [
+        {
+          "frames": [
+            "tuber18.png",
+            "tuber19.png",
+            "tuber20.png",
+            "tuber21.png",
+            "tuber22.png",
+            "tuber23.png",
+            "tuber24.png",
+            "tuber25.png",
+            "tuber26.png"
+          ],
+          "fps": 12
+        }
+      ],
+      "hotkey": "/",
+      "requires": null,
+      "result": "Basic"
     }
   ]
+
 }

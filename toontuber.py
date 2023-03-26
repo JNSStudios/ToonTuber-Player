@@ -36,7 +36,7 @@ def audio_callback(in_data, frame_count, time_info, status):
         rms = round(rmsNEW)
     else:
         rms = 100
-    print(rms)
+    # print(rms)
     
     # return None and continue streaming
     return (None, pyaudio.paContinue)

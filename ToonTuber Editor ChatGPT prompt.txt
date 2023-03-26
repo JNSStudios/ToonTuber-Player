@@ -1,0 +1,32 @@
+Please write a pygame script that creates a node editor that does the following:
+- All nodes are rectangular, and can be clicked and dragged around if the top right corner of the node is selected.
+- A button to add a node
+- A button to delete the next node clicked on
+- A button to remove all nodes (it will warn the user before doing proceeding)
+- An indicator in the top left that can cycle between animations depending on the following states
+	- An icon for no changes have been made
+	- An icon for unsaved changes
+	- An animation for saving
+	- An animation for the saving being completed
+
+- Standard Animation nodes which do the following:
+	- Have an editable name along the top (can be edited by clicking on it and typing into it like a textbox)
+	- A button to select a hotkey for the node (the user clicks on the button, then presses the desired input key, and the result is saved and shown in text representation)
+	- Have 5 buttons selecting multiple sets of animation frames, each with an editable number box for typing in a framerate for each animation (only whole numbers allowed, from 1 to 120)
+	- Have three connection sockets on a node
+		- The "Requires" input on the left. If another node is connected to this slot, that means that other node must currently be active in order for the current node to become active.
+		- The "Enables" socket on the right. This will let this node enable the use of another node sending connection to another animation node. It can only be connected to a "Requires" socket.
+		- The "Lead To" socket, which can only be connected to the "Result" socket on a Canned Animation node (described later)
+	- A small image preview of the first image in the first set of animation frames that appears if you hover over the box for one second.
+    
+
+- Canned Animation nodes, which are basically the same as the Standard nodes but with the following changes:
+	- The input connection socket is labelled as "requires," which means that the node connected in the Requires slot must currently be playing in order for this animation node to be enabled.
+	- Only one button for selecting animation frames and one framerate box
+	- The "Enables" socket is renamed to "Result" and MUST be connected to another node via its "Lead To" slot. Do not allow the data to be saved unless the Enables slot is connected to another node.
+
+- Universal Transition Node, which mostly has the same properties as a Standard node, but with the following changes:
+	- Different color
+	- Only one of them is allowed and it always exists, it cannot be deleted.
+	- It has no connection sockets, and it has only one button to select a single image.
+	- the image is always previewed inside the node.
