@@ -1,15 +1,59 @@
 import pygame
+import math
+import pyaudio
+import numpy as np
+import threading
 
 pygame.init()
 
 # Set up the Pygame window
 width, height = 750, 750
 screen = pygame.display.set_mode((width, height))
+rms = 0
+
+# audio stuff
+
+chunk_size = 256  # number of audio samples per chunk
+sample_rate = 44100  # number of samples per second
+
+pa = pyaudio.PyAudio()
+stream = pa.open(format=pyaudio.paInt16,
+                 channels=1,
+                 rate=sample_rate,
+                 input=True,
+                 frames_per_buffer=chunk_size)
+
+def audio_input():
+    global rms
+    while True:
+        # read audio data from the stream
+        data = stream.read(chunk_size)
+        
+        # convert audio data to a numpy array
+        audio = np.frombuffer(data, dtype=np.int16)
+        
+        # calculate the root mean square (RMS) amplitude
+        rmsNEW = np.sqrt(np.mean(np.square(audio)))
+
+        if(not np.isnan(rmsNEW)):
+            rms = rmsNEW
+        else:
+            rms = 100
+        print(rms)
+        
+
+# create a separate thread for audio input
+audio_thread = threading.Thread(target=audio_input)
+audio_thread.daemon = True
+audio_thread.start()
+
 
 # Define some colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
 
 # Define the font for the text options
 font = pygame.font.Font(None, 50)
@@ -52,19 +96,31 @@ def display_fps(clock):
 clock = pygame.time.Clock()
 
 # Load the sprites
-mic_base = pygame.image.load("micBase.png").convert_alpha()
-mic_fill = pygame.image.load("micFill.png").convert_alpha()
+mic_feedback = pygame.image.load("micLevel.png").convert_alpha()
+mic_range = pygame.image.load("micRange.png").convert_alpha()
+
+#get original size of both sprites
+mic_feed_orig = mic_feedback.get_size()
+
+# find the new height for the sprites, 7% of the screen height, and the width based on the ratio and that height
+mic_newHeight = int(0.07*height)
+mic_newWidth = int(mic_newHeight * (mic_feed_orig[0] / mic_feed_orig[1]))
+
 
 # Resize the sprites
-mic_base = pygame.transform.smoothscale(mic_base, (int(0.07*height), int(0.07*height)))
-mic_fill = pygame.transform.smoothscale(mic_fill, (int(0.07*height), int(0.07*height)))
+mic_feedback = pygame.transform.smoothscale(mic_feedback, (mic_newWidth, mic_newHeight))
+mic_range = pygame.transform.smoothscale(mic_range, (mic_newWidth, mic_newHeight))
 
 # Get the original height of the mic_fill sprite
-mic_fill_height_orig = mic_fill.get_height()
+mic_fill_height_orig = mic_feedback.get_height()
+
+
 
 # Main Pygame loop
 running = True
+
 while running:
+
     # Measure the time between frames and limit the FPS to 60
     delta_time = clock.tick(60) / 1000.0
 
@@ -83,15 +139,21 @@ while running:
         draw_text_options()
         # Display the FPS counter in the bottom right corner
         display_fps(clock)
-        # Display the mic sprites
-        mic_fill_height = mic_fill_height_orig * (0.5) # Change this value depending on the audio level
-        screen.blit(mic_base, (0, height - mic_base.get_height()))
-        screen.blit(mic_fill, (0, height - mic_fill_height))
+        # these values assume that the top left corner of the sprite is 0,0
+        # therefore, the bottom right of the sprite is the width and height
+        
+        
+        micFill_clipHeight = round((mic_feedback.get_height() * (rms/100)))
+        clip_rect = pygame.Rect(0, mic_feedback.get_height() - micFill_clipHeight, mic_feedback.get_width(), micFill_clipHeight)
+        mic_fill_clipped = pygame.Surface((clip_rect.width, clip_rect.height), pygame.SRCALPHA)
+        mic_fill_clipped.blit(mic_feedback, (0, 0), clip_rect)
+        screen.blit(mic_fill_clipped, (0, height - mic_fill_clipped.get_height()))
+
+        # draw mic range sprite a little next to the mic fill sprite
+        screen.blit(mic_range, (mic_fill_clipped.get_width()/3, height - mic_range.get_height()))
 
     # Update the Pygame window
     pygame.display.flip()
-
-#
 
 # Quit Pygame
 pygame.quit()
