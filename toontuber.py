@@ -25,7 +25,7 @@ sample_rate = 44100  # number of samples per second
 
 pa = pyaudio.PyAudio()
 
-def callback(in_data, frame_count, time_info, status):
+def audio_callback(in_data, frame_count, time_info, status):
     global rms
     # convert audio data to a numpy array
     audio = np.frombuffer(in_data, dtype=np.int16)
@@ -33,7 +33,7 @@ def callback(in_data, frame_count, time_info, status):
     # calculate the root mean square (RMS) amplitude
     rmsNEW = np.sqrt(np.mean(np.square(audio)))
     if(not np.isnan(rmsNEW)):
-        rms = rmsNEW
+        rms = round(rmsNEW)
     else:
         rms = 100
     print(rms)
@@ -47,46 +47,13 @@ stream = pa.open(format=pyaudio.paInt16,
                  rate=sample_rate,
                  input=True,
                  frames_per_buffer=chunk_size,
-                 stream_callback=callback)
+                 stream_callback=audio_callback)
 
-
-# def audio_input():
-#     global rms
-#     while True:
-
-#         if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-#             # process the window event
-#             event = input()
-#             if event == 'quit':
-#                 break
-#             else:
-#                 print(event)
-
-#         # try to read audio data from the stream
-#         try:
-#             data = stream.read(chunk_size, exception_on_overflow=False)
-#         except IOError:
-#             # ignore overflow errors
-#             continue
-        
-#         # convert audio data to a numpy array
-#         audio = np.frombuffer(data, dtype=np.int16)
-        
-#         # calculate the root mean square (RMS) amplitude
-#         rmsNEW = np.sqrt(np.mean(np.square(audio)))
-
-#         if(not np.isnan(rmsNEW)):
-#             rms = rmsNEW
-#         else:
-#             rms = 100
-#         print(rms)
-        
 
 # create a separate thread for audio input
-audio_thread = threading.Thread(target=callback)
+audio_thread = threading.Thread(target=audio_callback)
 audio_thread.daemon = True
 audio_thread.start()
-
 
 # Define some colors
 WHITE = (255, 255, 255)
@@ -104,7 +71,8 @@ text_settings = font.render("SETTINGS", True, BLACK)
 text_options = [
     {"text": "New", "position": (0, 50)},
     {"text": "Open", "position": (0, 100)},
-    {"text": "Edit", "position": (0, 150)}
+    {"text": "Edit", "position": (0, 150)},
+    {"text": "Settings", "position": (0, 200)}
 ]
 
 # Define a variable to keep track of whether the settings screen is active
