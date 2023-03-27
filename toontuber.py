@@ -72,7 +72,7 @@ keyboard_thread.start()
 
 # TUBER STUFF
 
-def open_png_files():
+def load_pngs():
     # create a Tkinter root window to use for the file dialog
     root = tk.Tk()
     root.withdraw()
@@ -84,17 +84,42 @@ def open_png_files():
         multiple=True
     )
 
-    # return the list of selected file paths
-    return file_paths
+    # create a list of Pygame images from the selected files
+    images = []
+    for file_path in file_paths:
+        image = pygame.image.load(file_path)
+        images.append(image)
+    return images
+
+class HotKey:
+    def __init__(self, key, requires):
+        self.key = key              # string
+        self.requires = requires    # list of ExpressionSets
+
+    def getKey(self):
+        return self.key
+    def setKey(self, key):
+        self.key = key
+
+    def getRequires(self):
+        return self.requires
+    def addRequires(self, newRequires):
+        self.requires.append(newRequires)
+    def removeRequires(self, oldRequires):
+        if(oldRequires not in self.requires):
+            print("Required state not found.")
+        else:
+            self.requires.remove(oldRequires)
 
 class Animation:
     def __init__(self, name, frames, fps, requires, enables, hotkey):
-        self.name = name
-        self.frames = frames
-        self.fps = fps
-        self.requires = requires
-        self.enables = enables
-        self.hotkey = hotkey
+        self.name = name            # string
+        self.frames = frames        # list of PNG images
+        self.fps = fps              # int
+        self.requires = requires    # list of ExpressionSets
+        self.enables = enables      # list of ExpressionSets
+        self.hotkey = hotkey        # Hotkey object
+    
     
     def getName(self):
         return self.name
@@ -104,8 +129,7 @@ class Animation:
     def getFrames(self):
         return self.frames
     def setFrames(self):
-        newFrames = open_png_files()
-        self.frames = newFrames
+        self.frames = load_pngs()
     
     def getFPS(self):
         return self.fps
@@ -114,18 +138,27 @@ class Animation:
 
     def getRequires(self):
         return self.requires
-    def setRequires(self, requires):
-        self.requires = requires
-
+    def addRequires(self, newRequires):
+        self.requires.append(newRequires)
+    def removeRequires(self, oldRequires):
+        if(oldRequires not in self.requires):
+            print("Required state not found.")
+        else:
+            self.requires.remove(oldRequires)
+    
     def getEnables(self):
         return self.enables
-    def setEnables(self, enables):
-        self.enables = enables
-    
+   
     def getHotkey(self):
         return self.hotkey
-    def setHotkey(self, hotkey):
-        self.hotkey = hotkey
+    def addHotkey(self, newHotkey, requiredState):
+        self.hotkey.append(HotKey(newHotkey, requiredState))
+        self.addRequires(requiredState)
+    def removeHotkey(self, oldHotkey):
+        if(oldHotkey not in self.hotkey):
+            print("Hotkey not found.")
+        else:
+            self.hotkey.remove(oldHotkey)
 
         
 
@@ -133,12 +166,12 @@ class Animation:
 
 
 
-class AnimationSet:
+# class AnimationSet:
 
 
-class Tuber:
-    def __init__(self, animations):
-        self.animations = animations
+# class Tuber:
+#     def __init__(self, animations):
+#         self.animations = animations
     
         
 
