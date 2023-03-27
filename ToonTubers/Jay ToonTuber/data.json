@@ -1,0 +1,375 @@
+{
+  "name": "Jay ToonTuber",
+  "creator": "JNS",
+  "created": "2023-03-25T6:23:21Z",
+  "last_modified": "2023-03-25T6:23:21Z",
+  "random_duplicate_reduction": 0.5,
+  "loop_anims": [
+    {
+
+      "name": "Basic",
+      "anims": [
+        {
+          "Main": "JayBasis0001.png",
+          "Idle": [
+            {
+              "frames": [
+                "JayBasis0002.png",
+                "JayBasis0003.png",
+                "JayBasis0004.png",
+                "JayBasis0005.png",
+                "JayBasis0006.png",
+                "JayBasis0007.png",
+                "JayBasis0008.png",
+                "JayBasis0009.png",
+                "JayBasis0010.png",
+                "JayBasis0011.png",
+                "JayBasis0012.png",
+                "JayBasis0013.png",
+                "JayBasis0014.png",
+                "JayBasis0015.png",
+                "JayBasis0016.png",
+                "JayBasis0017.png",
+                "JayBasis0018.png",
+                "JayBasis0019.png",
+                "JayBasis0020.png",
+                "JayBasis0021.png",
+                "JayBasis0022.png",
+                "JayBasis0023.png",
+                "JayBasis0024.png",
+                "JayBasis0025.png",
+                "JayBasis0026.png",
+                "JayBasis0027.png",
+                "JayBasis0028.png",
+                "JayBasis0029.png",
+                "JayBasis0030.png",
+                "JayBasis0031.png",
+                "JayBasis0032.png",
+                "JayBasis0033.png",
+                "JayBasis0034.png",
+                "JayBasis0035.png",
+                "JayBasis0036.png",
+                "JayBasis0037.png",
+                "JayBasis0038.png",
+                "JayBasis0039.png",
+                "JayBasis0040.png",
+                "JayBasis0041.png",
+                "JayBasis0042.png",
+                "JayBasis0043.png",
+                "JayBasis0044.png",
+                "JayBasis0045.png",
+                "JayBasis0046.png",
+                "JayBasis0047.png",
+                "JayBasis0048.png",
+                "JayBasis0049.png",
+                "JayBasis0050.png",
+                "JayBasis0051.png",
+                "JayBasis0052.png",
+                "JayBasis0053.png",
+                "JayBasis0054.png",
+                "JayBasis0055.png",
+                "JayBasis0056.png",
+                "JayBasis0057.png",
+                "JayBasis0058.png",
+                "JayBasis0059.png",
+                "JayBasis0060.png",
+                "JayBasis0061.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "Talk": [
+            {
+              "frames": [
+                "JayBasis0062.png",
+                "JayBasis0063.png",
+                "JayBasis0064.png",
+                "JayBasis0065.png",
+                "JayBasis0066.png",
+                "JayBasis0067.png",
+                "JayBasis0068.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "Peak": [
+            {
+              "frames": [
+                "JayBasis0069.png",
+                "JayBasis0070.png",
+                "JayBasis0071.png",
+                "JayBasis0072.png",
+                "JayBasis0073.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "TransitionIN": [
+            {
+              "frames": [
+                "JayBasis0079.png",
+                "JayBasis0080.png",
+                "JayBasis0081.png",
+                "JayBasis0082.png",
+                "JayBasis0083.png",
+                "JayBasis0084.png"
+              ],
+              "fps": 24
+            }
+          ], 
+          "TransitionOUT": [
+            {
+              "frames": [
+                "JayBasis0074.png",
+                "JayBasis0075.png",
+                "JayBasis0076.png",
+                "JayBasis0077.png",
+                "JayBasis0078.png",
+                "JayBasis0079.png"
+              ],
+              "fps": 12
+            }
+          ]
+        }
+      ],
+      "hotkey": "NUMPAD5",
+      "requires": null,
+      "enables": null
+    }, 
+
+
+    {
+      "name": "Happy",
+      "anims": [
+        {
+          "Main": [
+            {
+              "frames": [
+                "tuber0.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "Idle": [
+            {
+              "frames": [
+                "tuber09.png",
+                "tuber10.png",
+                "tuber11.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "Talk": [
+            {
+              "frames": [
+                "tuber12.png",
+                "tuber13.png",
+                "tuber14.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "Peak": [
+            {
+              "frames": [
+                "tuber15.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "TransitionIN": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 24
+            }
+          ], 
+          "TransitionOUT": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 24
+            }
+          ]
+        }
+      ],
+      "hotkey": "NUMPAD8",
+      "requires": null,
+      "enables": null
+    },
+
+    
+    {
+      "name": "Cheer",
+      "anims": [
+        {
+          "Main": "tuber0.png",
+          "Idle": [
+            {
+              "frames": [
+                "tuber09.png",
+                "tuber10.png",
+                "tuber11.png"
+              ],
+              "fps": 0.1
+            }
+          ],
+          "Talk": [
+            {
+              "frames": [
+                "tuber12.png",
+                "tuber13.png",
+                "tuber14.png"
+              ],
+              "fps": 12
+            }
+          ],
+          "Peak": [
+            {
+              "frames": [
+                "tuber15.png"
+              ],
+              "fps": 60
+            }
+          ],
+          "TransitionIN": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ], 
+          "TransitionOUT": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ]
+        }
+      ],
+      "hotkey": "NUMPAD8",
+      "requires": "Happy"
+    },
+    {
+      "name": "Hidden",
+      "anims": [
+        {
+          "Main": "tuber0.png",
+          "Idle": [
+            {
+              "frames": [
+                "tuber09.png",
+                "tuber10.png",
+                "tuber11.png"
+              ],
+              "fps": 0.1
+            }
+          ],
+          "Talk": [
+            {
+              "frames": [
+                "tuber12.png",
+                "tuber13.png",
+                "tuber14.png"
+              ],
+              "fps": 12
+            }
+          ],
+          "Peak": [
+            {
+              "frames": [
+                "tuber15.png"
+              ],
+              "fps": 60
+            }
+          ],
+          "TransitionIN": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ], 
+          "TransitionOUT": [
+            {
+              "frames": [
+                "tuber16.png",
+                "tuber17.png",
+                "tuber00.png"
+              ],
+              "fps": 12
+            }
+          ]
+        }
+      ],
+      "hotkey": null,
+      "requires": "Happy"
+    }
+  ],
+
+  "canned_anims": [
+    {
+      "name": "Disappear",
+      "anims": [
+        {
+          "frames": [
+            "tuber18.png",
+            "tuber19.png",
+            "tuber20.png",
+            "tuber21.png",
+            "tuber22.png",
+            "tuber23.png",
+            "tuber24.png",
+            "tuber25.png",
+            "tuber26.png"
+          ],
+          "fps": 12
+        }
+      ],
+      "hotkey": "/",
+      "requires": null,
+      "result": "Hidden"
+    },
+
+    {
+      "name": "Appear",
+      "anims": [
+        {
+          "frames": [
+            "tuber18.png",
+            "tuber19.png",
+            "tuber20.png",
+            "tuber21.png",
+            "tuber22.png",
+            "tuber23.png",
+            "tuber24.png",
+            "tuber25.png",
+            "tuber26.png"
+          ],
+          "fps": 12
+        }
+      ],
+      "hotkey": "/",
+      "requires": null,
+      "result": "Basic"
+    }
+  ]
+
+}

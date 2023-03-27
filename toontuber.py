@@ -6,6 +6,9 @@ import threading
 import time
 import sys
 import select
+import keyboard
+import tkinter as tk
+from tkinter import filedialog
 
 pygame.init()
 
@@ -19,7 +22,6 @@ pygame.display.set_caption("Toon Tuber Player")
 
 
 # audio stuff
-
 chunk_size = 256  # number of audio samples per chunk
 sample_rate = 44100  # number of samples per second
 
@@ -29,7 +31,7 @@ def audio_callback(in_data, frame_count, time_info, status):
     global rms
     # convert audio data to a numpy array
     audio = np.frombuffer(in_data, dtype=np.int16)
-    
+
     # calculate the root mean square (RMS) amplitude
     rmsNEW = np.sqrt(np.mean(np.square(audio)))
     if(not np.isnan(rmsNEW)):
@@ -55,6 +57,94 @@ audio_thread = threading.Thread(target=audio_callback)
 audio_thread.daemon = True
 audio_thread.start()
 
+# keyboard reading thread
+def keyboard_thread():
+    while True:
+        event = keyboard.read_event()
+        if event.event_type == "down":
+            print(f"Key pressed: {event.name}")
+        elif event.event_type == "up":
+            print(f"Key released: {event.name}")
+
+keyboard_thread = threading.Thread(target=keyboard_thread)
+keyboard_thread.daemon = True
+keyboard_thread.start()
+
+# TUBER STUFF
+
+def open_png_files():
+    # create a Tkinter root window to use for the file dialog
+    root = tk.Tk()
+    root.withdraw()
+
+    # open the file dialog and allow the user to select one or more PNG files
+    file_paths = filedialog.askopenfilenames(
+        filetypes=[("PNG files", "*.png")],
+        title="Select PNG files",
+        multiple=True
+    )
+
+    # return the list of selected file paths
+    return file_paths
+
+class Animation:
+    def __init__(self, name, frames, fps, requires, enables, hotkey):
+        self.name = name
+        self.frames = frames
+        self.fps = fps
+        self.requires = requires
+        self.enables = enables
+        self.hotkey = hotkey
+    
+    def getName(self):
+        return self.name
+    def setName(self, name):
+        self.name = name
+    
+    def getFrames(self):
+        return self.frames
+    def setFrames(self):
+        newFrames = open_png_files()
+        self.frames = newFrames
+    
+    def getFPS(self):
+        return self.fps
+    def setFPS(self, fps):
+        self.fps = fps
+
+    def getRequires(self):
+        return self.requires
+    def setRequires(self, requires):
+        self.requires = requires
+
+    def getEnables(self):
+        return self.enables
+    def setEnables(self, enables):
+        self.enables = enables
+    
+    def getHotkey(self):
+        return self.hotkey
+    def setHotkey(self, hotkey):
+        self.hotkey = hotkey
+
+        
+
+        
+
+
+
+class AnimationSet:
+
+
+class Tuber:
+    def __init__(self, animations):
+        self.animations = animations
+    
+        
+
+
+
+
 # Define some colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -69,10 +159,9 @@ text_settings = font.render("SETTINGS", True, BLACK)
 
 # Define the clickable text options
 text_options = [
-    {"text": "New", "position": (0, 50)},
-    {"text": "Open", "position": (0, 100)},
-    {"text": "Edit", "position": (0, 150)},
-    {"text": "Settings", "position": (0, 200)}
+    {"text": "Open ToonTuber", "position": (0, 75)},
+    {"text": "Player Settings", "position": (0, 125)},
+    {"text": "Open Editor", "position": (0, 175)}
 ]
 
 # Define a variable to keep track of whether the settings screen is active
@@ -165,3 +254,7 @@ while running:
 
 # Quit Pygame
 pygame.quit()
+
+stream.stop_stream()
+stream.close()
+pa.terminate()
