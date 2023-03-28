@@ -9,6 +9,7 @@ import select
 import keyboard
 import tkinter as tk
 from tkinter import filedialog
+import json
 
 pygame.init()
 
@@ -20,6 +21,11 @@ rms = 0
 # Set the window name
 pygame.display.set_caption("Toon Tuber Player")
 
+# Opening screen
+UniFont = pygame.font.Font('freesansbold.ttf', 64)
+text = UniFont.render("Toon Tuber Player", True, (255, 255, 255))
+textRect = text.get_rect()
+textRect.center = (width // 2, height // 2)
 
 # audio stuff
 chunk_size = 256  # number of audio samples per chunk
@@ -72,7 +78,7 @@ keyboard_thread.start()
 
 # TUBER STUFF
 
-def load_pngs():
+def load_pngs(message):
     # create a Tkinter root window to use for the file dialog
     root = tk.Tk()
     root.withdraw()
@@ -80,7 +86,7 @@ def load_pngs():
     # open the file dialog and allow the user to select one or more PNG files
     file_paths = filedialog.askopenfilenames(
         filetypes=[("PNG files", "*.png")],
-        title="Select PNG files",
+        title=message,
         multiple=True
     )
 
@@ -111,16 +117,16 @@ class HotKey:
         else:
             self.requires.remove(oldRequires)
 
-class Animation:
-    def __init__(self, name, frames, fps, requires, enables, hotkey):
-        self.name = name            # string
-        self.frames = frames        # list of PNG images
-        self.fps = fps              # int
-        self.requires = requires    # list of ExpressionSets
-        self.enables = enables      # list of ExpressionSets
-        self.hotkey = hotkey        # Hotkey object
-    
-    
+class LoopAnimation:
+    def __init__(self, name, frames, fps, requires, enables, hotkey, currentFrame):
+        self.name = name                # string
+        self.frames = frames            # list of PNG images
+        self.fps = fps                  # int
+        self.requires = requires        # list of ExpressionSets
+        self.enables = enables          # list of ExpressionSets
+        self.hotkey = hotkey            # Hotkey object
+        self.currentFrame = currentFrame  # int
+
     def getName(self):
         return self.name
     def setName(self, name):
@@ -129,7 +135,13 @@ class Animation:
     def getFrames(self):
         return self.frames
     def setFrames(self):
-        self.frames = load_pngs()
+        self.frames = load_pngs("Select frames for " + self.name + ":")
+    
+    def getCurrentFrame(self):
+        return self.frames[self.currentFrame]
+    
+    def setCurrentFrame(self, currentFrame):
+        self.currentFrame = currentFrame    
     
     def getFPS(self):
         return self.fps
@@ -153,27 +165,218 @@ class Animation:
         return self.hotkey
     def addHotkey(self, newHotkey, requiredState):
         self.hotkey.append(HotKey(newHotkey, requiredState))
-        self.addRequires(requiredState)
+        if(requiredState is not None):
+            self.addRequires(requiredState)
     def removeHotkey(self, oldHotkey):
         if(oldHotkey not in self.hotkey):
             print("Hotkey not found.")
         else:
             self.hotkey.remove(oldHotkey)
 
-        
+class IdleSet:
+    def __init__(self, name, animations, minRand, maxRand):
+        self.name = name                # string
+        self.animations = animations    # list of LoopAnimation objects
+        self.minRand = minRand          # int
+        self.maxRand = maxRand          # int
 
-        
-
-
-
-# class AnimationSet:
-
-
-# class Tuber:
-#     def __init__(self, animations):
-#         self.animations = animations
+    def getName(self):
+        return self.name
+    def setName(self, name):
+        self.name = name
     
+    def getAnimations(self):
+        return self.animations
+    
+    def addAnimation(self, newAnimation):
+        self.animations.append(newAnimation)
+    def removeAnimation(self, oldAnimation):
+        if(oldAnimation not in self.animations):
+            print("Animation not found.")
+        else:
+            self.animations.remove(oldAnimation)  
+
+    def getMinRand(self):
+        return self.minRand
+    def setMinRand(self, minRand):
+        self.minRand = minRand
+
+    def getMaxRand(self):
+        return self.maxRand
+    def setMaxRand(self, maxRand):
+        self.maxRand = maxRand
+
+
+class ExpressionSet:
+    def __init__(self, name, main, idleSet, animations):
+        self.name = name                # string
+        self.main = main                # Animation object
+        self.idleSet = idleSet          # IdleSet object
+        self.animations = animations    # list of LoopAnimation objects
+
+    def getName(self):
+        return self.name
+    def setName(self, name):
+        self.name = name
+
+    def getMain(self):
+        return self.main
+    def setMain(self, main):
+        self.main = main
+
+    def getIdleSet(self):
+        return self.idleSet
+    def setIdleSet(self, idleSet):
+        self.idleSet = idleSet
+
+    def getAnimations(self):
+        return self.animations
+    def addAnimation(self, newAnimation):
+        self.animations.append(newAnimation)
+    def removeAnimation(self, oldAnimation):
+        if(oldAnimation not in self.animations):
+            print("Animation not found.")
+        else:
+            self.animations.remove(oldAnimation)
+
+class CannedAnimation:
+    def __init__(self, name, frames, fps, hotkey, requires, result):
+        self.name = name                # string
+        self.frames = frames            # list of PNG images
+        self.fps = fps                  # int
+        self.hotkey = hotkey            # Hotkey object
+        self.requires = requires        # list of ExpressionSets
+        self.result = result            # ExpressionSet object
+    
+    def getName(self):
+        return self.name
+    def setName(self, name):
+        self.name = name
+    
+    def getFrames(self):
+        return self.frames
+    def setFrames(self):
+        self.frames = load_pngs("Select frames for " + self.name + ":")
+
+    def getFPS(self):
+        return self.fps
+    def setFPS(self, fps):
+        self.fps = fps
+
+    def getHotkey(self):
+        return self.hotkey
+    def addHotkey(self, newHotkey, requiredState):
+        self.hotkey.append(HotKey(newHotkey, requiredState))
+        if(requiredState is not None):
+            self.addRequires(requiredState)
+
+    def removeHotkey(self, oldHotkey):
+        if(oldHotkey not in self.hotkey):
+            print("Hotkey not found.")
+        else:
+            self.hotkey.remove(oldHotkey)
+            
+    def getRequires(self):
+        return self.requires
+    def addRequires(self, newRequires):
+        self.requires.append(newRequires)
+    def removeRequires(self, oldRequires):
+        if(oldRequires not in self.requires):
+            print("Required state not found.")
+        else:
+            self.requires.remove(oldRequires)
+
+
+
+
+
+class Tuber:
+    def __init__(self, name, expressions, cannedAnimations):
+        self.name = name
+        self.expressions = expressions
+        self.cannedAnimations = cannedAnimations
+
+    def getName(self):
+        return self.name
+    def setName(self, name):
+        self.name = name
+
+    def getExpressions(self):
+        return self.expressions
+    def addExpression(self, newExpression):
+        self.expressions.append(newExpression)
+    def removeExpression(self, oldExpression):
+        if(oldExpression not in self.expressions):
+            print("Expression not found.")
+        else:
+            self.expressions.remove(oldExpression)
+
+    def getCannedAnimations(self):
+        return self.cannedAnimations
+    def addCannedAnimation(self, newCannedAnimation):
+        self.cannedAnimations.append(newCannedAnimation)
+    def removeCannedAnimation(self, oldCannedAnimation):
+        if(oldCannedAnimation not in self.cannedAnimations):
+            print("Canned Animation not found.")
+        else:
+            self.cannedAnimations.remove(oldCannedAnimation)
+
+
+
+# GUI stuff
+
+class ClickableText:
+    def __init__(self, text, position, font, color, action=None):
+        self.text = text
+        self.position = position
+        self.font = font
+        self.color = color
+        self.action = action
+    
+    def setText(self, text):
+        self.text = text
+    def getPosition(self):
+        return self.position
+    def setPosition(self, position):
+        self.position = position
+
+    def draw(self, screen):
+        text = self.font.render(self.text, True, self.color)
+        screen.blit(text, self.position)
+
+    def isClicked(self, mousePos):
+        text = self.font.render(self.text, True, self.color)
+        textRect = text.get_rect()
+        textRect.topleft = self.position
+        if(textRect.collidepoint(mousePos)):
+            return True
+        else:
+            return False
         
+    def doAction(self):
+        if(self.action is not None):
+            self.action()
+
+# Button Actions
+def openToonTuber():
+    print("Open ToonTuber")
+
+def openPlayerSettings():
+    print("Open Player Settings")
+
+def openEditor():
+    print("Open Editor")
+
+def createNewTuber():
+    global openingScreen
+    openingScreen = False
+    print("New Tuber")
+
+def loadTuber():
+    global openingScreen
+    openingScreen = False
+    print("Load Tuber")
+
 
 
 
@@ -186,27 +389,29 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
 # Define the font for the text options
-font = pygame.font.Font(None, 50)
+UniFont = pygame.font.Font(None, 50)
 
-text_settings = font.render("SETTINGS", True, BLACK)
+# text_settings = UniFont.render("SETTINGS", True, BLACK)
 
 # Define the clickable text options
-text_options = [
-    {"text": "Open ToonTuber", "position": (0, 75)},
-    {"text": "Player Settings", "position": (0, 125)},
-    {"text": "Open Editor", "position": (0, 175)}
+settings_options = [
+    ClickableText("Open ToonTuber", (0, 0), UniFont, WHITE, openToonTuber),
+    ClickableText("Player Settings", (0, 50), UniFont, WHITE, openPlayerSettings),
+    ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor)
+]
+
+opening_options = [
+    ClickableText("New Tuber", (width/3, 75), UniFont, WHITE, createNewTuber),
+    ClickableText("Load Tuber", (width/3, 125), UniFont, WHITE, loadTuber)
 ]
 
 # Define a variable to keep track of whether the settings screen is active
 settings_active = False
 
 # Define a function to draw the text options on the screen
-def draw_text_options():
-    for option in text_options:
-        text = font.render(option["text"], True, WHITE)
-        text_rect = text.get_rect(left=option["position"][0], centery=option["position"][1])
-        screen.blit(text_settings, (0, 0))
-        screen.blit(text, text_rect)
+def draw_text_options(text):
+    for option in text:
+        option.draw(screen)
 
 # Define a function to darken the screen
 def darken_screen():
@@ -218,7 +423,7 @@ def darken_screen():
 # Define a function to display the FPS counter
 def display_fps(clock):
     fps = str(int(clock.get_fps()))
-    fps_text = font.render(fps, True, WHITE)
+    fps_text = UniFont.render(fps, True, WHITE)
     fps_rect = fps_text.get_rect(bottomright=(width, height))
     screen.blit(fps_text, fps_rect)
 
@@ -244,29 +449,54 @@ mic_range = pygame.transform.smoothscale(mic_range, (mic_newWidth, mic_newHeight
 # Get the original height of the mic_fill sprite
 mic_fill_height_orig = mic_feedback.get_height()
 
+# create Tuber
+
+
+
 
 
 # Main Pygame loop
 running = True
-
+openingScreen = True
 while running:
-
     # Measure the time between frames and limit the FPS to 60
     delta_time = clock.tick(60) / 1000.0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_p and not openingScreen:
             settings_active = not settings_active
+        # if the user clicks on a text option, do the action
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mousePos = pygame.mouse.get_pos()
+            if openingScreen:
+                for option in opening_options:
+                    if option.isClicked(mousePos):
+                        option.doAction()
+            if settings_active:
+                for option in settings_options:
+                    if option.isClicked(mousePos):
+                        option.doAction()
 
     # Draw the green background
     screen.fill(GREEN)
 
+    # if on the opening screen, prompt user if they want to open an existing tuber or make a new one
+    if openingScreen:
+        # print("opening screen")
+        darken_screen()
+        draw_text_options(opening_options)
+        # if user clicks on "Open ToonTuber", open the file explorer and allow them to select a tuber
+        # if user clicks on "New ToonTuber", open the editor
+
+    # draw Tuber to screen
+
+
     # If the settings screen is active, darken the screen and draw the text options
     if settings_active:
         darken_screen()
-        draw_text_options()
+        draw_text_options(settings_options)
         # Display the FPS counter in the bottom right corner
         display_fps(clock)
         # these values assume that the top left corner of the sprite is 0,0
