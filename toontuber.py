@@ -69,8 +69,10 @@ def keyboard_thread():
         event = keyboard.read_event()
         if event.event_type == "down":
             print(f"Key pressed: {event.name}")
+            pushHotkey(event.name)
         elif event.event_type == "up":
             print(f"Key released: {event.name}")
+            pushHotkey(event.name)
 
 keyboard_thread = threading.Thread(target=keyboard_thread)
 keyboard_thread.daemon = True
@@ -116,6 +118,13 @@ class HotKey:
             print("Required state not found.")
         else:
             self.requires.remove(oldRequires)
+
+lastKeyPressed = ""
+latestKeyPressed = ""
+
+def pushHotKey(key):
+    global latestKeyPressed
+    latestKeyPressed = key
 
 class LoopAnimation:
     def __init__(self, name, frames, fps, requires, enables, hotkey, currentFrame):
@@ -288,6 +297,34 @@ class CannedAnimation:
 
 
 
+# hash table to act as an index for the tuber animations and their hotkeys
+# also, account for animations that share hotkeys
+def createHoykeyIndex(self):
+    self.index = {}
+    for expression in self.expressions:
+        for animation in expression.getAnimations():
+            for hotkey in animation.getHotkeys():
+                if(hotkey not in self.index):
+                    self.index[hotkey] = [animation]
+                else:
+                    self.index[hotkey].append(animation)
+        for hotkey in expression.getMain().getHotkeys():
+            if(hotkey not in self.index):
+                self.index[hotkey] = [expression.getMain()]
+            else:
+                self.index[hotkey].append(expression.getMain())
+        for hotkey in expression.getIdleSet().getAnimations().getHotkeys():
+            if(hotkey not in self.index):
+                self.index[hotkey] = [expression.getIdleSet().getAnimations()]
+            else:
+                self.index[hotkey].append(expression.getIdleSet().getAnimations())
+    for cannedAnimation in self.cannedAnimations:
+        for hotkey in cannedAnimation.getHotkeys():
+            if(hotkey not in self.index):
+                self.index[hotkey] = [cannedAnimation]
+            else:
+                self.index[hotkey].append(cannedAnimation)
+
 
 
 class Tuber:
@@ -295,6 +332,7 @@ class Tuber:
         self.name = name
         self.expressions = expressions
         self.cannedAnimations = cannedAnimations
+        createHoykeyIndex(self)
 
     def getName(self):
         return self.name
@@ -320,6 +358,23 @@ class Tuber:
             print("Canned Animation not found.")
         else:
             self.cannedAnimations.remove(oldCannedAnimation)
+
+images = []
+currentFrame = 0
+fpsClock = pygame.time.Clock()
+fpsTimeBtwnFrames = 0
+currentAnimMinID = 0
+currentAnimMaxID = 0
+lockedInAnimation = False
+
+def getCurrentTuberFrame(tuber):
+    global images, currentFrame, fpsClock, fpsTimeBtwnFrames, currentAnimMinID, currentAnimMaxID, lastKeyPressed, latestKeyPressed
+    if(lastKeyPressed != latestKeyPressed and not lockedInAnimation):
+        lastKeyPressed = latestKeyPressed
+        
+
+    
+
 
 
 

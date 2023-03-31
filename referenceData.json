@@ -11,7 +11,6 @@
       "name": "Basic",
       "anims": [
         {
-          "Main": "JayBasis0001.png",
           "Idles": [
             {
               "randomSecMin": 5,
@@ -88,6 +87,15 @@
                   "fps": 24
                 }
               ]
+            }
+          ],
+          "Main": 
+          [
+            {
+              "frames": [
+                "JayBasis0001.png"
+              ],
+              "fps": 24
             }
           ],
           "Talk": [
