@@ -132,13 +132,15 @@ class HotKey:
             self.requires.remove(oldRequires)
 
 class Animation:
-    def __init__(self, frames, fps):
+    def __init__(self, frames, fps, locking):
         if(frames is None):
             self.frames = None
             self.fps = None
+            self.fps = False
         else:
             self.frames = load_pngs(frames) # list of PNG images
             self.fps = fps                  # int
+            self.locking = locking          # bool
 
     def getFrames(self):
         return self.frames
@@ -149,6 +151,11 @@ class Animation:
         return self.fps
     def setFPS(self, fps):
         self.fps = fps
+
+    def isLocking(self):
+        return self.locking
+    def setLocking(self, locking):
+        self.locking = locking
 
 class IdleSet:
     def __init__(self, animations, minSec, maxSec):
@@ -312,21 +319,38 @@ tuberName = "NONE"
 creator = "NONE"
 created = "NONE"
 modified = "NONE"
-randomDuplicateReduction = 0.5
-folderPath = "NONE"
+randomDuplicateReduction = 0
 expressionList = []
 cannedAnimationList = []
 tuberFrames = []
+expressionDictionary = {}
+cannedAnimationDictionary = {}
 
 currentAnimation = None
 currentFrame = 0
 framerate = 0
+image_timer = 0
 fpsClock = pygame.time.Clock()
 fpsTimeBtwnFrames = 0
 randIntervalClock = pygame.time.Clock()
-currentAnimMinID = 0
-currentAnimMaxID = 0
-lockedInAnimation = False
+currentTotalFrames = 0
+locked = False
+
+talkThreshold = 0.5
+peakThreshold = 0.9
+
+def update_render_thread():
+    global currentFrame, framerate,image_timer, locked
+    while True:
+        timeElapsed = fpsClock.tick(framerate) / 1000.0  # Get the time passed since last frame
+        image_timer += timeElapsed
+        # print(timeElapsed, "  ", image_timer)
+        if image_timer > 1 / framerate:
+            # time to change frame! (or at least try to)
+            
+            currentFrame = (currentFrame + 1) % len(tuberFrames)
+            # print("Updating render. ", currentFrame)
+            image_timer -= 1.0 / framerate
 
 
 # GUI stuff
@@ -379,7 +403,7 @@ def createNewTuber():
     print("New Tuber")
 
 def loadTuber():
-    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames
+    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionDictionary, cannedAnimationDictionary, currentAnimation, currentFrame, framerate, fpsClock, fpsTimeBtwnFrames, randIntervalClock, currentTotalFrames, locked
     openingScreen = False
     # file dialog to select json file   
     root = tk.Tk()
@@ -406,45 +430,61 @@ def loadTuber():
         # expression set requires a main animation, an idle set, and loop animations
 
         # main animation        REQUIRED
-        main = Animation(expressionData["anims"]["Main"]["frames"], expressionData["anims"]["Main"]["fps"])
+        main = Animation(expressionData["anims"]["Main"]["frames"], expressionData["anims"]["Main"]["fps"], expressionData["anims"]["Main"]["locking"])
 
         # idle set
-        idleList = [Animation(None, None)]
+        idleList = [Animation(None, None, None)]
         if(not expressionData["anims"]["Idles"]):
-            print("No idles found.")
+            # print("No idles found.")
             idles = IdleSet(None, None, None)
         else:
             for idle in expressionData["anims"]["Idles"]["idleAnims"]:
-                idleList.append(Animation(idle["frames"], idle["fps"]))
+                idleList.append(Animation(idle["frames"], idle["fps"], idle["locking"]))
             idles = IdleSet(idleList, expressionData["anims"]["Idles"]["randomSecMin"], expressionData["anims"]["Idles"]["randomSecMax"])
 
 
         # talking
         if(not expressionData["anims"]["Talk"]):
-            print("No talking animation found.")
-            talking = Animation(None, None)
+            # print("No talking animation found.")
+            talking = Animation(None, None, None)
         else:
-            talking = Animation(expressionData["anims"]["Talk"]["frames"], expressionData["anims"]["Talk"]["fps"])
+            talking = Animation(expressionData["anims"]["Talk"]["frames"], expressionData["anims"]["Talk"]["fps"], expressionData["anims"]["Talk"]["locking"])
 
         # peak
         if(not expressionData["anims"]["Peak"]):
-            print("No peak animation found.")
-            peak = Animation(None, None)
+            # print("No peak animation found.")
+            peak = Animation(None, None, None)
         else:
-            peak = Animation(expressionData["anims"]["Peak"]["frames"], expressionData["anims"]["Peak"]["fps"])
+            peak = Animation(expressionData["anims"]["Peak"]["frames"], expressionData["anims"]["Peak"]["fps"], expressionData["anims"]["Peak"]["locking"])
 
         # transition in
-        transitionIn = Animation(expressionData["anims"]["TransitionIN"]["frames"], expressionData["anims"]["TransitionIN"]["fps"])
+        transitionIn = Animation(expressionData["anims"]["TransitionIN"]["frames"], expressionData["anims"]["TransitionIN"]["fps"], expressionData["anims"]["TransitionIN"]["locking"])
 
         # transition out
-        transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"])
+        transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"], expressionData["anims"]["TransitionOUT"]["locking"])
 
         # create ExpressionSet
         expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["enables"], expressionData["hotkey"]))
+        expressionDictionary[expressionData["name"]] = len(expressionList) - 1
+        # print(expressionDictionary)
 
     for cannedAnimationData in data["canned_anims"]:
         # name, animation, hotkey, requires, result
-        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"]), cannedAnimationData["hotkey"], cannedAnimationData["requires"], cannedAnimationData["result"]))
+        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkey"], cannedAnimationData["requires"], cannedAnimationData["result"]))
+        cannedAnimationDictionary[cannedAnimationData["name"]] = len(cannedAnimationList) - 1
+        # print(cannedAnimationDictionary)
+    
+    currentAnimation = "Laughing"
+    tuberFrames = expressionList[expressionDictionary["Laughing"]].main.frames
+    framerate = expressionList[expressionDictionary["Laughing"]].main.fps
+    fpsTimeBtwnFrames = framerate
+    currentTotalFrames = len(tuberFrames)
+    currentFrame = 0
+    locked = expressionList[expressionDictionary["Laughing"]].main.locking
+    fpsClock = pygame.time.Clock()
+    randIntervalClock = pygame.time.Clock()
+    print("Loaded Tuber: " + name)
+
 
 # Define some colors
 WHITE = (255, 255, 255)
@@ -486,10 +526,10 @@ def darken_screen():
     screen.blit(darken_surface, (0, 0))
 
 # Define a function to display the FPS counter
-def display_fps(clock):
-    fps = str(int(clock.get_fps()))
+def display_fps(txt, clock, heightSubtract):
+    fps = txt + str(int(clock.get_fps()))
     fps_text = UniFont.render(fps, True, WHITE)
-    fps_rect = fps_text.get_rect(bottomright=(width, height))
+    fps_rect = fps_text.get_rect(bottomright=(width, height-heightSubtract))
     screen.blit(fps_text, fps_rect)
 
 # Create a Pygame clock object to measure time between frames
@@ -514,11 +554,17 @@ mic_range = pygame.transform.smoothscale(mic_range, (mic_newWidth, mic_newHeight
 # Get the original height of the mic_fill sprite
 mic_fill_height_orig = mic_feedback.get_height()
 
+render_thread = threading.Thread(target=update_render_thread)
+render_thread.daemon = True
 
 # Main Pygame loop
 running = True
 openingScreen = True
+updateFrameRunning = False
 while running:
+    if(not updateFrameRunning and not openingScreen):
+        updateFrameRunning = True
+        render_thread.start()
     # Measure the time between frames and limit the FPS to 60
     delta_time = clock.tick(60) / 1000.0
 
@@ -549,18 +595,25 @@ while running:
         draw_text_options(opening_options)
         # if user clicks on "Open ToonTuber", open the file explorer and allow them to select a tuber
         # if user clicks on "New ToonTuber", open the editor
+    else:
 
-    # draw Tuber to screen
+        
+
+        # draw Tuber to screen
+        tuber_rect = pygame.Rect(0, 0, width, height)
+        currentImage = tuberFrames[currentFrame]
+        render = currentImage.convert_alpha()
+        screen.blit(render, tuber_rect)
+
     
-    # if(keyHeld is True and latestKeyPressed is not None):
-
 
     # If the settings screen is active, darken the screen and draw the text options
     if settings_active:
         darken_screen()
         draw_text_options(settings_options)
         # Display the FPS counter in the bottom right corner
-        display_fps(clock)
+        display_fps("program FPS: ",clock, 0)
+        display_fps("anim FPS: ", fpsClock, 50)
         # these values assume that the top left corner of the sprite is 0,0
         # therefore, the bottom right of the sprite is the width and height
         

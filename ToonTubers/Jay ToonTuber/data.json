@@ -19,7 +19,8 @@
           "frames": [
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0001.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": false
         },
         "Idles": {
           "randomSecMin": 5,
@@ -36,7 +37,8 @@
                 "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0008.png",
                 "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0009.png"
               ],
-              "fps": 24
+              "fps": 24,
+              "locking": false
             },
             {
               "frames": [
@@ -81,7 +83,8 @@
                 "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0048.png",
                 "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0049.png"
               ],
-              "fps": 24
+              "fps": 24,
+              "locking": false
             }
           ]
         },
@@ -95,7 +98,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0054.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0055.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": true
         },
         "Peak":
         {
@@ -105,7 +109,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0059.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0060.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": false
         },
         "TransitionIN":
         {
@@ -114,7 +119,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0067.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0068.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": true
         }, 
         "TransitionOUT": 
         {
@@ -124,7 +130,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0064.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0065.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": true
         } 
       }
     },
@@ -144,7 +151,8 @@
           "frames": [
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0001.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": false
         },
         "Idles": 
         {
@@ -174,7 +182,8 @@
                 "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0020.png",
                 "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0021.png"
               ],
-              "fps": 24
+              "fps": 24,
+              "locking": false
             }
           ]
         },
@@ -188,7 +197,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0026.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0027.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": true
         },
         "Peak": 
         {
@@ -196,7 +206,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0029.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0030.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": false
         },
         "TransitionIN": 
         {
@@ -206,7 +217,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0037.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0038.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": true
         }, 
         "TransitionOUT": 
         {
@@ -216,7 +228,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0033.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0034.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": true
         }
       }
     },
@@ -241,7 +254,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0005.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0006.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": false
         },
         "Idles": {
           
@@ -257,7 +271,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0009.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0010.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": false
         },
         "TransitionIN": 
         {
@@ -266,7 +281,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0016.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0017.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": true
         }, 
         "TransitionOUT": 
         {
@@ -276,7 +292,8 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0013.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0014.png"
           ],
-          "fps": 24
+          "fps": 24,
+          "locking": true
         }
       }
     }
@@ -287,7 +304,7 @@
       "hotkey": "/",
       "requires": null,
       "result": "Basic",
-      "anims": 
+      "anim": 
       {
         "frames": [
           "asdf.png"
