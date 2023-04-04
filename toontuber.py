@@ -327,40 +327,42 @@ def createHoykeyIndex(self):
 
 
 
-class Tuber:
-    def __init__(self, name, expressions, cannedAnimations):
-        self.name = name
-        self.expressions = expressions
-        self.cannedAnimations = cannedAnimations
-        createHoykeyIndex(self)
+# class Tuber:
+#     def __init__(self, name, expressions, cannedAnimations):
+#         self.name = name
+#         self.expressions = expressions
+#         self.cannedAnimations = cannedAnimations
+#         createHoykeyIndex(self)
 
-    def getName(self):
-        return self.name
-    def setName(self, name):
-        self.name = name
+#     def getName(self):
+#         return self.name
+#     def setName(self, name):
+#         self.name = name
 
-    def getExpressions(self):
-        return self.expressions
-    def addExpression(self, newExpression):
-        self.expressions.append(newExpression)
-    def removeExpression(self, oldExpression):
-        if(oldExpression not in self.expressions):
-            print("Expression not found.")
-        else:
-            self.expressions.remove(oldExpression)
+#     def getExpressions(self):
+#         return self.expressions
+#     def addExpression(self, newExpression):
+#         self.expressions.append(newExpression)
+#     def removeExpression(self, oldExpression):
+#         if(oldExpression not in self.expressions):
+#             print("Expression not found.")
+#         else:
+#             self.expressions.remove(oldExpression)
 
-    def getCannedAnimations(self):
-        return self.cannedAnimations
-    def addCannedAnimation(self, newCannedAnimation):
-        self.cannedAnimations.append(newCannedAnimation)
-    def removeCannedAnimation(self, oldCannedAnimation):
-        if(oldCannedAnimation not in self.cannedAnimations):
-            print("Canned Animation not found.")
-        else:
-            self.cannedAnimations.remove(oldCannedAnimation)
+#     def getCannedAnimations(self):
+#         return self.cannedAnimations
+#     def addCannedAnimation(self, newCannedAnimation):
+#         self.cannedAnimations.append(newCannedAnimation)
+#     def removeCannedAnimation(self, oldCannedAnimation):
+#         if(oldCannedAnimation not in self.cannedAnimations):
+#             print("Canned Animation not found.")
+#         else:
+#             self.cannedAnimations.remove(oldCannedAnimation)
 
 images = []
+tuberName = "NONE"
 currentFrame = 0
+framerate = 0
 fpsClock = pygame.time.Clock()
 fpsTimeBtwnFrames = 0
 currentAnimMinID = 0
