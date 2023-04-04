@@ -10,6 +10,7 @@ import keyboard
 import tkinter as tk
 from tkinter import filedialog
 import json
+import os
 
 pygame.init()
 
@@ -63,16 +64,32 @@ audio_thread = threading.Thread(target=audio_callback)
 audio_thread.daemon = True
 audio_thread.start()
 
+lastKeyPressed = ""
+latestKeyPressed = ""
+keyHeld = False
+
+def pushHotKey(key):
+    global latestKeyPressed, lastKeyPressed
+    lastKeyPressed = latestKeyPressed
+    latestKeyPressed = key
+    keyHeld = True
+
+def releaseHotKey(key):
+    global latestKeyPressed, lastKeyPressed
+    lastKeyPressed = latestKeyPressed
+    latestKeyPressed = ""
+    keyHeld = False
+
 # keyboard reading thread
 def keyboard_thread():
     while True:
         event = keyboard.read_event()
         if event.event_type == "down":
             print(f"Key pressed: {event.name}")
-            pushHotkey(event.name)
+            pushHotKey(event.name)
         elif event.event_type == "up":
             print(f"Key released: {event.name}")
-            pushHotkey(event.name)
+            releaseHotKey(event.name)
 
 keyboard_thread = threading.Thread(target=keyboard_thread)
 keyboard_thread.daemon = True
@@ -80,23 +97,18 @@ keyboard_thread.start()
 
 # TUBER STUFF
 
-def load_pngs(message):
-    # create a Tkinter root window to use for the file dialog
-    root = tk.Tk()
-    root.withdraw()
+MISSING_IMAGE = pygame.image.load("MissingImage.png")
 
-    # open the file dialog and allow the user to select one or more PNG files
-    file_paths = filedialog.askopenfilenames(
-        filetypes=[("PNG files", "*.png")],
-        title=message,
-        multiple=True
-    )
-
+def load_pngs(paths):
     # create a list of Pygame images from the selected files
     images = []
-    for file_path in file_paths:
-        image = pygame.image.load(file_path)
-        images.append(image)
+    for file_path in paths:
+        if(os.path.isfile(file_path)):
+            image = pygame.image.load(file_path)
+            images.append(image)
+        else:
+            images.append(MISSING_IMAGE)
+        
     return images
 
 class HotKey:
@@ -119,84 +131,41 @@ class HotKey:
         else:
             self.requires.remove(oldRequires)
 
-lastKeyPressed = ""
-latestKeyPressed = ""
+class Animation:
+    def __init__(self, frames, fps):
+        if(frames is None):
+            self.frames = None
+            self.fps = None
+        else:
+            self.frames = load_pngs(frames) # list of PNG images
+            self.fps = fps                  # int
 
-def pushHotKey(key):
-    global latestKeyPressed
-    latestKeyPressed = key
-
-class LoopAnimation:
-    def __init__(self, name, frames, fps, requires, enables, hotkey, currentFrame):
-        self.name = name                # string
-        self.frames = frames            # list of PNG images
-        self.fps = fps                  # int
-        self.requires = requires        # list of ExpressionSets
-        self.enables = enables          # list of ExpressionSets
-        self.hotkey = hotkey            # Hotkey object
-        self.currentFrame = currentFrame  # int
-
-    def getName(self):
-        return self.name
-    def setName(self, name):
-        self.name = name
-    
     def getFrames(self):
         return self.frames
-    def setFrames(self):
-        self.frames = load_pngs("Select frames for " + self.name + ":")
-    
-    def getCurrentFrame(self):
-        return self.frames[self.currentFrame]
-    
-    def setCurrentFrame(self, currentFrame):
-        self.currentFrame = currentFrame    
-    
+    def countFrames(self):
+        return len(self.frames)
+
     def getFPS(self):
         return self.fps
     def setFPS(self, fps):
         self.fps = fps
 
-    def getRequires(self):
-        return self.requires
-    def addRequires(self, newRequires):
-        self.requires.append(newRequires)
-    def removeRequires(self, oldRequires):
-        if(oldRequires not in self.requires):
-            print("Required state not found.")
-        else:
-            self.requires.remove(oldRequires)
-    
-    def getEnables(self):
-        return self.enables
-   
-    def getHotkey(self):
-        return self.hotkey
-    def addHotkey(self, newHotkey, requiredState):
-        self.hotkey.append(HotKey(newHotkey, requiredState))
-        if(requiredState is not None):
-            self.addRequires(requiredState)
-    def removeHotkey(self, oldHotkey):
-        if(oldHotkey not in self.hotkey):
-            print("Hotkey not found.")
-        else:
-            self.hotkey.remove(oldHotkey)
-
 class IdleSet:
-    def __init__(self, name, animations, minRand, maxRand):
-        self.name = name                # string
-        self.animations = animations    # list of LoopAnimation objects
-        self.minRand = minRand          # int
-        self.maxRand = maxRand          # int
-
-    def getName(self):
-        return self.name
-    def setName(self, name):
-        self.name = name
+    def __init__(self, animations, minSec, maxSec):
+        if(animations is None):
+            # null object
+            self.animations = None
+            self.count = None
+            self.minSec = None
+            self.maxSec = None
+        else:
+            self.animations = animations    # list of Animation objects
+            self.count = len(animations)              # int
+            self.minSec = minSec          # int
+            self.maxSec = maxSec          # int
     
     def getAnimations(self):
         return self.animations
-    
     def addAnimation(self, newAnimation):
         self.animations.append(newAnimation)
     def removeAnimation(self, oldAnimation):
@@ -205,23 +174,31 @@ class IdleSet:
         else:
             self.animations.remove(oldAnimation)  
 
-    def getMinRand(self):
-        return self.minRand
-    def setMinRand(self, minRand):
-        self.minRand = minRand
+    def getCount(self):
+        return self.count
 
-    def getMaxRand(self):
-        return self.maxRand
-    def setMaxRand(self, maxRand):
-        self.maxRand = maxRand
+    def getMinSec(self):
+        return self.minSec
+    def setMinSec(self, minSec):
+        self.minSec = minSec
 
+    def getMaxSec(self):
+        return self.maxSec
+    def setMaxSec(self, maxSec):
+        self.maxSec = maxSec
 
 class ExpressionSet:
-    def __init__(self, name, main, idleSet, animations):
+    def __init__(self, name, main, idleSet, talk, peak, trIn, trOut, requires, enables, hotkey):
         self.name = name                # string
         self.main = main                # Animation object
         self.idleSet = idleSet          # IdleSet object
-        self.animations = animations    # list of LoopAnimation objects
+        self.talk = talk                # Animation object
+        self.peak = peak                # Animation object
+        self.trIn = trIn          # Animation object
+        self.trOut = trOut        # Animation object
+        self.requires = requires        # list of ExpressionSets
+        self.enables = enables          # list of ExpressionSets
+        self.hotkey = hotkey            # Hotkey object
 
     def getName(self):
         return self.name
@@ -238,21 +215,61 @@ class ExpressionSet:
     def setIdleSet(self, idleSet):
         self.idleSet = idleSet
 
-    def getAnimations(self):
-        return self.animations
-    def addAnimation(self, newAnimation):
-        self.animations.append(newAnimation)
-    def removeAnimation(self, oldAnimation):
-        if(oldAnimation not in self.animations):
-            print("Animation not found.")
+    def getTalk(self):
+        return self.talk
+    def setTalk(self, talk):
+        self.talk = talk
+
+    def getPeak(self):
+        return self.peak
+    def setPeak(self, peak):
+        self.peak = peak
+
+    def getTransitionIn(self):
+        return self.trIn
+    def setTransitionIn(self, trIn):
+        self.trIn = trIn
+
+    def getTransitionOut(self):
+        return self.trOut
+    def setTransitionOut(self, trOut):
+        self.trOut = trOut
+
+    def getRequires(self):
+        return self.requires
+    def addRequires(self, newRequires):
+        self.requires.append(newRequires)
+    def removeRequires(self, oldRequires):
+        if(oldRequires not in self.requires):
+            print("Required state not found.")
         else:
-            self.animations.remove(oldAnimation)
+            self.requires.remove(oldRequires)
+
+    def getEnables(self):
+        return self.enables
+    def addEnables(self, newEnables):
+        self.enables.append(newEnables)
+    def removeEnables(self, oldEnables):
+        if(oldEnables not in self.enables):
+            print("Enabled state not found.")
+        else:
+            self.enables.remove(oldEnables)
+
+    def getHotkey(self):
+        return self.hotkey
+    def addHotkey(self, newHotkey, required):
+        self.hotkey = newHotkey
+        self.requires.append(required)
+    def removeHotkey(self, oldHotkey):
+        if(oldHotkey not in self.hotkey):
+            print("Hotkey not found.")
+        else:
+            self.hotkey = None
 
 class CannedAnimation:
-    def __init__(self, name, frames, fps, hotkey, requires, result):
+    def __init__(self, name, animation, hotkey, requires, result):
         self.name = name                # string
-        self.frames = frames            # list of PNG images
-        self.fps = fps                  # int
+        self.animation = animation      # Animation object
         self.hotkey = hotkey            # Hotkey object
         self.requires = requires        # list of ExpressionSets
         self.result = result            # ExpressionSet object
@@ -262,15 +279,10 @@ class CannedAnimation:
     def setName(self, name):
         self.name = name
     
-    def getFrames(self):
-        return self.frames
-    def setFrames(self):
-        self.frames = load_pngs("Select frames for " + self.name + ":")
-
-    def getFPS(self):
-        return self.fps
-    def setFPS(self, fps):
-        self.fps = fps
+    def getAnimation(self):
+        return self.animation
+    def setAnimation(self, animation):
+        self.animation = animation
 
     def getHotkey(self):
         return self.hotkey
@@ -295,89 +307,26 @@ class CannedAnimation:
         else:
             self.requires.remove(oldRequires)
 
-
-
-# hash table to act as an index for the tuber animations and their hotkeys
-# also, account for animations that share hotkeys
-def createHoykeyIndex(self):
-    self.index = {}
-    for expression in self.expressions:
-        for animation in expression.getAnimations():
-            for hotkey in animation.getHotkeys():
-                if(hotkey not in self.index):
-                    self.index[hotkey] = [animation]
-                else:
-                    self.index[hotkey].append(animation)
-        for hotkey in expression.getMain().getHotkeys():
-            if(hotkey not in self.index):
-                self.index[hotkey] = [expression.getMain()]
-            else:
-                self.index[hotkey].append(expression.getMain())
-        for hotkey in expression.getIdleSet().getAnimations().getHotkeys():
-            if(hotkey not in self.index):
-                self.index[hotkey] = [expression.getIdleSet().getAnimations()]
-            else:
-                self.index[hotkey].append(expression.getIdleSet().getAnimations())
-    for cannedAnimation in self.cannedAnimations:
-        for hotkey in cannedAnimation.getHotkeys():
-            if(hotkey not in self.index):
-                self.index[hotkey] = [cannedAnimation]
-            else:
-                self.index[hotkey].append(cannedAnimation)
-
-
-
-# class Tuber:
-#     def __init__(self, name, expressions, cannedAnimations):
-#         self.name = name
-#         self.expressions = expressions
-#         self.cannedAnimations = cannedAnimations
-#         createHoykeyIndex(self)
-
-#     def getName(self):
-#         return self.name
-#     def setName(self, name):
-#         self.name = name
-
-#     def getExpressions(self):
-#         return self.expressions
-#     def addExpression(self, newExpression):
-#         self.expressions.append(newExpression)
-#     def removeExpression(self, oldExpression):
-#         if(oldExpression not in self.expressions):
-#             print("Expression not found.")
-#         else:
-#             self.expressions.remove(oldExpression)
-
-#     def getCannedAnimations(self):
-#         return self.cannedAnimations
-#     def addCannedAnimation(self, newCannedAnimation):
-#         self.cannedAnimations.append(newCannedAnimation)
-#     def removeCannedAnimation(self, oldCannedAnimation):
-#         if(oldCannedAnimation not in self.cannedAnimations):
-#             print("Canned Animation not found.")
-#         else:
-#             self.cannedAnimations.remove(oldCannedAnimation)
-
-images = []
+# tuber info
 tuberName = "NONE"
+creator = "NONE"
+created = "NONE"
+modified = "NONE"
+randomDuplicateReduction = 0.5
+folderPath = "NONE"
+expressionList = []
+cannedAnimationList = []
+tuberFrames = []
+
+currentAnimation = None
 currentFrame = 0
 framerate = 0
 fpsClock = pygame.time.Clock()
 fpsTimeBtwnFrames = 0
+randIntervalClock = pygame.time.Clock()
 currentAnimMinID = 0
 currentAnimMaxID = 0
 lockedInAnimation = False
-
-def getCurrentTuberFrame(tuber):
-    global images, currentFrame, fpsClock, fpsTimeBtwnFrames, currentAnimMinID, currentAnimMaxID, lastKeyPressed, latestKeyPressed
-    if(lastKeyPressed != latestKeyPressed and not lockedInAnimation):
-        lastKeyPressed = latestKeyPressed
-        
-
-    
-
-
 
 
 # GUI stuff
@@ -430,13 +379,72 @@ def createNewTuber():
     print("New Tuber")
 
 def loadTuber():
-    global openingScreen
+    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames
     openingScreen = False
-    print("Load Tuber")
+    # file dialog to select json file   
+    root = tk.Tk()
+    root.withdraw()
+
+    file_path = filedialog.askopenfilename(
+        filetypes=[("JSON files", "*.json")],
+        title="Select a JSON file",
+    )
+
+    print("Selected file:", file_path)
+
+    # load json file
+    with open(file_path) as json_file:
+        data = json.load(json_file)
+        # print(data)
+    name = data["name"]
+    creator = data["creator"]
+    created = data["created"]
+    modified = data["last_modified"]
+    randomDuplicateReduction = data["random_duplicate_reduction"]
+    for expressionData in data["loop_anims"]:
+        print("Loading expression: " + expressionData["name"])
+        # expression set requires a main animation, an idle set, and loop animations
+
+        # main animation        REQUIRED
+        main = Animation(expressionData["anims"]["Main"]["frames"], expressionData["anims"]["Main"]["fps"])
+
+        # idle set
+        idleList = [Animation(None, None)]
+        if(not expressionData["anims"]["Idles"]):
+            print("No idles found.")
+            idles = IdleSet(None, None, None)
+        else:
+            for idle in expressionData["anims"]["Idles"]["idleAnims"]:
+                idleList.append(Animation(idle["frames"], idle["fps"]))
+            idles = IdleSet(idleList, expressionData["anims"]["Idles"]["randomSecMin"], expressionData["anims"]["Idles"]["randomSecMax"])
 
 
+        # talking
+        if(not expressionData["anims"]["Talk"]):
+            print("No talking animation found.")
+            talking = Animation(None, None)
+        else:
+            talking = Animation(expressionData["anims"]["Talk"]["frames"], expressionData["anims"]["Talk"]["fps"])
 
+        # peak
+        if(not expressionData["anims"]["Peak"]):
+            print("No peak animation found.")
+            peak = Animation(None, None)
+        else:
+            peak = Animation(expressionData["anims"]["Peak"]["frames"], expressionData["anims"]["Peak"]["fps"])
 
+        # transition in
+        transitionIn = Animation(expressionData["anims"]["TransitionIN"]["frames"], expressionData["anims"]["TransitionIN"]["fps"])
+
+        # transition out
+        transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"])
+
+        # create ExpressionSet
+        expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["enables"], expressionData["hotkey"]))
+
+    for cannedAnimationData in data["canned_anims"]:
+        # name, animation, hotkey, requires, result
+        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"]), cannedAnimationData["hotkey"], cannedAnimationData["requires"], cannedAnimationData["result"]))
 
 # Define some colors
 WHITE = (255, 255, 255)
@@ -506,11 +514,6 @@ mic_range = pygame.transform.smoothscale(mic_range, (mic_newWidth, mic_newHeight
 # Get the original height of the mic_fill sprite
 mic_fill_height_orig = mic_feedback.get_height()
 
-# create Tuber
-
-
-
-
 
 # Main Pygame loop
 running = True
@@ -548,6 +551,8 @@ while running:
         # if user clicks on "New ToonTuber", open the editor
 
     # draw Tuber to screen
+    
+    # if(keyHeld is True and latestKeyPressed is not None):
 
 
     # If the settings screen is active, darken the screen and draw the text options
