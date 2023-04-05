@@ -96,7 +96,7 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0055.png"
           ],
           "fps": 24,
-          "locking": true
+          "locking": false
         },
         "Peak":
         {
@@ -192,7 +192,7 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0027.png"
           ],
           "fps": 24,
-          "locking": true
+          "locking": false
         },
         "Peak": 
         {

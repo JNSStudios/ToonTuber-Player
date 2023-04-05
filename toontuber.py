@@ -19,6 +19,7 @@ pygame.init()
 width, height = 750, 750
 screen = pygame.display.set_mode((width, height))
 rms = 0
+avgVol = 0
 
 # Set the window name
 pygame.display.set_caption("Toon Tuber Player")
@@ -33,10 +34,16 @@ textRect.center = (width // 2, height // 2)
 chunk_size = 256  # number of audio samples per chunk
 sample_rate = 44100  # number of samples per second
 
+talkThreshold = 60
+peakThreshold = 90
+
+volRollingAverage = []
+volRollingAverageLength = 10
+
 pa = pyaudio.PyAudio()
 
 def audio_callback(in_data, frame_count, time_info, status):
-    global rms
+    global rms, avgVol
     # convert audio data to a numpy array
     audio = np.frombuffer(in_data, dtype=np.int16)
 
@@ -46,7 +53,12 @@ def audio_callback(in_data, frame_count, time_info, status):
         rms = round(rmsNEW)
     else:
         rms = 100
-    # print(rms)
+    
+    volRollingAverage.append(rms)
+    if(len(volRollingAverage) > volRollingAverageLength):
+        volRollingAverage.pop(0)
+    avgVol = sum(volRollingAverage) / len(volRollingAverage)
+    print(avgVol)
     
     # return None and continue streaming
     return (None, pyaudio.paContinue)
@@ -59,10 +71,8 @@ stream = pa.open(format=pyaudio.paInt16,
                  frames_per_buffer=chunk_size,
                  stream_callback=audio_callback)
 
-# create a separate thread for audio input
-audio_thread = threading.Thread(target=audio_callback)
-audio_thread.daemon = True
-audio_thread.start()
+# Start the audio stream
+stream.start_stream()
 
 lastKeyPressed = ""
 latestKeyPressed = ""
@@ -94,8 +104,6 @@ randIntervalClock = pygame.time.Clock()
 currentTotalFrames = 0
 locked = False
 
-talkThreshold = 0.5
-peakThreshold = 0.9
 
 def pushHotKey(key):
     global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition
@@ -125,7 +133,7 @@ def pushHotKey(key):
                 # it's an expression and the needed anim is ready. check if the required animation is already playing
                 queuedExpression = animName
                 break
-                
+
             elif(animName in cannedAnimationIndex 
                  and (currentAnimation in cannedAnimationList[cannedAnimationIndex[animName]].requires 
                       or cannedAnimationList[cannedAnimationIndex[animName]].requires == [None]) 
@@ -187,6 +195,9 @@ class Animation:
     def __str__(self):
         return f"Animation with {len(self.frames) if self.frames != None else None} frames at {self.fps} fps. Locking: {self.locking}"
 
+    def exists(self):
+        return self.frames != None
+
     def getFrames(self):
         return self.frames
     def countFrames(self):
@@ -219,6 +230,9 @@ class IdleSet:
     def __str__(self):
         return f"IdleSet with {self.count} animations. Min: {self.minSec} Max: {self.maxSec}"
     
+    def exists(self):
+        return self.animations != None
+
     def getAnimations(self):
         return self.animations
     def addAnimation(self, newAnimation):
@@ -358,15 +372,18 @@ class CannedAnimation:
             self.requires.remove(oldRequires)
 
 def update_render_thread():
-    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression
+    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol
     while True:
         timeElapsed = fpsClock.tick(framerate) / 1000.0  # Get the time passed since last frame
         image_timer += timeElapsed
+        # print(rms)
         # print(timeElapsed, "  ", image_timer)
         if image_timer > 1 / framerate: # time equivelent to one frame has passed
             currentFrame = currentFrame + 1
             # print("queued:", queuedExpression, "   current:", currentExpression)
             # time to change frame! 
+            # print(expressionList[expressionIndex[currentExpression]].getTalk())
+
             if(not locked or currentFrame >= len(tuberFrames)):
                 # can change animation. check what kind of animation we need to switch to, if we need to
                 if((queuedExpression != currentAnimation and queuedExpression != "") and transition == ""):
@@ -375,17 +392,27 @@ def update_render_thread():
                     loadAnimation(expressionList[expressionIndex[currentExpression]], "out")
                 elif(transition == "out" and currentFrame >= len(tuberFrames)):
                     transition = "in"
-                    locked = expressionList[expressionIndex[queuedExpression]].getTransitionIn().isLocking()
-                    loadAnimation(expressionList[expressionIndex[queuedExpression]], "in")
-                elif(transition == "in" and currentFrame >= len(tuberFrames)):
-                    transition = ""
-                    locked = expressionList[expressionIndex[queuedExpression]].getMain().isLocking()
-                    loadAnimation(expressionList[expressionIndex[queuedExpression]], "main")
                     currentExpression = queuedExpression
                     queuedExpression = ""
+                    locked = expressionList[expressionIndex[currentExpression]].getTransitionIn().isLocking()
+                    loadAnimation(expressionList[expressionIndex[currentExpression]], "in")
+                elif(transition == "in" and currentFrame >= len(tuberFrames)):
+                    transition = ""
+                    locked = expressionList[expressionIndex[currentExpression]].getMain().isLocking()
+                    loadAnimation(expressionList[expressionIndex[currentExpression]], "main")
+                elif(avgVol >= peakThreshold and expressionList[expressionIndex[currentExpression]].getPeak().exists()):
+                    # peak animation is set, and we're not locked
+                    # print("peak")
+                    locked = expressionList[expressionIndex[currentExpression]].getPeak().isLocking()
+                    loadAnimation(expressionList[expressionIndex[currentExpression]], "peak")
+                elif(avgVol >= talkThreshold and expressionList[expressionIndex[currentExpression]].getTalk().exists()):
+                    # talk animation is set, and we're not locked
+                    # print("talk")
+                    locked = expressionList[expressionIndex[currentExpression]].getTalk().isLocking()
+                    loadAnimation(expressionList[expressionIndex[currentExpression]], "talk")
                 else:
                     # no transition, just update the animation
-                    currentFrame = (currentFrame) % len(tuberFrames)
+                    currentFrame = (currentFrame) % len(tuberFrames)   
             else:                
                 currentFrame = (currentFrame) % len(tuberFrames)
                 # print("Updating render. ", currentFrame)
@@ -427,9 +454,6 @@ class ClickableText:
             self.action()
 
 # Button Actions
-def openToonTuber():
-    print("Open ToonTuber")
-
 def openPlayerSettings():
     print("Open Player Settings")
 
@@ -441,21 +465,26 @@ def createNewTuber():
     openingScreen = False
     print("New Tuber")
 
+
+# tuber loading definitions
 def loadAnimation(expressionSet, animation):
     global currentAnimation, tuberFrames, framerate, fpsClock, randIntervalClock, currentTotalFrames, locked, currentFrame, currentExpression
-    # print("Loading animation \"", animation, "\" from expression set \"", expressionSet.getName(), ".\"")
-    if(animation == "main"):
+    # print(f"Loading animation \"{animation}\" from expression set \"{expressionSet.getName()}.\"")
+    if(animation == "main" and expressionSet.getMain().exists()):
         currentAnimation = expressionSet.getMain()
-    elif(animation == "in"):
+    elif(animation == "in" and expressionSet.getTransitionIn().exists()):
         currentAnimation = expressionSet.getTransitionIn()
-    elif(animation == "out"):
+    elif(animation == "out" and expressionSet.getTransitionOut().exists()):
         currentAnimation = expressionSet.getTransitionOut()
-    elif(animation == "idle"):
+    elif(animation == "idle" and expressionSet.getIdleSet().exists()):
         currentAnimation = expressionSet.getIdleSet().getAnimations()[random.randint(0, len(expressionSet.getIdleSet()) - 1)]
-    elif(animation == "talk"):
+    elif(animation == "talk" and expressionSet.getTalk().exists()):
         currentAnimation = expressionSet.getTalk()
-    elif(animation == "peak"):
+    elif(animation == "peak" and expressionSet.getPeak().exists()):
         currentAnimation = expressionSet.getPeak()
+    else:
+        print("Animation does not exist.")
+        return
 
     tuberFrames = currentAnimation.frames
     framerate = currentAnimation.fps
@@ -571,7 +600,7 @@ UniFont = pygame.font.Font(None, 50)
 
 # Define the clickable text options
 settings_options = [
-    ClickableText("Open ToonTuber", (0, 0), UniFont, WHITE, openToonTuber),
+    ClickableText("Load ToonTuber", (0, 0), UniFont, WHITE, loadTuber),
     ClickableText("Player Settings", (0, 50), UniFont, WHITE, openPlayerSettings),
     ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor)
 ]
@@ -692,7 +721,7 @@ while running:
         # therefore, the bottom right of the sprite is the width and height
         
         
-        micFill_clipHeight = round((mic_feedback.get_height() * (rms/100)))
+        micFill_clipHeight = round((mic_feedback.get_height() * (avgVol/100)))
         clip_rect = pygame.Rect(0, mic_feedback.get_height() - micFill_clipHeight, mic_feedback.get_width(), micFill_clipHeight)
         mic_fill_clipped = pygame.Surface((clip_rect.width, clip_rect.height), pygame.SRCALPHA)
         mic_fill_clipped.blit(mic_feedback, (0, 0), clip_rect)
