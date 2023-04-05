@@ -98,23 +98,33 @@ talkThreshold = 0.5
 peakThreshold = 0.9
 
 def pushHotKey(key):
-    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression
-    print(hotkeyDictionary)
+    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition
+    # print(hotkeyDictionary)
     if(key in hotkeyDictionary):
-        # print(f"Hotkey pressed: {key}")
+        print(f"Hotkey pressed: {key}")
         # a hotkey was pressed. check if it needs an existing animation
         for animName in hotkeyDictionary[key]:
+            if(animName == queuedExpression):
+                # skip itself if its already queued
+                continue
             print(f"Checking animation: {animName}")
-            # print(f"name is {'' if animName in expressionIndex else 'NOT '}in the expression set" )
+            print(f"name is {'' if animName in expressionIndex else 'NOT '}in the expression set" )
             print(f"current anim is {'' if currentExpression in expressionList[expressionIndex[animName]].requires else 'NOT '}in the required set {'(EMPTY)' if expressionList[expressionIndex[animName]].requires == [None] else ''}" )
             print(f"requested anim is {'NOT ' if animName != currentExpression else ''}already playing.")
+
+            # for the animation to be queued, it must mee the following:
+            # 1. it must be a valid expression
+            # 2. the required animation must be playing (or the required animation list is empty)
+            # 3. the requested animation must not be playing
+            
             if(animName in expressionIndex 
-                and (currentExpression in expressionList[expressionIndex[animName]].requires 
-                    or expressionList[expressionIndex[animName]].requires == [None]) 
+                and ((currentExpression in expressionList[expressionIndex[animName]].requires 
+                     or expressionList[expressionIndex[animName]].requires == [None]) or (queuedExpression != "" and queuedExpression in expressionList[expressionIndex[animName]].requires))
                 and animName != currentExpression):
-                print(f"queuing {animName}")
+                # print(f"queuing {animName}")
                 # it's an expression and the needed anim is ready. check if the required animation is already playing
                 queuedExpression = animName
+                break
                 
             elif(animName in cannedAnimationIndex 
                  and (currentAnimation in cannedAnimationList[cannedAnimationIndex[animName]].requires 
@@ -122,6 +132,7 @@ def pushHotKey(key):
                  and animName != currentExpression):
                 # it's a canned animation. check if the required animation is already playing
                 queuedExpression = animName
+                break
 
     lastKeyPressed = latestKeyPressed
     latestKeyPressed = key
@@ -432,7 +443,7 @@ def createNewTuber():
 
 def loadAnimation(expressionSet, animation):
     global currentAnimation, tuberFrames, framerate, fpsClock, randIntervalClock, currentTotalFrames, locked, currentFrame, currentExpression
-    print("Loading animation \"", animation, "\" from expression set \"", expressionSet.getName(), ".\"")
+    # print("Loading animation \"", animation, "\" from expression set \"", expressionSet.getName(), ".\"")
     if(animation == "main"):
         currentAnimation = expressionSet.getMain()
     elif(animation == "in"):
@@ -540,7 +551,7 @@ def loadTuber():
         # print(cannedAnimationDictionary)
     
     # print(hotkeyDictionary)
-    loadAnimation(expressionList[expressionIndex["Laughing"]], "main")
+    loadAnimation(expressionList[expressionIndex["Main"]], "main")
     # print("Loaded Tuber: " + name)
 
 

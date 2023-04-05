@@ -6,8 +6,8 @@
   "random_duplicate_reduction": 0.5,
   "loop_anims": [
     {
-      "name": "Basic",
-      "hotkey": "b",
+      "name": "Main",
+      "hotkey": "right ctrl",
       "requires": [
         null
       ],
@@ -292,7 +292,7 @@
   "canned_anims": [
     {
       "name": "test",
-      "hotkey": "/",
+      "hotkey": "=",
       "requires": [
         null
       ],
