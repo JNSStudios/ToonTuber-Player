@@ -101,16 +101,16 @@ def pushHotKey(key):
     global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition
     # print(hotkeyDictionary)
     if(key in hotkeyDictionary):
-        print(f"Hotkey pressed: {key}")
+        # print(f"Hotkey pressed: {key}")
         # a hotkey was pressed. check if it needs an existing animation
         for animName in hotkeyDictionary[key]:
             if(animName == queuedExpression):
                 # skip itself if its already queued
                 continue
-            print(f"Checking animation: {animName}")
-            print(f"name is {'' if animName in expressionIndex else 'NOT '}in the expression set" )
-            print(f"current anim is {'' if currentExpression in expressionList[expressionIndex[animName]].requires else 'NOT '}in the required set {'(EMPTY)' if expressionList[expressionIndex[animName]].requires == [None] else ''}" )
-            print(f"requested anim is {'NOT ' if animName != currentExpression else ''}already playing.")
+            # print(f"Checking animation: {animName}")
+            # print(f"name is {'' if animName in expressionIndex else 'NOT '}in the expression set" )
+            # print(f"current anim is {'' if currentExpression in expressionList[expressionIndex[animName]].requires else 'NOT '}in the required set {'(EMPTY)' if expressionList[expressionIndex[animName]].requires == [None] else ''}" )
+            # print(f"requested anim is {'NOT ' if animName != currentExpression else ''}already playing.")
 
             # for the animation to be queued, it must mee the following:
             # 1. it must be a valid expression
