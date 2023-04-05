@@ -362,16 +362,14 @@ class CannedAnimation:
 
     def getHotkey(self):
         return self.hotkey
-    def addHotkey(self, newHotkey, requiredState):
-        self.hotkey.append(HotKey(newHotkey, requiredState))
-        if(requiredState is not None):
-            self.addRequires(requiredState)
-
+    def addHotkey(self, newHotkey, required):
+        self.hotkey = newHotkey
+        self.requires.append(required)
     def removeHotkey(self, oldHotkey):
         if(oldHotkey not in self.hotkey):
             print("Hotkey not found.")
         else:
-            self.hotkey.remove(oldHotkey)
+            self.hotkey = None
             
     def getRequires(self):
         return self.requires
