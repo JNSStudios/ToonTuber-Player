@@ -11,6 +11,7 @@ import tkinter as tk
 from tkinter import filedialog
 import json
 import os
+import random
 
 pygame.init()
 
@@ -58,7 +59,6 @@ stream = pa.open(format=pyaudio.paInt16,
                  frames_per_buffer=chunk_size,
                  stream_callback=audio_callback)
 
-
 # create a separate thread for audio input
 audio_thread = threading.Thread(target=audio_callback)
 audio_thread.daemon = True
@@ -68,16 +68,67 @@ lastKeyPressed = ""
 latestKeyPressed = ""
 keyHeld = False
 
+# tuber info
+tuberName = "NONE"
+creator = "NONE"
+created = "NONE"
+modified = "NONE"
+randomDuplicateReduction = 0
+expressionList = []
+cannedAnimationList = []
+tuberFrames = []
+expressionIndex = {}
+cannedAnimationIndex = {}
+
+hotkeyDictionary = {}   # key: key pressed, value: an array of strings for each animation name
+
+currentAnimation = None
+currentExpression = ""
+currentFrame = 0
+queuedExpression = ""
+transition = ""     # blank for no transition, "out" for transition out, "in" for transition in
+framerate = 0
+image_timer = 0
+fpsClock = pygame.time.Clock()
+randIntervalClock = pygame.time.Clock()
+currentTotalFrames = 0
+locked = False
+
+talkThreshold = 0.5
+peakThreshold = 0.9
+
 def pushHotKey(key):
-    global latestKeyPressed, lastKeyPressed
+    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression
+    print(hotkeyDictionary)
+    if(key in hotkeyDictionary):
+        # print(f"Hotkey pressed: {key}")
+        # a hotkey was pressed. check if it needs an existing animation
+        for animName in hotkeyDictionary[key]:
+            print(f"Checking animation: {animName}")
+            # print(f"name is {'' if animName in expressionIndex else 'NOT '}in the expression set" )
+            print(f"current anim is {'' if currentExpression in expressionList[expressionIndex[animName]].requires else 'NOT '}in the required set {'(EMPTY)' if expressionList[expressionIndex[animName]].requires == [None] else ''}" )
+            print(f"requested anim is {'NOT ' if animName != currentExpression else ''}already playing.")
+            if(animName in expressionIndex 
+                and (currentExpression in expressionList[expressionIndex[animName]].requires 
+                    or expressionList[expressionIndex[animName]].requires == [None]) 
+                and animName != currentExpression):
+                print(f"queuing {animName}")
+                # it's an expression and the needed anim is ready. check if the required animation is already playing
+                queuedExpression = animName
+                
+            elif(animName in cannedAnimationIndex 
+                 and (currentAnimation in cannedAnimationList[cannedAnimationIndex[animName]].requires 
+                      or cannedAnimationList[cannedAnimationIndex[animName]].requires == [None]) 
+                 and animName != currentExpression):
+                # it's a canned animation. check if the required animation is already playing
+                queuedExpression = animName
+
     lastKeyPressed = latestKeyPressed
     latestKeyPressed = key
     keyHeld = True
 
 def releaseHotKey(key):
-    global latestKeyPressed, lastKeyPressed
-    lastKeyPressed = latestKeyPressed
-    latestKeyPressed = ""
+    global keyHeld
     keyHeld = False
 
 # keyboard reading thread
@@ -111,36 +162,19 @@ def load_pngs(paths):
         
     return images
 
-class HotKey:
-    def __init__(self, key, requires):
-        self.key = key              # string
-        self.requires = requires    # list of ExpressionSets
-
-    def getKey(self):
-        return self.key
-    def setKey(self, key):
-        self.key = key
-
-    def getRequires(self):
-        return self.requires
-    def addRequires(self, newRequires):
-        self.requires.append(newRequires)
-    def removeRequires(self, oldRequires):
-        if(oldRequires not in self.requires):
-            print("Required state not found.")
-        else:
-            self.requires.remove(oldRequires)
-
 class Animation:
     def __init__(self, frames, fps, locking):
         if(frames is None):
             self.frames = None
             self.fps = None
-            self.fps = False
+            self.locking = None
         else:
             self.frames = load_pngs(frames) # list of PNG images
             self.fps = fps                  # int
             self.locking = locking          # bool
+
+    def __str__(self):
+        return f"Animation with {len(self.frames) if self.frames != None else None} frames at {self.fps} fps. Locking: {self.locking}"
 
     def getFrames(self):
         return self.frames
@@ -170,6 +204,9 @@ class IdleSet:
             self.count = len(animations)              # int
             self.minSec = minSec          # int
             self.maxSec = maxSec          # int
+
+    def __str__(self):
+        return f"IdleSet with {self.count} animations. Min: {self.minSec} Max: {self.maxSec}"
     
     def getAnimations(self):
         return self.animations
@@ -195,7 +232,7 @@ class IdleSet:
         self.maxSec = maxSec
 
 class ExpressionSet:
-    def __init__(self, name, main, idleSet, talk, peak, trIn, trOut, requires, enables, hotkey):
+    def __init__(self, name, main, idleSet, talk, peak, trIn, trOut, requires, hotkey):
         self.name = name                # string
         self.main = main                # Animation object
         self.idleSet = idleSet          # IdleSet object
@@ -204,8 +241,10 @@ class ExpressionSet:
         self.trIn = trIn          # Animation object
         self.trOut = trOut        # Animation object
         self.requires = requires        # list of ExpressionSets
-        self.enables = enables          # list of ExpressionSets
         self.hotkey = hotkey            # Hotkey object
+
+    def __str__(self):
+        return f"ExpressionSet {self.name}:\nMain: {self.main}\n{self.idleSet}\nTalk: {self.talk}\nPeak: {self.peak}\nTransition In: {self.trIn}\nTransition Out: {self.trOut}\nRequires: {self.requires}\nHotkey: {self.hotkey}"
 
     def getName(self):
         return self.name
@@ -252,16 +291,6 @@ class ExpressionSet:
         else:
             self.requires.remove(oldRequires)
 
-    def getEnables(self):
-        return self.enables
-    def addEnables(self, newEnables):
-        self.enables.append(newEnables)
-    def removeEnables(self, oldEnables):
-        if(oldEnables not in self.enables):
-            print("Enabled state not found.")
-        else:
-            self.enables.remove(oldEnables)
-
     def getHotkey(self):
         return self.hotkey
     def addHotkey(self, newHotkey, required):
@@ -280,6 +309,9 @@ class CannedAnimation:
         self.hotkey = hotkey            # Hotkey object
         self.requires = requires        # list of ExpressionSets
         self.result = result            # ExpressionSet object
+
+    def __str__(self):
+        return f"CannedAnimation {self.name}:\nAnimation: {self.animation}\nHotkey: {self.hotkey}\nRequires: {self.requires}\nResult: {self.result}"
     
     def getName(self):
         return self.name
@@ -314,42 +346,38 @@ class CannedAnimation:
         else:
             self.requires.remove(oldRequires)
 
-# tuber info
-tuberName = "NONE"
-creator = "NONE"
-created = "NONE"
-modified = "NONE"
-randomDuplicateReduction = 0
-expressionList = []
-cannedAnimationList = []
-tuberFrames = []
-expressionDictionary = {}
-cannedAnimationDictionary = {}
-
-currentAnimation = None
-currentFrame = 0
-framerate = 0
-image_timer = 0
-fpsClock = pygame.time.Clock()
-fpsTimeBtwnFrames = 0
-randIntervalClock = pygame.time.Clock()
-currentTotalFrames = 0
-locked = False
-
-talkThreshold = 0.5
-peakThreshold = 0.9
-
 def update_render_thread():
-    global currentFrame, framerate,image_timer, locked
+    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression
     while True:
         timeElapsed = fpsClock.tick(framerate) / 1000.0  # Get the time passed since last frame
         image_timer += timeElapsed
         # print(timeElapsed, "  ", image_timer)
-        if image_timer > 1 / framerate:
-            # time to change frame! (or at least try to)
-            
-            currentFrame = (currentFrame + 1) % len(tuberFrames)
-            # print("Updating render. ", currentFrame)
+        if image_timer > 1 / framerate: # time equivelent to one frame has passed
+            currentFrame = currentFrame + 1
+            # print("queued:", queuedExpression, "   current:", currentExpression)
+            # time to change frame! 
+            if(not locked or currentFrame >= len(tuberFrames)):
+                # can change animation. check what kind of animation we need to switch to, if we need to
+                if((queuedExpression != currentAnimation and queuedExpression != "") and transition == ""):
+                    transition = "out"
+                    locked = expressionList[expressionIndex[currentExpression]].getTransitionOut().isLocking()
+                    loadAnimation(expressionList[expressionIndex[currentExpression]], "out")
+                elif(transition == "out" and currentFrame >= len(tuberFrames)):
+                    transition = "in"
+                    locked = expressionList[expressionIndex[queuedExpression]].getTransitionIn().isLocking()
+                    loadAnimation(expressionList[expressionIndex[queuedExpression]], "in")
+                elif(transition == "in" and currentFrame >= len(tuberFrames)):
+                    transition = ""
+                    locked = expressionList[expressionIndex[queuedExpression]].getMain().isLocking()
+                    loadAnimation(expressionList[expressionIndex[queuedExpression]], "main")
+                    currentExpression = queuedExpression
+                    queuedExpression = ""
+                else:
+                    # no transition, just update the animation
+                    currentFrame = (currentFrame) % len(tuberFrames)
+            else:                
+                currentFrame = (currentFrame) % len(tuberFrames)
+                # print("Updating render. ", currentFrame)
             image_timer -= 1.0 / framerate
 
 
@@ -402,8 +430,33 @@ def createNewTuber():
     openingScreen = False
     print("New Tuber")
 
+def loadAnimation(expressionSet, animation):
+    global currentAnimation, tuberFrames, framerate, fpsClock, randIntervalClock, currentTotalFrames, locked, currentFrame, currentExpression
+    print("Loading animation \"", animation, "\" from expression set \"", expressionSet.getName(), ".\"")
+    if(animation == "main"):
+        currentAnimation = expressionSet.getMain()
+    elif(animation == "in"):
+        currentAnimation = expressionSet.getTransitionIn()
+    elif(animation == "out"):
+        currentAnimation = expressionSet.getTransitionOut()
+    elif(animation == "idle"):
+        currentAnimation = expressionSet.getIdleSet().getAnimations()[random.randint(0, len(expressionSet.getIdleSet()) - 1)]
+    elif(animation == "talk"):
+        currentAnimation = expressionSet.getTalk()
+    elif(animation == "peak"):
+        currentAnimation = expressionSet.getPeak()
+
+    tuberFrames = currentAnimation.frames
+    framerate = currentAnimation.fps
+    currentTotalFrames = len(tuberFrames)
+    currentFrame = 0
+    locked = currentAnimation.locking
+    fpsClock = pygame.time.Clock()
+    randIntervalClock = pygame.time.Clock()
+    currentExpression = expressionSet.getName()
+
 def loadTuber():
-    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionDictionary, cannedAnimationDictionary, currentAnimation, currentFrame, framerate, fpsClock, fpsTimeBtwnFrames, randIntervalClock, currentTotalFrames, locked
+    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, randIntervalClock, currentTotalFrames, locked
     openingScreen = False
     # file dialog to select json file   
     root = tk.Tk()
@@ -414,7 +467,7 @@ def loadTuber():
         title="Select a JSON file",
     )
 
-    print("Selected file:", file_path)
+    # print("Selected file:", file_path)
 
     # load json file
     with open(file_path) as json_file:
@@ -426,7 +479,7 @@ def loadTuber():
     modified = data["last_modified"]
     randomDuplicateReduction = data["random_duplicate_reduction"]
     for expressionData in data["loop_anims"]:
-        print("Loading expression: " + expressionData["name"])
+        # print("Loading expression: " + expressionData["name"])
         # expression set requires a main animation, an idle set, and loop animations
 
         # main animation        REQUIRED
@@ -464,26 +517,33 @@ def loadTuber():
         transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"], expressionData["anims"]["TransitionOUT"]["locking"])
 
         # create ExpressionSet
-        expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["enables"], expressionData["hotkey"]))
-        expressionDictionary[expressionData["name"]] = len(expressionList) - 1
+        expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["hotkey"]))
+        expressionIndex[expressionData["name"]] = len(expressionList) - 1
+
+        # add to hotkey dictionary
+        if(expressionData["hotkey"] not in hotkeyDictionary):
+            hotkeyDictionary[expressionData["hotkey"]] = [expressionData["name"]]
+        else:
+            hotkeyDictionary[expressionData["hotkey"]].append(expressionData["name"])
+
         # print(expressionDictionary)
 
     for cannedAnimationData in data["canned_anims"]:
         # name, animation, hotkey, requires, result
         cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkey"], cannedAnimationData["requires"], cannedAnimationData["result"]))
-        cannedAnimationDictionary[cannedAnimationData["name"]] = len(cannedAnimationList) - 1
+        cannedAnimationIndex[cannedAnimationData["name"]] = len(cannedAnimationList) - 1
+
+        if(cannedAnimationData["hotkey"] not in hotkeyDictionary):
+            hotkeyDictionary[cannedAnimationData["hotkey"]] = [cannedAnimationData["name"]]
+        else:
+            hotkeyDictionary[cannedAnimationData["hotkey"]].append(cannedAnimationData["name"])
         # print(cannedAnimationDictionary)
     
-    currentAnimation = "Laughing"
-    tuberFrames = expressionList[expressionDictionary["Laughing"]].main.frames
-    framerate = expressionList[expressionDictionary["Laughing"]].main.fps
-    fpsTimeBtwnFrames = framerate
-    currentTotalFrames = len(tuberFrames)
-    currentFrame = 0
-    locked = expressionList[expressionDictionary["Laughing"]].main.locking
-    fpsClock = pygame.time.Clock()
-    randIntervalClock = pygame.time.Clock()
-    print("Loaded Tuber: " + name)
+    # print(hotkeyDictionary)
+    loadAnimation(expressionList[expressionIndex["Laughing"]], "main")
+    # print("Loaded Tuber: " + name)
+
+
 
 
 # Define some colors
@@ -601,6 +661,9 @@ while running:
 
         # draw Tuber to screen
         tuber_rect = pygame.Rect(0, 0, width, height)
+        # failsafe
+        if(currentFrame >= len(tuberFrames)):
+            currentFrame = currentFrame % len(tuberFrames)
         currentImage = tuberFrames[currentFrame]
         render = currentImage.convert_alpha()
         screen.blit(render, tuber_rect)

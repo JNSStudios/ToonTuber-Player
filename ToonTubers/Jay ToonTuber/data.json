@@ -11,9 +11,6 @@
       "requires": [
         null
       ],
-      "enables": [
-        null
-      ],
       "anims": {
         "Main": {
           "frames": [
@@ -141,9 +138,6 @@
       "requires": [
         null
       ],
-      "enables": [
-        "Laughing"
-      ],
       "anims": 
       {
         "Main": 
@@ -239,9 +233,6 @@
       "requires": [
         "Happy"
       ],
-      "enables": [
-        null
-      ],
       "anims": 
       {
         "Main": 
@@ -302,7 +293,9 @@
     {
       "name": "test",
       "hotkey": "/",
-      "requires": null,
+      "requires": [
+        null
+      ],
       "result": "Basic",
       "anim": 
       {
