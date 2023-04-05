@@ -1,11 +1,7 @@
 import pygame
-import math
 import pyaudio
 import numpy as np
 import threading
-import time
-import sys
-import select
 import keyboard
 import tkinter as tk
 from tkinter import filedialog
@@ -13,72 +9,15 @@ import json
 import os
 import random
 
-pygame.init()
+def debugPrint(str):
+    print(str)
 
-# Set up the Pygame window
-width, height = 750, 750
-screen = pygame.display.set_mode((width, height))
-rms = 0
-avgVol = 0
-
-# Set the window name
-pygame.display.set_caption("Toon Tuber Player")
-
-# Opening screen
-UniFont = pygame.font.Font('freesansbold.ttf', 64)
-text = UniFont.render("Toon Tuber Player", True, (255, 255, 255))
-textRect = text.get_rect()
-textRect.center = (width // 2, height // 2)
-
-# audio stuff
-chunk_size = 256  # number of audio samples per chunk
-sample_rate = 44100  # number of samples per second
-
-talkThreshold = 60
-peakThreshold = 90
-
-volRollingAverage = []
-volRollingAverageLength = 10
-
-pa = pyaudio.PyAudio()
-
-def audio_callback(in_data, frame_count, time_info, status):
-    global rms, avgVol
-    # convert audio data to a numpy array
-    audio = np.frombuffer(in_data, dtype=np.int16)
-
-    # calculate the root mean square (RMS) amplitude
-    rmsNEW = np.sqrt(np.mean(np.square(audio)))
-    if(not np.isnan(rmsNEW)):
-        rms = round(rmsNEW)
-    else:
-        rms = 100
-    
-    volRollingAverage.append(rms)
-    if(len(volRollingAverage) > volRollingAverageLength):
-        volRollingAverage.pop(0)
-    avgVol = sum(volRollingAverage) / len(volRollingAverage)
-    print(avgVol)
-    
-    # return None and continue streaming
-    return (None, pyaudio.paContinue)
-
-# Open the stream with the callback function
-stream = pa.open(format=pyaudio.paInt16,
-                 channels=1,
-                 rate=sample_rate,
-                 input=True,
-                 frames_per_buffer=chunk_size,
-                 stream_callback=audio_callback)
-
-# Start the audio stream
-stream.start_stream()
+## GLOBAL VARIABLES
 
 lastKeyPressed = ""
 latestKeyPressed = ""
 keyHeld = False
 
-# tuber info
 tuberName = "NONE"
 creator = "NONE"
 created = "NONE"
@@ -103,6 +42,77 @@ fpsClock = pygame.time.Clock()
 randIntervalClock = pygame.time.Clock()
 currentTotalFrames = 0
 locked = False
+
+talkThreshold = 75
+peakThreshold = 95
+
+latestUnicode = None
+talkThreshText = f"{talkThreshold}"
+peakThreshText = f"{peakThreshold}"
+selectedBox = ""
+
+# Define some colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+
+
+print("Toon Tuber Player v1.0.0")
+
+pygame.init()
+
+debugPrint("Pygame initialized. Setting up window...")
+# Set up the Pygame window
+width, height = 750, 750
+screen = pygame.display.set_mode((width, height))
+
+# Set the window name
+pygame.display.set_caption("Toon Tuber Player")
+
+# Opening screen
+UniFont = pygame.font.Font('freesansbold.ttf', 24)
+UniFontSmaller = pygame.font.Font('freesansbold.ttf', 18)
+text = UniFont.render("Toon Tuber Player", True, (255, 255, 255))
+textRect = text.get_rect()
+textRect.center = (width // 2, height // 2)
+
+debugPrint("Opening screen set up.\nInitializing audio data stuff...")
+
+# audio stuff
+rms = 0
+avgVol = 0
+chunk_size = 256  # number of audio samples per chunk
+sample_rate = 44100  # number of samples per second
+
+volRollingAverage = []
+volRollingAverageLength = 10
+
+pa = pyaudio.PyAudio()
+
+def audio_callback(in_data, frame_count, time_info, status):
+    global rms, avgVol
+    # convert audio data to a numpy array
+    audio = np.frombuffer(in_data, dtype=np.int16)
+
+    # calculate the root mean square (RMS) amplitude
+    rmsNEW = np.sqrt(np.mean(np.square(np.nan_to_num(audio))) + 1e-6)
+    if(not np.isnan(rmsNEW)):
+        rms = round(rmsNEW)
+    else:
+        rms = 100
+    
+    volRollingAverage.append(rms)
+    if(len(volRollingAverage) > volRollingAverageLength):
+        volRollingAverage.pop(0)
+    avgVol = sum(volRollingAverage) / len(volRollingAverage)
+    # print(avgVol)
+    
+    # return None and continue streaming
+    return (None, pyaudio.paContinue)
+
+debugPrint("Audio data stuff initialized.\nInitializing keyboard reader thread...")
 
 
 def pushHotKey(key):
@@ -155,15 +165,17 @@ def keyboard_thread():
     while True:
         event = keyboard.read_event()
         if event.event_type == "down":
-            print(f"Key pressed: {event.name}")
+            # print(f"Key pressed: {event.name}")
             pushHotKey(event.name)
         elif event.event_type == "up":
-            print(f"Key released: {event.name}")
+            # print(f"Key released: {event.name}")
             releaseHotKey(event.name)
 
 keyboard_thread = threading.Thread(target=keyboard_thread)
 keyboard_thread.daemon = True
 keyboard_thread.start()
+
+debugPrint("Keyboard reader thread started.\nCreating animation classes...")
 
 # TUBER STUFF
 
@@ -386,30 +398,38 @@ def update_render_thread():
 
             if(not locked or currentFrame >= len(tuberFrames)):
                 # can change animation. check what kind of animation we need to switch to, if we need to
+
+                # queued expression and transitions
                 if((queuedExpression != currentAnimation and queuedExpression != "") and transition == ""):
                     transition = "out"
-                    locked = expressionList[expressionIndex[currentExpression]].getTransitionOut().isLocking()
                     loadAnimation(expressionList[expressionIndex[currentExpression]], "out")
                 elif(transition == "out" and currentFrame >= len(tuberFrames)):
                     transition = "in"
                     currentExpression = queuedExpression
                     queuedExpression = ""
-                    locked = expressionList[expressionIndex[currentExpression]].getTransitionIn().isLocking()
                     loadAnimation(expressionList[expressionIndex[currentExpression]], "in")
                 elif(transition == "in" and currentFrame >= len(tuberFrames)):
                     transition = ""
-                    locked = expressionList[expressionIndex[currentExpression]].getMain().isLocking()
                     loadAnimation(expressionList[expressionIndex[currentExpression]], "main")
-                elif(avgVol >= peakThreshold and expressionList[expressionIndex[currentExpression]].getPeak().exists()):
+                # peak and talk
+                elif(avgVol >= peakThreshold \
+                     and expressionList[expressionIndex[currentExpression]].getPeak().exists() 
+                     and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
                     # peak animation is set, and we're not locked
                     # print("peak")
-                    locked = expressionList[expressionIndex[currentExpression]].getPeak().isLocking()
                     loadAnimation(expressionList[expressionIndex[currentExpression]], "peak")
-                elif(avgVol >= talkThreshold and expressionList[expressionIndex[currentExpression]].getTalk().exists()):
+                elif(avgVol >= talkThreshold 
+                     and expressionList[expressionIndex[currentExpression]].getTalk().exists() 
+                     and currentAnimation is not expressionList[expressionIndex[currentExpression]].getTalk() 
+                     and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
                     # talk animation is set, and we're not locked
                     # print("talk")
-                    locked = expressionList[expressionIndex[currentExpression]].getTalk().isLocking()
                     loadAnimation(expressionList[expressionIndex[currentExpression]], "talk")
+                elif( avgVol < talkThreshold 
+                     and (currentAnimation is expressionList[expressionIndex[currentExpression]].getTalk() 
+                          or currentAnimation is expressionList[expressionIndex[currentExpression]].getPeak())):
+                    # print("returning to main from a talk or peak")
+                    loadAnimation(expressionList[expressionIndex[currentExpression]], "main")
                 else:
                     # no transition, just update the animation
                     currentFrame = (currentFrame) % len(tuberFrames)   
@@ -418,6 +438,7 @@ def update_render_thread():
                 # print("Updating render. ", currentFrame)
             image_timer -= 1.0 / framerate
 
+debugPrint("Animation classes created.\nCreating GUI classes and button actions...")
 
 # GUI stuff
 
@@ -435,6 +456,11 @@ class ClickableText:
         return self.position
     def setPosition(self, position):
         self.position = position
+
+    def setFont(self, font):
+        self.font = font
+    def getFont(self):
+        return self.font
 
     def draw(self, screen):
         text = self.font.render(self.text, True, self.color)
@@ -465,6 +491,19 @@ def createNewTuber():
     openingScreen = False
     print("New Tuber")
 
+def talkThreshSelected():
+    global selectedBox, settings_options, talkThreshText
+    settings_options[3].setFont(UniFont)
+    selectedBox = "talk"
+    talkThreshText = ""
+
+def peakThreshSelected():
+    global selectedBox, settings_options, peakThreshText
+    settings_options[4].setFont(UniFont)
+    selectedBox = "peak"
+    peakThreshText = ""
+
+debugPrint("GUI classes created.\nCreating Tuber loading functions...")
 
 # tuber loading definitions
 def loadAnimation(expressionSet, animation):
@@ -583,18 +622,8 @@ def loadTuber():
     loadAnimation(expressionList[expressionIndex["Main"]], "main")
     # print("Loaded Tuber: " + name)
 
+debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
 
-
-
-# Define some colors
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
-BLUE = (0, 0, 255)
-
-# Define the font for the text options
-UniFont = pygame.font.Font(None, 50)
 
 # text_settings = UniFont.render("SETTINGS", True, BLACK)
 
@@ -602,7 +631,9 @@ UniFont = pygame.font.Font(None, 50)
 settings_options = [
     ClickableText("Load ToonTuber", (0, 0), UniFont, WHITE, loadTuber),
     ClickableText("Player Settings", (0, 50), UniFont, WHITE, openPlayerSettings),
-    ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor)
+    ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor),
+    ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-100), UniFontSmaller, WHITE, talkThreshSelected),
+    ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-50), UniFontSmaller, WHITE, peakThreshSelected)
 ]
 
 opening_options = [
@@ -635,6 +666,8 @@ def display_fps(txt, clock, heightSubtract):
 # Create a Pygame clock object to measure time between frames
 clock = pygame.time.Clock()
 
+debugPrint("Creating mic meter sprites...")
+
 # Load the sprites
 mic_feedback = pygame.image.load("micLevel.png").convert_alpha()
 mic_range = pygame.image.load("micRange.png").convert_alpha()
@@ -654,13 +687,45 @@ mic_range = pygame.transform.smoothscale(mic_range, (mic_newWidth, mic_newHeight
 # Get the original height of the mic_fill sprite
 mic_fill_height_orig = mic_feedback.get_height()
 
+# create both threshold arrow images
+talkThresholdSprite = pygame.image.load("ThresholdArrow.png").convert_alpha()
+peakThresholdSprite = pygame.image.load("ThresholdArrow.png").convert_alpha()
+
+
+talkThreshPos = 0
+peakThreshPos = 0
+
+
+# no need to scale the threshold arrows, they are already the correct size. prepare the sprites for drawing later
+
+debugPrint("Mic meter sprites created.\nBeginning audio and render threads...")
+
+# begin threads
+
+# Open the stream with the callback function
+stream = pa.open(format=pyaudio.paInt16,
+                 channels=1,
+                 rate=sample_rate,
+                 input=True,
+                 frames_per_buffer=chunk_size,
+                 stream_callback=audio_callback)
+
+# Start the audio stream
+stream.start_stream()
+
 render_thread = threading.Thread(target=update_render_thread)
 render_thread.daemon = True
+
+debugPrint("Audio and render threads started.\nBeginning main Pygame loop...")
 
 # Main Pygame loop
 running = True
 openingScreen = True
 updateFrameRunning = False
+
+# TEMPORARY INSTANT-LOAD PROMPT
+loadTuber()
+
 while running:
     if(not updateFrameRunning and not openingScreen):
         updateFrameRunning = True
@@ -674,8 +739,58 @@ while running:
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_p and not openingScreen:
             settings_active = not settings_active
         # if the user clicks on a text option, do the action
+        elif event.type == pygame.KEYDOWN and settings_active:
+            # save the latest key pressed in case the user is typing a value for the mic threshold
+            latestUnicode = event.unicode
+            # print(latestUnicode)
+            acceptableChars = "0123456789."
+            if(latestUnicode in acceptableChars):
+                if(selectedBox == "talk"):
+                    
+                    talkThreshText += latestUnicode
+                    if(talkThreshText.isnumeric()):
+                        talkThreshold = int(talkThreshText)
+                        if(talkThreshold > 100):
+                            talkThreshold = 100
+                            talkThreshText = "100"
+                    settings_options[3].setText(f"Talk Threshold: {talkThreshold}/100")
+                elif(selectedBox == "peak"):
+                    peakThreshText += latestUnicode
+                    if(peakThreshText.isnumeric()):
+                        peakThreshold = int(peakThreshText)
+                        if(peakThreshold > 100):
+                            peakThreshold = 100
+                            peakThreshText = "100"
+                    settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
+            elif(event.key == pygame.K_BACKSPACE):
+                if(selectedBox == "talk"):
+                    talkThreshText = talkThreshText[:-1]
+                    if(talkThreshText.isnumeric()):
+                        talkThreshold = int(talkThreshText)
+                        if(talkThreshold > 100):
+                            talkThreshold = 100
+                            talkThreshText = "100"
+                    settings_options[3].setText(f"Talk Threshold: {talkThreshText}/100")
+                elif(selectedBox == "peak"):
+                    peakThreshText = peakThreshText[:-1]
+                    if(peakThreshText.isnumeric()):
+                        peakThreshold = int(peakThreshText)
+                        if(peakThreshold > 100):
+                            peakThreshold = 100
+                            peakThreshText = "100"
+                    settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mousePos = pygame.mouse.get_pos()
+            selectedBox = ""
+            settings_options[3].setFont(UniFontSmaller)
+            settings_options[4].setFont(UniFontSmaller)
+            if(peakThreshold < talkThreshold):
+                peakThreshold = talkThreshold
+                peakThreshText = str(talkThreshold)
+                settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
+
+
             if openingScreen:
                 for option in opening_options:
                     if option.isClicked(mousePos):
@@ -684,6 +799,9 @@ while running:
                 for option in settings_options:
                     if option.isClicked(mousePos):
                         option.doAction()
+
+                
+                
 
     # Draw the green background
     screen.fill(GREEN)
@@ -706,6 +824,8 @@ while running:
             currentFrame = currentFrame % len(tuberFrames)
         currentImage = tuberFrames[currentFrame]
         render = currentImage.convert_alpha()
+        # scale tuber image to fill screen
+        render = pygame.transform.smoothscale(render, (width, height))
         screen.blit(render, tuber_rect)
 
     
@@ -727,8 +847,23 @@ while running:
         mic_fill_clipped.blit(mic_feedback, (0, 0), clip_rect)
         screen.blit(mic_fill_clipped, (0, height - mic_fill_clipped.get_height()))
 
+
+
         # draw mic range sprite a little next to the mic fill sprite
         screen.blit(mic_range, (mic_fill_clipped.get_width()/3, height - mic_range.get_height()))
+
+        # get the vertical center of the threshold arrow sprite
+        arrowCenter = talkThresholdSprite.get_height()/2
+
+        # update the mic threshold arrow positions based on the talkThreshold and peakThreshold values over the range of the top of the mic fill sprite to the bottom
+        talkThreshPos = (0, height-((talkThreshold * (mic_range.get_height() / 100)) + arrowCenter))
+        peakThreshPos = (0, height-((peakThreshold * (mic_range.get_height() / 100)) + arrowCenter))
+
+        
+
+        # draw talk threshold arrow
+        screen.blit(talkThresholdSprite, talkThreshPos)
+        screen.blit(peakThresholdSprite, peakThreshPos)
 
     # Update the Pygame window
     pygame.display.flip()
