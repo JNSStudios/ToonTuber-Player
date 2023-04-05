@@ -9,8 +9,10 @@ import json
 import os
 import random
 
+# helper function, comment out the "print" line to disable this function
 def debugPrint(str):
     print(str)
+    return
 
 ## GLOBAL VARIABLES
 
@@ -36,10 +38,15 @@ currentExpression = ""
 currentFrame = 0
 queuedExpression = ""
 transition = ""     # blank for no transition, "out" for transition out, "in" for transition in
+idling = False
 framerate = 0
 image_timer = 0
 fpsClock = pygame.time.Clock()
-randIntervalClock = pygame.time.Clock()
+idleClockCounter = pygame.time.Clock()
+idleTimer = 0
+randIdleMin = 0
+randIdleMax = 0
+timeUntilNextIdle = 0
 currentTotalFrames = 0
 locked = False
 
@@ -176,6 +183,35 @@ keyboard_thread.daemon = True
 keyboard_thread.start()
 
 debugPrint("Keyboard reader thread started.\nCreating animation classes...")
+
+resetIdleTimer = threading.Event()
+
+def idle_timer_thread():
+    global idleClockCounter, timeUntilNextIdle, idleTimer
+    while True:
+        resetIdleTimer.wait()
+        # Reset the idle timer
+        idleTimer = 0
+        # Clear the event
+        resetIdleTimer.clear()
+        while True:
+            # Update the idle timer
+            idleTimer += idleClockCounter.tick(60)
+            # Check if the event is set
+            if resetIdleTimer.is_set():
+                # If the event is set, exit the inner loop and reset the timer
+                break
+
+def idle_timer_reset():
+    global idleTimer
+    resetIdleTimer.set()
+
+def get_idle_timer():
+    global idleTimer
+    return idleTimer / 1000
+
+idleTimer_thread = threading.Thread(target=idle_timer_thread)
+idleTimer_thread.daemon = True
 
 # TUBER STUFF
 
@@ -382,11 +418,11 @@ class CannedAnimation:
             self.requires.remove(oldRequires)
 
 def update_render_thread():
-    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol
+    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer
     while True:
         timeElapsed = fpsClock.tick(framerate) / 1000.0  # Get the time passed since last frame
+        print(get_idle_timer())
         image_timer += timeElapsed
-        # print(rms)
         # print(timeElapsed, "  ", image_timer)
         if image_timer > 1 / framerate: # time equivelent to one frame has passed
             currentFrame = currentFrame + 1
@@ -410,7 +446,7 @@ def update_render_thread():
                     transition = ""
                     loadAnimation(expressionList[expressionIndex[currentExpression]], "main")
                 # peak and talk
-                elif(avgVol >= peakThreshold \
+                elif(avgVol >= peakThreshold 
                      and expressionList[expressionIndex[currentExpression]].getPeak().exists() 
                      and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
                     # peak animation is set, and we're not locked
@@ -426,7 +462,6 @@ def update_render_thread():
                 elif( avgVol < talkThreshold 
                      and (currentAnimation is expressionList[expressionIndex[currentExpression]].getTalk() 
                           or currentAnimation is expressionList[expressionIndex[currentExpression]].getPeak())):
-                    # print("returning to main from a talk or peak")
                     loadAnimation(expressionList[expressionIndex[currentExpression]], "main")
                 else:
                     # no transition, just update the animation
@@ -505,8 +540,13 @@ debugPrint("GUI classes created.\nCreating Tuber loading functions...")
 
 # tuber loading definitions
 def loadAnimation(expressionSet, animation):
-    global currentAnimation, tuberFrames, framerate, fpsClock, randIntervalClock, currentTotalFrames, locked, currentFrame, currentExpression
-    # print(f"Loading animation \"{animation}\" from expression set \"{expressionSet.getName()}.\"")
+    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle
+    print(f"Loading animation \"{animation}\" from expression set \"{expressionSet.getName()}.\"")
+    idling = False
+    idle_timer_reset()
+    randIdleMin = -1
+    randIdleMax = -1
+    timeUntilNextIdle = -1
     if(animation == "main" and expressionSet.getMain().exists()):
         currentAnimation = expressionSet.getMain()
     elif(animation == "in" and expressionSet.getTransitionIn().exists()):
@@ -515,6 +555,10 @@ def loadAnimation(expressionSet, animation):
         currentAnimation = expressionSet.getTransitionOut()
     elif(animation == "idle" and expressionSet.getIdleSet().exists()):
         currentAnimation = expressionSet.getIdleSet().getAnimations()[random.randint(0, len(expressionSet.getIdleSet()) - 1)]
+        idling = True
+        randIdleMin = expressionSet.getIdleSet().getMinSec()
+        randIdleMax = expressionSet.getIdleSet().getMaxSec()
+        timeUntilNextIdle = random.randint(randIdleMin, randIdleMax)
     elif(animation == "talk" and expressionSet.getTalk().exists()):
         currentAnimation = expressionSet.getTalk()
     elif(animation == "peak" and expressionSet.getPeak().exists()):
@@ -523,17 +567,17 @@ def loadAnimation(expressionSet, animation):
         print("Animation does not exist.")
         return
 
+    
     tuberFrames = currentAnimation.frames
     framerate = currentAnimation.fps
     currentTotalFrames = len(tuberFrames)
     currentFrame = 0
     locked = currentAnimation.locking
     fpsClock = pygame.time.Clock()
-    randIntervalClock = pygame.time.Clock()
     currentExpression = expressionSet.getName()
 
 def loadTuber():
-    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, randIntervalClock, currentTotalFrames, locked
+    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin
     openingScreen = False
     # file dialog to select json file   
     root = tk.Tk()
@@ -567,10 +611,13 @@ def loadTuber():
         if(not expressionData["anims"]["Idles"]):
             # print("No idles found.")
             idles = IdleSet(None, None, None)
+            randIdleMax = -1
+            randIdleMin = -1
         else:
             for idle in expressionData["anims"]["Idles"]["idleAnims"]:
                 idleList.append(Animation(idle["frames"], idle["fps"], idle["locking"]))
             idles = IdleSet(idleList, expressionData["anims"]["Idles"]["randomSecMin"], expressionData["anims"]["Idles"]["randomSecMax"])
+
 
 
         # talking
@@ -630,8 +677,8 @@ settings_options = [
     ClickableText("Load ToonTuber", (0, 0), UniFont, WHITE, loadTuber),
     ClickableText("Player Settings", (0, 50), UniFont, WHITE, openPlayerSettings),
     ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor),
-    ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-100), UniFontSmaller, WHITE, talkThreshSelected),
-    ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-50), UniFontSmaller, WHITE, peakThreshSelected)
+    ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-50), UniFontSmaller, WHITE, talkThreshSelected),
+    ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-100), UniFontSmaller, WHITE, peakThreshSelected)
 ]
 
 opening_options = [
@@ -728,6 +775,7 @@ while running:
     if(not updateFrameRunning and not openingScreen):
         updateFrameRunning = True
         render_thread.start()
+        idleTimer_thread.start()
     # Measure the time between frames and limit the FPS to 60
     delta_time = clock.tick(60) / 1000.0
 
@@ -744,7 +792,6 @@ while running:
             acceptableChars = "0123456789."
             if(latestUnicode in acceptableChars):
                 if(selectedBox == "talk"):
-                    
                     talkThreshText += latestUnicode
                     if(talkThreshText.isnumeric()):
                         talkThreshold = int(talkThreshText)
