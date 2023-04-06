@@ -3,7 +3,7 @@
   "creator": "JNS",
   "created": "2023-03-25T6:23:21Z",
   "last_modified": "2023-03-25T6:23:21Z",
-  "random_duplicate_reduction": 1,
+  "random_duplicate_reduction": 0.75,
   "expressions": [
     {
       "name": "Main",
