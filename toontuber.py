@@ -10,6 +10,7 @@ import os
 import random
 import sys
 import winsound
+from StreamDeck.DeviceManager import DeviceManager
 
 debugMode = True
 
@@ -28,7 +29,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     stream.close()
     pa.terminate()
     # Play a sound when an exception occurs
-    winsound.PlaySound("error.wav", winsound.SND_FILENAME)
+    winsound.PlaySound("assets\error.wav", winsound.SND_FILENAME)
 
     # Print the exception information
     print("Unhandled exception:", exc_type, exc_value)
@@ -203,7 +204,7 @@ def select_audio_device(id):
     stream.start_stream()
     print("Audio stream restarted.")
 
-debugPrint("Audio data stuff initialized.\nInitializing keyboard reader thread...")
+debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 
 def pushHotKey(key):
     global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType
@@ -254,8 +255,27 @@ def releaseHotKey(key):
     global keyHeld
     keyHeld = False
 
+# stream deck input reading (UNTESTED, I DON'T HAVE A STREAM DECK TO PROVE THAT THIS WORKS)
+def key_change_callback(deck, key, state):
+    if state:
+        print(f"Key {key} was pressed")
+        pushHotKey("SD"+key)
+
+debugPrint("Checking for connected StreamDecks...")
+
+streamdecks = None
+try:
+    streamdecks = DeviceManager().enumerate()   # ERROR HERE
+    for deck in streamdecks:
+        deck.open()
+        deck.reset()
+        deck.set_key_callback(key_change_callback)
+    debugPrint(f"({len(streamdecks)}) StreamDeck found.")
+except Exception as e:
+    debugPrint("NO StreamDecks were found.")
+
 # keyboard reading thread
-def keyboard_thread():
+def keyboard_input_thread():
     while True:
         event = keyboard.read_event()
         if event.event_type == "down":
@@ -265,11 +285,15 @@ def keyboard_thread():
             # print(f"Key released: {event.name}")
             releaseHotKey(event.name)
 
-keyboard_thread = threading.Thread(target=keyboard_thread)
-keyboard_thread.daemon = True
-keyboard_thread.start()
 
-debugPrint("Keyboard reader thread started.\nCreating animation classes...")
+keyboard_input_thread = threading.Thread(target=keyboard_input_thread)
+keyboard_input_thread.daemon = True
+keyboard_input_thread.start()
+
+debugPrint("Input reader thread started.\nCreating animation classes...")
+
+
+
 
 resetIdleTimer = threading.Event()
 
@@ -302,7 +326,7 @@ idleTimer_thread.daemon = True
 
 # TUBER STUFF
 
-MISSING_IMAGE = pygame.image.load("MissingImage.png")
+MISSING_IMAGE = pygame.image.load("assets\MissingImage.png")
 
 def load_pngs(paths):
     # create a list of Pygame images from the selected files
@@ -907,8 +931,8 @@ clock = pygame.time.Clock()
 debugPrint("Creating mic meter sprites...")
 
 # Load the sprites
-mic_feedback = pygame.image.load("micLevel.png").convert_alpha()
-mic_range = pygame.image.load("micRange.png").convert_alpha()
+mic_feedback = pygame.image.load("assets\micLevel.png").convert_alpha()
+mic_range = pygame.image.load("assets\micRange.png").convert_alpha()
 
 #get original size of both sprites
 mic_feed_orig = mic_feedback.get_size()
@@ -926,8 +950,8 @@ mic_range = pygame.transform.smoothscale(mic_range, (mic_newWidth, mic_newHeight
 mic_fill_height_orig = mic_feedback.get_height()
 
 # create both threshold arrow images
-talkThresholdSprite = pygame.image.load("ThresholdArrow.png").convert_alpha()
-peakThresholdSprite = pygame.image.load("ThresholdArrow.png").convert_alpha()
+talkThresholdSprite = pygame.image.load("assets\ThresholdArrow.png").convert_alpha()
+peakThresholdSprite = pygame.image.load("assets\ThresholdArrow.png").convert_alpha()
 
 talkThreshPos = 0
 peakThreshPos = 0
