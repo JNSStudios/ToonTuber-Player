@@ -8,10 +8,41 @@ from tkinter import filedialog
 import json
 import os
 import random
+import sys
+import winsound
+
+debugMode = False
+
+peakThreshold = 82
+talkThreshold = 50
+
+# play sound when crash happens so user is alerted
+def handle_exception(exc_type, exc_value, exc_traceback):
+    global stream
+    if(debugMode):
+        return
+    # Quit Pygame
+    pygame.quit()
+
+    stream.stop_stream()
+    stream.close()
+    pa.terminate()
+    # Play a sound when an exception occurs
+    winsound.PlaySound("error.wav", winsound.SND_FILENAME)
+
+    # Print the exception information
+    print("Unhandled exception:", exc_type, exc_value)
+
+    # Call the default exception handler
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+# Set the exception handler
+sys.excepthook = handle_exception
 
 # helper function, comment out the "print" line to disable this function
 def debugPrint(str):
-    # print(str)
+    if(debugMode):
+        print(str)
     return
 
 ## GLOBAL VARIABLES
@@ -53,13 +84,12 @@ timeUntilNextIdle = 10
 currentTotalFrames = 0
 locked = False
 
-talkThreshold = 75
-peakThreshold = 95
-
 latestUnicode = None
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
 selectedBox = ""
+
+audioDeviceText = "1"
 
 # Define some colors
 WHITE = (255, 255, 255)
@@ -137,15 +167,15 @@ stream = pa.open(format=pyaudio.paInt16,
 stream.start_stream()
 
 # Prompt user to select a new input device
-def select_audio_device():
+def select_audio_device(id):
     global audio_device_id, stream
-    info = pa.get_host_api_info_by_index(0)
-    numdevices = info.get('deviceCount')
-    print("Available input devices:")
-    for i in range(0, numdevices):
-        if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-            print("ID:", i, "- Name:", pa.get_device_info_by_host_api_device_index(0, i).get('name'))
-    audio_device_id = input("Enter the ID of the input device you want to use (or 'loopback' to use the default loopback device): ")
+    # info = pa.get_host_api_info_by_index(0)
+    # numdevices = info.get('deviceCount')
+    # print("Available input devices:")
+    # for i in range(0, numdevices):
+    #     if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+    #         print("ID:", i, "- Name:", pa.get_device_info_by_host_api_device_index(0, i).get('name'))
+    audio_device_id = id
     print("Stopping audio stream...")
     stream.stop_stream()
     print("Closing audio stream...")
@@ -156,7 +186,7 @@ def select_audio_device():
                  rate=sample_rate,
                  input=True,
                  frames_per_buffer=chunk_size,
-                 input_device_index=int(audio_device_id),
+                 input_device_index=id,
                  stream_callback=audio_callback)
     print("Starting audio stream...")
     stream.start_stream()
@@ -372,7 +402,6 @@ class IdleSet:
         idleChoiceIndex = self.animations.index(randAnim)
         return randAnim
 
-
 class ExpressionSet:
     def __init__(self, name, main, idleSet, talk, peak, trIn, trOut, requires, hotkey):
         self.name = name                # string
@@ -492,8 +521,10 @@ class CannedAnimation:
         self.result = result
 
 def update_render_thread():
-    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle
+    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, openingScreen, audioDeviceScreen
     while True:
+        if(openingScreen or audioDeviceScreen):
+            continue
         timeElapsed = fpsClock.tick(framerate) / 1000.0  # Get the time passed since last frame
         # print(get_idle_timer())
         image_timer += timeElapsed
@@ -612,9 +643,41 @@ class ClickableText:
         if(self.action is not None):
             self.action()
 
+openingScreen = True
+updateFrameRunning = False
+audioDeviceScreen = False
+
 # Button Actions
 def openEditor():
     print("Open Editor")
+
+audioDevice_options = []
+
+audioDeviceScreenText = [
+    ClickableText("Audio Device", (30, 15), UniFont, (255, 255, 255)),
+    ClickableText("Type the number of the audio device and hit Enter", (30, 90), UniFontSmaller, (255, 255, 255)),
+]
+
+audioDevice_selected = [
+    ClickableText(f"Selected Audio Device: {audioDeviceText}", (30, height - 50), UniFont, (255, 255, 255))
+]
+
+audioDeviceList = {}
+
+def openAudioSettings():
+    global audioDeviceScreen, openingScreen, settingsScreen
+    print("Change Audio Device")
+    audioDeviceScreen = True
+    openingScreen = False
+    settingsScreen = False
+    # get the list of all connected audio devices
+    deviceList = pa.get_host_api_info_by_index(0)
+    numdevices = deviceList.get('deviceCount')
+    audioDevice_options.clear()
+    for i in range(0, numdevices):
+        if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+            audioDevice_options.append(ClickableText(f"{i} - {pa.get_device_info_by_host_api_device_index(0, i).get('name')}", (30, (i*50)+150), UniFontSmaller, (255, 255, 255), openAudioSettings))
+            audioDeviceList[i] = pa.get_device_info_by_host_api_device_index(0, i).get('name')
 
 def createNewTuber():
     global openingScreen
@@ -788,14 +851,10 @@ def loadTuber():
     loadExpression(expressionList[expressionIndex["Main"]], "main")
     print("Loaded Tuber: " + name)
 
-debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
-
-# text_settings = UniFont.render("SETTINGS", True, BLACK)
-
 # Define the clickable text options
 settings_options = [
     ClickableText("Load ToonTuber", (0, 0), UniFont, WHITE, loadTuber),
-    ClickableText("Change Audio Input", (0, 50), UniFont, WHITE, select_audio_device),
+    ClickableText("Change Audio Input", (0, 50), UniFont, WHITE, openAudioSettings),
     ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor),
     ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-50), UniFontSmaller, WHITE, talkThreshSelected),
     ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-100), UniFontSmaller, WHITE, peakThreshSelected),
@@ -806,8 +865,12 @@ opening_options = [
     ClickableText("Load Tuber", (width/3, 125), UniFont, WHITE, loadTuber)
 ]
 
+debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
+
+# text_settings = UniFont.render("SETTINGS", True, BLACK)
+
 # Define a variable to keep track of whether the settings screen is active
-settings_active = False
+settingsScreen = False
 
 # Define a function to draw the text options on the screen
 def draw_text_options(text):
@@ -856,10 +919,8 @@ mic_fill_height_orig = mic_feedback.get_height()
 talkThresholdSprite = pygame.image.load("ThresholdArrow.png").convert_alpha()
 peakThresholdSprite = pygame.image.load("ThresholdArrow.png").convert_alpha()
 
-
 talkThreshPos = 0
 peakThreshPos = 0
-
 
 # no need to scale the threshold arrows, they are already the correct size. prepare the sprites for drawing later
 
@@ -875,11 +936,9 @@ debugPrint("Audio and render threads started.\nBeginning main Pygame loop...")
 
 # Main Pygame loop
 running = True
-openingScreen = True
-updateFrameRunning = False
 
 # TEMPORARY INSTANT-LOAD PROMPT
-loadTuber()
+# loadTuber()
 
 while running:
     if(not updateFrameRunning and not openingScreen):
@@ -892,10 +951,12 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_p and not openingScreen:
-            settings_active = not settings_active
-        # if the user clicks on a text option, do the action
-        elif event.type == pygame.KEYDOWN and settings_active:
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_p and not openingScreen and not audioDeviceScreen:
+            print("toggling settings")
+            settingsScreen = not settingsScreen
+        # key pressed during settings
+        elif event.type == pygame.KEYDOWN and settingsScreen:
+            print("key pressed and settings is active")
             # save the latest key pressed in case the user is typing a value for the mic threshold
             latestUnicode = event.unicode
             # print(latestUnicode)
@@ -934,8 +995,38 @@ while running:
                             peakThreshold = 100
                             peakThreshText = "100"
                     settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
+        
+        # key pressed on audio device screen
+        elif event.type == pygame.KEYDOWN and audioDeviceScreen:
+            # print("key pressed on audio screen", event.key)
+            latestUnicode = event.unicode
+            # print(latestUnicode)
+            acceptableChars = "0123456789"
+            if(latestUnicode in acceptableChars):
+                audioDeviceText += latestUnicode
+                if(audioDeviceText.isnumeric() and int(audioDeviceText) <= len(audioDeviceList)-1):
+                    newAudioDevice = int(audioDeviceText)
+                elif(audioDeviceText.isnumeric() and int(audioDeviceText) > len(audioDeviceList)-1):
+                    newAudioDevice = len(audioDeviceList)-1
+                    audioDeviceText = str(newAudioDevice)
+            elif(event.key == pygame.K_BACKSPACE):
+                audioDeviceText = audioDeviceText[:-1]
+                if(audioDeviceText.isnumeric() and int(audioDeviceText) <= len(audioDeviceList)-1):
+                    newAudioDevice = int(audioDeviceText)
+                elif(audioDeviceText.isnumeric() and int(audioDeviceText) > len(audioDeviceList)-1):
+                    newAudioDevice = len(audioDeviceList)-1
+                    audioDeviceText = str(newAudioDevice)
+            elif(event.key == pygame.K_RETURN):
+                audio_device_id = newAudioDevice
+                audioDeviceScreen = False
+                select_audio_device(audio_device_id)
 
+                
+            audioDevice_selected[0].setText(f"Selected Audio Device: {audioDeviceText}")
+        
+        # if the user clicks on a text option, do the action
         elif event.type == pygame.MOUSEBUTTONDOWN:
+            print("mouse clicked")
             mousePos = pygame.mouse.get_pos()
             selectedBox = ""
             settings_options[3].setFont(UniFontSmaller)
@@ -950,29 +1041,16 @@ while running:
                 for option in opening_options:
                     if option.isClicked(mousePos):
                         option.doAction()
-            if settings_active:
+            if settingsScreen:
                 for option in settings_options:
                     if option.isClicked(mousePos):
                         option.doAction()
 
-                
-                
-
     # Draw the green background
     screen.fill(GREEN)
 
-    # if on the opening screen, prompt user if they want to open an existing tuber or make a new one
-    if openingScreen:
-        # print("opening screen")
-        darken_screen()
-        draw_text_options(opening_options)
-        # if user clicks on "Open ToonTuber", open the file explorer and allow them to select a tuber
-        # if user clicks on "New ToonTuber", open the editor
-    else:
-
-        
-
-        # draw Tuber to screen
+    # draw Tuber to screen
+    if(not audioDeviceScreen and not openingScreen):
         tuber_rect = pygame.Rect(0, 0, width, height)
         # failsafe. will repeat a frame if the current frame is out of range
         if(currentFrame >= len(tuberFrames)):
@@ -984,10 +1062,20 @@ while running:
         render = pygame.transform.smoothscale(render, (width, height))
         screen.blit(render, tuber_rect)
 
-    
+    # if on the opening screen, prompt user if they want to open an existing tuber or make a new one
+    if openingScreen:
+        # print("opening screen")
+        darken_screen()
+        draw_text_options(opening_options)
+        # if user clicks on "Open ToonTuber", open the file explorer and allow them to select a tuber
+        # if user clicks on "New ToonTuber", open the editor
+    elif audioDeviceScreen:
+        darken_screen()
+        draw_text_options(audioDeviceScreenText)
+        draw_text_options(audioDevice_options)
+        draw_text_options(audioDevice_selected)
 
-    # If the settings screen is active, darken the screen and draw the text options
-    if settings_active:
+    elif settingsScreen:
         darken_screen()
         draw_text_options(settings_options)
         # Display the FPS counter in the bottom right corner
@@ -996,14 +1084,11 @@ while running:
         # these values assume that the top left corner of the sprite is 0,0
         # therefore, the bottom right of the sprite is the width and height
         
-        
         micFill_clipHeight = round((mic_feedback.get_height() * (avgVol/100)))
         clip_rect = pygame.Rect(0, mic_feedback.get_height() - micFill_clipHeight, mic_feedback.get_width(), micFill_clipHeight)
         mic_fill_clipped = pygame.Surface((clip_rect.width, clip_rect.height), pygame.SRCALPHA)
         mic_fill_clipped.blit(mic_feedback, (0, 0), clip_rect)
         screen.blit(mic_fill_clipped, (0, height - mic_fill_clipped.get_height()))
-
-
 
         # draw mic range sprite a little next to the mic fill sprite
         screen.blit(mic_range, (mic_fill_clipped.get_width()/3, height - mic_range.get_height()))
@@ -1014,8 +1099,6 @@ while running:
         # update the mic threshold arrow positions based on the talkThreshold and peakThreshold values over the range of the top of the mic fill sprite to the bottom
         talkThreshPos = (0, height-((talkThreshold * (mic_range.get_height() / 100)) + arrowCenter))
         peakThreshPos = (0, height-((peakThreshold * (mic_range.get_height() / 100)) + arrowCenter))
-
-        
 
         # draw talk threshold arrow
         screen.blit(talkThresholdSprite, talkThreshPos)
