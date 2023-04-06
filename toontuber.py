@@ -258,7 +258,7 @@ def releaseHotKey(key):
 # stream deck input reading (UNTESTED, I DON'T HAVE A STREAM DECK TO PROVE THAT THIS WORKS)
 def key_change_callback(deck, key, state):
     if state:
-        print(f"Key {key} was pressed")
+        debugPrint(f"Stream Deck Key {key} was pressed")
         pushHotKey("SD"+key)
 
 debugPrint("Checking for connected StreamDecks...")
