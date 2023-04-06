@@ -267,7 +267,7 @@ class Animation:
     def setLocking(self, locking):
         self.locking = locking
 
-choiceIndex = -1
+idleChoiceIndex = -1
 
 class IdleSet:
     def __init__(self, animations, minSec, maxSec):
@@ -299,12 +299,6 @@ class IdleSet:
         else:
             self.animations.remove(oldAnimation)  
 
-    def getRandomIdle(self):
-        global choiceIndex
-        randAnim = random.choice(self.animations)
-        choiceIndex = self.animations.index(randAnim)
-        return randAnim
-
     def getCount(self):
         return self.count
 
@@ -317,6 +311,27 @@ class IdleSet:
         return self.maxSec
     def setMaxSec(self, maxSec):
         self.maxSec = maxSec
+
+
+    def getRandomIdle(self):
+        global idleChoiceIndex, randomDuplicateReduction
+        if(idleChoiceIndex == -1):
+            randAnim = random.choice(self.animations)
+        elif(len(self.animations) == 1):
+                return self.animations[0]
+        else:
+            weighted = []
+            for i, animation in enumerate(self.animations):
+                if i == idleChoiceIndex:
+                    weight = 1 - randomDuplicateReduction
+                else:
+                    weight = 1
+                weighted.append(weight)
+            randAnim = random.choices(self.animations, weights=weighted, k=1)[0]
+
+        idleChoiceIndex = self.animations.index(randAnim)
+        return randAnim
+
 
 class ExpressionSet:
     def __init__(self, name, main, idleSet, talk, peak, trIn, trOut, requires, hotkey):
@@ -585,7 +600,7 @@ debugPrint("GUI classes created.\nCreating Tuber loading functions...")
 
 # tuber loading definitions
 def loadExpression(expressionSet, animation):
-    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle, currentAnimationType, choiceIndex
+    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle, currentAnimationType, idleChoiceIndex
     idling = False
     idle_timer_reset()
     randIdleMin = -1
@@ -608,7 +623,7 @@ def loadExpression(expressionSet, animation):
         print("Animation does not exist.")
         return
     currentAnimationType = "expression"
-    print(f"Loading animation \"{animation}{f' {choiceIndex}' if animation == 'idle' else ''}\" from expression set \"{expressionSet.getName()}.\"")
+    print(f"Loading animation \"{animation}{f' {idleChoiceIndex}' if animation == 'idle' else ''}\" from expression set \"{expressionSet.getName()}.\"")
 
     tuberFrames = currentAnimation.frames
     # print(currentAnimation.frames)
@@ -665,7 +680,10 @@ def loadTuber():
     created = data["created"]
     modified = data["last_modified"]
     randomDuplicateReduction = data["random_duplicate_reduction"]
-    for expressionData in data["loop_anims"]:
+    # an RDR of 0 means it will NEVER try to stop the same idle from playing multiple times in a row, 
+    # 1 means it will ALWAYS prevent repetition
+    # decimals are allowed
+    for expressionData in data["expressions"]:
         # print("Loading expression: " + expressionData["name"])
         # expression set requires a main animation, an idle set, and loop animations
 
@@ -734,7 +752,6 @@ def loadTuber():
     print("Loaded Tuber: " + name)
 
 debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
-
 
 # text_settings = UniFont.render("SETTINGS", True, BLACK)
 

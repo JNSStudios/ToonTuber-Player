@@ -3,8 +3,8 @@
   "creator": "JNS",
   "created": "2023-03-25T6:23:21Z",
   "last_modified": "2023-03-25T6:23:21Z",
-  "random_duplicate_reduction": 0.5,
-  "loop_anims": [
+  "random_duplicate_reduction": 1,
+  "expressions": [
     {
       "name": "Main",
       "hotkey": "right ctrl",
@@ -149,8 +149,8 @@
         },
         "Idles": 
         {
-          "randomSecMin": 3,
-          "randomSecMax": 8,
+          "randomSecMin": 1,
+          "randomSecMax": 2,
           "idleAnims": [
             {
               "frames": [
@@ -183,7 +183,6 @@
         "Talk": 
         {
           "frames": [
-            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0023.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0024.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0025.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0026.png",
