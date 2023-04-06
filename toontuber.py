@@ -101,6 +101,8 @@ volRollingAverageLength = 10
 
 pa = pyaudio.PyAudio()
 
+audio_device_id = 1
+
 def audio_callback(in_data, frame_count, time_info, status):
     global rms, avgVol
     # convert audio data to a numpy array
@@ -121,6 +123,44 @@ def audio_callback(in_data, frame_count, time_info, status):
     
     # return None and continue streaming
     return (None, pyaudio.paContinue)
+
+# Open the stream with the callback function
+stream = pa.open(format=pyaudio.paInt16,
+                 channels=1,
+                 rate=sample_rate,
+                 input=True,
+                 frames_per_buffer=chunk_size,
+                 input_device_index=audio_device_id,
+                 stream_callback=audio_callback)
+
+# Start the audio stream
+stream.start_stream()
+
+# Prompt user to select a new input device
+def select_audio_device():
+    global audio_device_id, stream
+    info = pa.get_host_api_info_by_index(0)
+    numdevices = info.get('deviceCount')
+    print("Available input devices:")
+    for i in range(0, numdevices):
+        if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+            print("ID:", i, "- Name:", pa.get_device_info_by_host_api_device_index(0, i).get('name'))
+    audio_device_id = input("Enter the ID of the input device you want to use (or 'loopback' to use the default loopback device): ")
+    print("Stopping audio stream...")
+    stream.stop_stream()
+    print("Closing audio stream...")
+    stream.close()
+    print("Reopening audio stream...")
+    stream = pa.open(format=pyaudio.paInt16,
+                 channels=1,
+                 rate=sample_rate,
+                 input=True,
+                 frames_per_buffer=chunk_size,
+                 input_device_index=int(audio_device_id),
+                 stream_callback=audio_callback)
+    print("Starting audio stream...")
+    stream.start_stream()
+    print("Audio stream restarted.")
 
 debugPrint("Audio data stuff initialized.\nInitializing keyboard reader thread...")
 
@@ -573,9 +613,6 @@ class ClickableText:
             self.action()
 
 # Button Actions
-def openPlayerSettings():
-    print("Open Player Settings")
-
 def openEditor():
     print("Open Editor")
 
@@ -623,7 +660,7 @@ def loadExpression(expressionSet, animation):
         print("Animation does not exist.")
         return
     currentAnimationType = "expression"
-    print(f"Loading animation \"{animation}{f' {idleChoiceIndex}' if animation == 'idle' else ''}\" from expression set \"{expressionSet.getName()}.\"")
+    # print(f"Loading animation \"{animation}{f' {idleChoiceIndex}' if animation == 'idle' else ''}\" from expression set \"{expressionSet.getName()}.\"")
 
     tuberFrames = currentAnimation.frames
     # print(currentAnimation.frames)
@@ -758,10 +795,10 @@ debugPrint("Tuber loading functions created.\nSetting up final GUI elements and 
 # Define the clickable text options
 settings_options = [
     ClickableText("Load ToonTuber", (0, 0), UniFont, WHITE, loadTuber),
-    ClickableText("Player Settings", (0, 50), UniFont, WHITE, openPlayerSettings),
+    ClickableText("Change Audio Input", (0, 50), UniFont, WHITE, select_audio_device),
     ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor),
     ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-50), UniFontSmaller, WHITE, talkThreshSelected),
-    ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-100), UniFontSmaller, WHITE, peakThreshSelected)
+    ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-100), UniFontSmaller, WHITE, peakThreshSelected),
 ]
 
 opening_options = [
@@ -830,16 +867,6 @@ debugPrint("Mic meter sprites created.\nBeginning audio and render threads...")
 
 # begin threads
 
-# Open the stream with the callback function
-stream = pa.open(format=pyaudio.paInt16,
-                 channels=1,
-                 rate=sample_rate,
-                 input=True,
-                 frames_per_buffer=chunk_size,
-                 stream_callback=audio_callback)
-
-# Start the audio stream
-stream.start_stream()
 
 render_thread = threading.Thread(target=update_render_thread)
 render_thread.daemon = True
