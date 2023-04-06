@@ -11,7 +11,7 @@ import random
 
 # helper function, comment out the "print" line to disable this function
 def debugPrint(str):
-    print(str)
+    # print(str)
     return
 
 ## GLOBAL VARIABLES
@@ -37,6 +37,9 @@ currentAnimation = None
 currentExpression = ""
 currentFrame = 0
 queuedExpression = ""
+currentAnimationType = ""    # "expression" or "canned"
+queuedAnimationType = ""    # "expression" or "canned
+
 transition = ""     # blank for no transition, "out" for transition out, "in" for transition in
 idling = False
 framerate = 0
@@ -46,7 +49,7 @@ idleClockCounter = pygame.time.Clock()
 idleTimer = 0
 randIdleMin = 0
 randIdleMax = 0
-timeUntilNextIdle = 0
+timeUntilNextIdle = 10
 currentTotalFrames = 0
 locked = False
 
@@ -121,9 +124,8 @@ def audio_callback(in_data, frame_count, time_info, status):
 
 debugPrint("Audio data stuff initialized.\nInitializing keyboard reader thread...")
 
-
 def pushHotKey(key):
-    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition
+    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType
     # print(hotkeyDictionary)
     if(key in hotkeyDictionary):
         # print(f"Hotkey pressed: {key}")
@@ -141,22 +143,26 @@ def pushHotKey(key):
             # 1. it must be a valid expression
             # 2. the required animation must be playing (or the required animation list is empty)
             # 3. the requested animation must not be playing
-            
+            # print(cannedAnimationList[cannedAnimationIndex[animName]].requires, "     current: ", currentExpression.name)
+
+
             if(animName in expressionIndex 
                 and ((currentExpression in expressionList[expressionIndex[animName]].requires 
                      or expressionList[expressionIndex[animName]].requires == [None]) or (queuedExpression != "" and queuedExpression in expressionList[expressionIndex[animName]].requires))
-                and animName != currentExpression):
+                and animName != currentExpression and currentAnimationType != "canned"):
                 # print(f"queuing {animName}")
                 # it's an expression and the needed anim is ready. check if the required animation is already playing
                 queuedExpression = animName
+                queuedAnimationType = "expression"
                 break
 
             elif(animName in cannedAnimationIndex 
-                 and (currentAnimation in cannedAnimationList[cannedAnimationIndex[animName]].requires 
+                 and (currentExpression in cannedAnimationList[cannedAnimationIndex[animName]].requires 
                       or cannedAnimationList[cannedAnimationIndex[animName]].requires == [None]) 
                  and animName != currentExpression):
                 # it's a canned animation. check if the required animation is already playing
                 queuedExpression = animName
+                queuedAnimationType = "canned"
                 break
 
     lastKeyPressed = latestKeyPressed
@@ -261,6 +267,8 @@ class Animation:
     def setLocking(self, locking):
         self.locking = locking
 
+choiceIndex = -1
+
 class IdleSet:
     def __init__(self, animations, minSec, maxSec):
         if(animations is None):
@@ -290,6 +298,12 @@ class IdleSet:
             print("Animation not found.")
         else:
             self.animations.remove(oldAnimation)  
+
+    def getRandomIdle(self):
+        global choiceIndex
+        randAnim = random.choice(self.animations)
+        choiceIndex = self.animations.index(randAnim)
+        return randAnim
 
     def getCount(self):
         return self.count
@@ -417,11 +431,16 @@ class CannedAnimation:
         else:
             self.requires.remove(oldRequires)
 
+    def getResult(self):
+        return self.result
+    def setResult(self, result):
+        self.result = result
+
 def update_render_thread():
-    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer
+    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle
     while True:
         timeElapsed = fpsClock.tick(framerate) / 1000.0  # Get the time passed since last frame
-        print(get_idle_timer())
+        # print(get_idle_timer())
         image_timer += timeElapsed
         # print(timeElapsed, "  ", image_timer)
         if image_timer > 1 / framerate: # time equivelent to one frame has passed
@@ -429,40 +448,66 @@ def update_render_thread():
             # print("queued:", queuedExpression, "   current:", currentExpression)
             # time to change frame! 
             # print(expressionList[expressionIndex[currentExpression]].getTalk())
-
-            if(not locked or currentFrame >= len(tuberFrames)):
+            animationFinished = currentFrame >= len(tuberFrames)
+            idlesExist = timeUntilNextIdle != -1
+            if(currentAnimationType == "expression" and not idling and get_idle_timer() >= timeUntilNextIdle and idlesExist):
+                # print("idling")
+                loadExpression(expressionList[expressionIndex[currentExpression]], "idle")
+                idling = True
+            elif(currentAnimationType == "expression" and idling and animationFinished and idlesExist):
+                # print("ending idle")
+                loadExpression(expressionList[expressionIndex[currentExpression]], "main")
+                idling = False
+                idle_timer_reset()
+                # print(get_idle_timer())
+            elif(not locked or animationFinished):
                 # can change animation. check what kind of animation we need to switch to, if we need to
 
                 # queued expression and transitions
-                if((queuedExpression != currentAnimation and queuedExpression != "") and transition == ""):
+                if((queuedExpression != currentAnimation and queuedExpression != "") and transition == "" and currentAnimationType != "canned"):
                     transition = "out"
-                    loadAnimation(expressionList[expressionIndex[currentExpression]], "out")
-                elif(transition == "out" and currentFrame >= len(tuberFrames)):
-                    transition = "in"
+                    loadExpression(expressionList[expressionIndex[currentExpression]], "out")
+                elif(transition == "out" and animationFinished):
+                    # print("trying to transition out")
                     currentExpression = queuedExpression
+                    currentAnimationType = queuedAnimationType
                     queuedExpression = ""
-                    loadAnimation(expressionList[expressionIndex[currentExpression]], "in")
-                elif(transition == "in" and currentFrame >= len(tuberFrames)):
+                    queuedAnimationType = ""
+                    if(currentAnimationType == "expression"):
+                        # print("expression")
+                        transition = "in"
+                        currentAnimationType = "expression"
+                        loadExpression(expressionList[expressionIndex[currentExpression]], "in")                        
+                    elif(currentAnimationType == "canned"):
+                        # print("canned animation")
+                        transition = ""
+                        currentAnimationType = "canned"
+                        loadCanned(cannedAnimationList[cannedAnimationIndex[currentExpression]])
+                elif(transition == "in" and animationFinished):
                     transition = ""
-                    loadAnimation(expressionList[expressionIndex[currentExpression]], "main")
+                    loadExpression(expressionList[expressionIndex[currentExpression]], "main")
+                elif(currentAnimationType == "canned" and animationFinished):
+                    # print("canned animation ended")
+                    resultingExpression = cannedAnimationList[cannedAnimationIndex[currentExpression]].getResult()
+                    loadExpression(expressionList[expressionIndex[resultingExpression]], "main")
                 # peak and talk
                 elif(avgVol >= peakThreshold 
                      and expressionList[expressionIndex[currentExpression]].getPeak().exists() 
                      and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
                     # peak animation is set, and we're not locked
                     # print("peak")
-                    loadAnimation(expressionList[expressionIndex[currentExpression]], "peak")
+                    loadExpression(expressionList[expressionIndex[currentExpression]], "peak")
                 elif(avgVol >= talkThreshold 
                      and expressionList[expressionIndex[currentExpression]].getTalk().exists() 
                      and currentAnimation is not expressionList[expressionIndex[currentExpression]].getTalk() 
                      and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
                     # talk animation is set, and we're not locked
                     # print("talk")
-                    loadAnimation(expressionList[expressionIndex[currentExpression]], "talk")
+                    loadExpression(expressionList[expressionIndex[currentExpression]], "talk")
                 elif( avgVol < talkThreshold 
                      and (currentAnimation is expressionList[expressionIndex[currentExpression]].getTalk() 
                           or currentAnimation is expressionList[expressionIndex[currentExpression]].getPeak())):
-                    loadAnimation(expressionList[expressionIndex[currentExpression]], "main")
+                    loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                 else:
                     # no transition, just update the animation
                     currentFrame = (currentFrame) % len(tuberFrames)   
@@ -539,9 +584,8 @@ def peakThreshSelected():
 debugPrint("GUI classes created.\nCreating Tuber loading functions...")
 
 # tuber loading definitions
-def loadAnimation(expressionSet, animation):
-    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle
-    print(f"Loading animation \"{animation}\" from expression set \"{expressionSet.getName()}.\"")
+def loadExpression(expressionSet, animation):
+    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle, currentAnimationType, choiceIndex
     idling = False
     idle_timer_reset()
     randIdleMin = -1
@@ -554,10 +598,7 @@ def loadAnimation(expressionSet, animation):
     elif(animation == "out" and expressionSet.getTransitionOut().exists()):
         currentAnimation = expressionSet.getTransitionOut()
     elif(animation == "idle" and expressionSet.getIdleSet().exists()):
-        currentAnimation = expressionSet.getIdleSet().getAnimations()[random.randint(0, len(expressionSet.getIdleSet()) - 1)]
-        idling = True
-        randIdleMin = expressionSet.getIdleSet().getMinSec()
-        randIdleMax = expressionSet.getIdleSet().getMaxSec()
+        currentAnimation = expressionSet.getIdleSet().getRandomIdle()
         timeUntilNextIdle = random.randint(randIdleMin, randIdleMax)
     elif(animation == "talk" and expressionSet.getTalk().exists()):
         currentAnimation = expressionSet.getTalk()
@@ -566,7 +607,32 @@ def loadAnimation(expressionSet, animation):
     else:
         print("Animation does not exist.")
         return
+    currentAnimationType = "expression"
+    print(f"Loading animation \"{animation}{f' {choiceIndex}' if animation == 'idle' else ''}\" from expression set \"{expressionSet.getName()}.\"")
 
+    tuberFrames = currentAnimation.frames
+    # print(currentAnimation.frames)
+    framerate = currentAnimation.fps
+    currentTotalFrames = len(tuberFrames)
+    currentFrame = 0
+    if(expressionSet.getIdleSet().exists()):
+        randIdleMin = expressionSet.getIdleSet().getMinSec()
+        randIdleMax = expressionSet.getIdleSet().getMaxSec()
+        timeUntilNextIdle = random.randint(randIdleMin, randIdleMax)
+    locked = currentAnimation.locking
+    fpsClock = pygame.time.Clock()
+    currentExpression = expressionSet.getName()
+
+def loadCanned(cannedAnimation):
+    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle, currentAnimationType
+    print(f"Loading CANNED animation \"{cannedAnimation.getName()}.\"")
+    idling = False
+    idle_timer_reset()
+    randIdleMin = -1
+    randIdleMax = -1
+    timeUntilNextIdle = -1
+    currentAnimationType = "canned"
+    currentAnimation = cannedAnimation.getAnimation()
     
     tuberFrames = currentAnimation.frames
     framerate = currentAnimation.fps
@@ -574,7 +640,7 @@ def loadAnimation(expressionSet, animation):
     currentFrame = 0
     locked = currentAnimation.locking
     fpsClock = pygame.time.Clock()
-    currentExpression = expressionSet.getName()
+    currentExpression = cannedAnimation.getName()
 
 def loadTuber():
     global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin
@@ -607,7 +673,7 @@ def loadTuber():
         main = Animation(expressionData["anims"]["Main"]["frames"], expressionData["anims"]["Main"]["fps"], expressionData["anims"]["Main"]["locking"])
 
         # idle set
-        idleList = [Animation(None, None, None)]
+        idleList = []
         if(not expressionData["anims"]["Idles"]):
             # print("No idles found.")
             idles = IdleSet(None, None, None)
@@ -617,7 +683,7 @@ def loadTuber():
             for idle in expressionData["anims"]["Idles"]["idleAnims"]:
                 idleList.append(Animation(idle["frames"], idle["fps"], idle["locking"]))
             idles = IdleSet(idleList, expressionData["anims"]["Idles"]["randomSecMin"], expressionData["anims"]["Idles"]["randomSecMax"])
-
+        # print(f"all idles for {expressionData['name']}:\n {idleList}")
 
 
         # talking
@@ -663,9 +729,9 @@ def loadTuber():
             hotkeyDictionary[cannedAnimationData["hotkey"]].append(cannedAnimationData["name"])
         # print(cannedAnimationDictionary)
     
-    # print(hotkeyDictionary)
-    loadAnimation(expressionList[expressionIndex["Main"]], "main")
-    # print("Loaded Tuber: " + name)
+    print(hotkeyDictionary)
+    loadExpression(expressionList[expressionIndex["Main"]], "main")
+    print("Loaded Tuber: " + name)
 
 debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
 
@@ -864,10 +930,11 @@ while running:
 
         # draw Tuber to screen
         tuber_rect = pygame.Rect(0, 0, width, height)
-        # failsafe
+        # failsafe. will repeat a frame if the current frame is out of range
         if(currentFrame >= len(tuberFrames)):
-            currentFrame = currentFrame % len(tuberFrames)
+            currentFrame = (currentFrame % len(tuberFrames))
         currentImage = tuberFrames[currentFrame]
+        
         render = currentImage.convert_alpha()
         # scale tuber image to fill screen
         render = pygame.transform.smoothscale(render, (width, height))
