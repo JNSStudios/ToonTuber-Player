@@ -11,7 +11,7 @@ import random
 import sys
 import winsound
 
-debugMode = False
+debugMode = True
 
 peakThreshold = 82
 talkThreshold = 50
@@ -20,7 +20,7 @@ talkThreshold = 50
 def handle_exception(exc_type, exc_value, exc_traceback):
     global stream
     if(debugMode):
-        return
+        return # so i dont keep hearing this every time i test something
     # Quit Pygame
     pygame.quit()
 
@@ -165,6 +165,17 @@ stream = pa.open(format=pyaudio.paInt16,
 
 # Start the audio stream
 stream.start_stream()
+
+audioDeviceList = {}
+
+audioDevice_options = []
+
+#populate audio device table
+deviceList = pa.get_host_api_info_by_index(0)
+numdevices = deviceList.get('deviceCount')
+for i in range(0, numdevices):
+    if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+        audioDeviceList[i] = pa.get_device_info_by_host_api_device_index(0, i).get('name')
 
 # Prompt user to select a new input device
 def select_audio_device(id):
@@ -651,7 +662,7 @@ audioDeviceScreen = False
 def openEditor():
     print("Open Editor")
 
-audioDevice_options = []
+
 
 audioDeviceScreenText = [
     ClickableText("Audio Device", (30, 15), UniFont, (255, 255, 255)),
@@ -661,8 +672,6 @@ audioDeviceScreenText = [
 audioDevice_selected = [
     ClickableText(f"Selected Audio Device: {audioDeviceText}", (30, height - 50), UniFont, (255, 255, 255))
 ]
-
-audioDeviceList = {}
 
 def openAudioSettings():
     global audioDeviceScreen, openingScreen, settingsScreen
@@ -723,7 +732,7 @@ def loadExpression(expressionSet, animation):
         print("Animation does not exist.")
         return
     currentAnimationType = "expression"
-    # print(f"Loading animation \"{animation}{f' {idleChoiceIndex}' if animation == 'idle' else ''}\" from expression set \"{expressionSet.getName()}.\"")
+    debugPrint(f"Loading animation \"{animation}{f' {idleChoiceIndex}' if animation == 'idle' else ''}\" from expression set \"{expressionSet.getName()}.\"")
 
     tuberFrames = currentAnimation.frames
     # print(currentAnimation.frames)
@@ -740,7 +749,7 @@ def loadExpression(expressionSet, animation):
 
 def loadCanned(cannedAnimation):
     global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle, currentAnimationType
-    print(f"Loading CANNED animation \"{cannedAnimation.getName()}.\"")
+    debugPrint(f"Loading CANNED animation \"{cannedAnimation.getName()}.\"")
     idling = False
     idle_timer_reset()
     randIdleMin = -1
@@ -858,6 +867,7 @@ settings_options = [
     ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor),
     ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-50), UniFontSmaller, WHITE, talkThreshSelected),
     ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-100), UniFontSmaller, WHITE, peakThreshSelected),
+    ClickableText(f"Current Device: {audioDeviceList[audio_device_id]}", (100, height-200), UniFontSmaller, WHITE, None),
 ]
 
 opening_options = [
@@ -952,11 +962,11 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_p and not openingScreen and not audioDeviceScreen:
-            print("toggling settings")
+            # print("toggling settings")
             settingsScreen = not settingsScreen
         # key pressed during settings
         elif event.type == pygame.KEYDOWN and settingsScreen:
-            print("key pressed and settings is active")
+            # print("key pressed and settings is active")
             # save the latest key pressed in case the user is typing a value for the mic threshold
             latestUnicode = event.unicode
             # print(latestUnicode)
@@ -1021,12 +1031,14 @@ while running:
                 audioDeviceScreen = False
                 select_audio_device(audio_device_id)
 
-                
+            for option in audioDevice_options:
+                option.setFont(UniFontSmaller)
+            audioDevice_options[newAudioDevice].setFont(UniFont)
             audioDevice_selected[0].setText(f"Selected Audio Device: {audioDeviceText}")
         
         # if the user clicks on a text option, do the action
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            print("mouse clicked")
+            # print("mouse clicked")
             mousePos = pygame.mouse.get_pos()
             selectedBox = ""
             settings_options[3].setFont(UniFontSmaller)
