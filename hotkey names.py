@@ -68,4 +68,3 @@ while not done:
 
 # Quit Pygame and stop the listener
 pygame.quit()
-listener.stop()

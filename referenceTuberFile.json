@@ -1,0 +1,207 @@
+{
+  "name": "test",
+  "creator": "test",
+  "created": "2023-03-25T6:23:21Z",
+  "last_modified": "2023-03-25T6:23:21Z",
+  "random_duplicate_reduction": 0.5,
+  "folderPath": "ToonTubers\\Test Tuber\\",
+  "loop_anims": [
+    {
+      "name": "Basic",
+      "anims": [
+        {
+          "Idles": [
+            {
+              "randomSecMin": 5,
+              "randomSecMax": 15,
+              "idleAnims": [
+                {
+                  "frames": [
+                    "TestBasis0002.png",
+                    "TestBasis0003.png",
+                    "TestBasis0004.png",
+                    "TestBasis0005.png",
+                    "TestBasis0006.png",
+                    "TestBasis0007.png",
+                    "TestBasis0008.png",
+                    "TestBasis0009.png",
+                    "TestBasis0010.png",
+                    "TestBasis0011.png",
+                    "TestBasis0012.png",
+                    "TestBasis0013.png",
+                    "TestBasis0014.png",
+                    "TestBasis0015.png",
+                    "TestBasis0016.png",
+                    "TestBasis0017.png",
+                    "TestBasis0018.png",
+                    "TestBasis0019.png"
+                  ],
+                  "fps": 24
+                },
+                {
+                  "frames": [
+                    "TestBasis0020.png",
+                    "TestBasis0021.png",
+                    "TestBasis0022.png",
+                    "TestBasis0023.png",
+                    "TestBasis0024.png",
+                    "TestBasis0025.png",
+                    "TestBasis0026.png",
+                    "TestBasis0027.png",
+                    "TestBasis0028.png",
+                    "TestBasis0029.png",
+                    "TestBasis0030.png",
+                    "TestBasis0031.png",
+                    "TestBasis0032.png",
+                    "TestBasis0033.png",
+                    "TestBasis0034.png",
+                    "TestBasis0035.png",
+                    "TestBasis0036.png",
+                    "TestBasis0037.png",
+                    "TestBasis0038.png",
+                    "TestBasis0039.png",
+                    "TestBasis0040.png",
+                    "TestBasis0041.png",
+                    "TestBasis0042.png",
+                    "TestBasis0043.png",
+                    "TestBasis0044.png",
+                    "TestBasis0045.png",
+                    "TestBasis0046.png",
+                    "TestBasis0047.png",
+                    "TestBasis0048.png",
+                    "TestBasis0049.png",
+                    "TestBasis0050.png",
+                    "TestBasis0051.png",
+                    "TestBasis0052.png",
+                    "TestBasis0053.png",
+                    "TestBasis0054.png",
+                    "TestBasis0055.png",
+                    "TestBasis0056.png",
+                    "TestBasis0057.png",
+                    "TestBasis0058.png",
+                    "TestBasis0059.png",
+                    "TestBasis0060.png",
+                    "TestBasis0061.png"
+                  ],
+                  "fps": 24
+                }
+              ]
+            }
+          ],
+          "Main": 
+          [
+            {
+              "frames": [
+                "TestBasis0001.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "Talk": [
+            {
+              "frames": [
+                "TestBasis0062.png",
+                "TestBasis0063.png",
+                "TestBasis0064.png",
+                "TestBasis0065.png",
+                "TestBasis0066.png",
+                "TestBasis0067.png",
+                "TestBasis0068.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "Peak": [
+            {
+              "frames": [
+                "TestBasis0069.png",
+                "TestBasis0070.png",
+                "TestBasis0071.png",
+                "TestBasis0072.png",
+                "TestBasis0073.png"
+              ],
+              "fps": 24
+            }
+          ],
+          "TransitionIN": [
+            {
+              "frames": [
+                "TestBasis0079.png",
+                "TestBasis0080.png",
+                "TestBasis0081.png",
+                "TestBasis0082.png",
+                "TestBasis0083.png",
+                "TestBasis0084.png"
+              ],
+              "fps": 24
+            }
+          ], 
+          "TransitionOUT": [
+            {
+              "frames": [
+                "TestBasis0074.png",
+                "TestBasis0075.png",
+                "TestBasis0076.png",
+                "TestBasis0077.png",
+                "TestBasis0078.png",
+                "TestBasis0079.png"
+              ],
+              "fps": 12
+            }
+          ]
+        }
+      ],
+      "hotkey": "NUMPAD5",
+      "requires": null,
+      "enables": null
+    }
+  ],
+  "canned_anims": [
+    {
+      "name": "Disappear",
+      "anims": [
+        {
+          "frames": [
+            "tuber18.png",
+            "tuber19.png",
+            "tuber20.png",
+            "tuber21.png",
+            "tuber22.png",
+            "tuber23.png",
+            "tuber24.png",
+            "tuber25.png",
+            "tuber26.png"
+          ],
+          "fps": 12
+        }
+      ],
+      "hotkey": "/",
+      "requires": null,
+      "result": "Hidden"
+    },
+
+    {
+      "name": "Appear",
+      "anims": [
+        {
+          "frames": [
+            "tuber18.png",
+            "tuber19.png",
+            "tuber20.png",
+            "tuber21.png",
+            "tuber22.png",
+            "tuber23.png",
+            "tuber24.png",
+            "tuber25.png",
+            "tuber26.png"
+          ],
+          "fps": 12
+        }
+      ],
+      "hotkey": "/",
+      "requires": null,
+      "result": "Basic"
+    }
+  ]
+
+}

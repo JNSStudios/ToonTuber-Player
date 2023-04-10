@@ -11,6 +11,7 @@ import random
 import sys
 import winsound
 from StreamDeck.DeviceManager import DeviceManager
+import imageio
 
 debugMode = True
 
@@ -256,7 +257,7 @@ def releaseHotKey(key):
     keyHeld = False
 
 # stream deck input reading (UNTESTED, I DON'T HAVE A STREAM DECK TO PROVE THAT THIS WORKS)
-def key_change_callback(deck, key, state):
+def streamdeck_key_press_callback(deck, key, state):
     if state:
         debugPrint(f"Stream Deck Key {key} was pressed")
         pushHotKey(f"SD_{deck.id()}_{key}")
@@ -270,7 +271,7 @@ try:
     for deck in streamdecks:
         deck.open()
         deck.reset()
-        deck.set_key_callback(key_change_callback)
+        deck.set_key_callback(streamdeck_key_press_callback)
     debugPrint(f"({len(streamdecks)}) StreamDeck found.")
 except Exception as e:
     debugPrint("NO StreamDecks were found.")
@@ -329,17 +330,35 @@ idleTimer_thread.daemon = True
 
 MISSING_IMAGE = pygame.image.load("assets\MissingImage.png")
 
-def load_pngs(paths):
+def load_images(paths, fps):
     # create a list of Pygame images from the selected files
     images = []
     for file_path in paths:
         if(os.path.isfile(file_path)):
-            image = pygame.image.load(file_path)
-            images.append(image)
+            extension = os.path.splitext(file_path)[1]
+            if(extension == ".png"):
+                image = pygame.image.load(file_path)
+                images.append(image)
+            elif(extension == ".gif"):
+                gif = imageio.mimread(file_path)
+                for frame in gif:
+                    # convert the image to a Pygame surface
+                    # count the number of bytes in frame.tobytes() and print it out
+                    try:
+                        pygameFrame = pygame.image.frombuffer(frame.tobytes(), frame.shape[1::-1], "RGBA")
+                    except Exception as e:
+                        print(e)
+                        exit()
+                    images.append(pygameFrame)
+                if('fps' in gif[0].meta):
+                    fps = gif[0].meta['fps']
+                elif('duration' in gif[0].meta):
+                    fps = 1000 / gif[0].meta['duration']
+                return (images, fps)
         else:
             images.append(MISSING_IMAGE)
-        
-    return images
+    return (images, fps)
+    
 
 class Animation:
     def __init__(self, frames, fps, locking):
@@ -348,8 +367,7 @@ class Animation:
             self.fps = None
             self.locking = None
         else:
-            self.frames = load_pngs(frames) # list of PNG images
-            self.fps = fps                  # int
+            (self.frames, self.fps) = load_images(frames, fps)
             self.locking = locking          # bool
 
     def __str__(self):
