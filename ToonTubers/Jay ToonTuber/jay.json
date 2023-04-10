@@ -11,6 +11,9 @@
       "requires": [
         null
       ],
+      "blockers": [
+        "HIDDEN"
+      ],
       "anims": {
         "Main": {
           "frames": [
@@ -137,6 +140,9 @@
       "requires": [
         null
       ],
+      "blockers": [
+        "HIDDEN"
+      ],
       "anims": 
       {
         "Main": 
@@ -230,6 +236,9 @@
       "requires": [
         "Happy"
       ],
+      "blockers": [
+        "HIDDEN"
+      ],
       "anims": 
       {
         "Main": 
@@ -291,6 +300,9 @@
       "requires": [
         "NAN"
       ],
+      "blockers": [
+        null
+      ],
       "anims": 
       {
         "Main": 
@@ -337,6 +349,9 @@
       "requires": [
         "HIDDEN"
       ],
+      "blockers": [
+        null
+      ],
       "result": "Main",
       "anim": 
       {
@@ -350,6 +365,9 @@
       "name": "Disappear",
       "hotkey": "delete",
       "requires": [
+        null
+      ],
+      "blockers": [
         null
       ],
       "result": "HIDDEN",

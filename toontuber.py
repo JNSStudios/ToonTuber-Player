@@ -227,13 +227,21 @@ def pushHotKey(key):
             # 2. the required animation must be playing (or the required animation list is empty)
             # 3. the requested animation must not be playing
             # print(cannedAnimationList[cannedAnimationIndex[animName]].requires, "     current: ", currentExpression.name)
-
+            isBlocked = False
+            # print(f"Checking blockers for {animName}...")
+            if(animName in expressionIndex):
+                if currentExpression in expressionList[expressionIndex[animName]].getBlockers():
+                    isBlocked = True
+            elif(animName in cannedAnimationIndex):
+                if currentExpression in cannedAnimationList[cannedAnimationIndex[animName]].getBlockers():
+                    isBlocked = True
+            # print(f"Blocked: {isBlocked}")
 
             if(animName in expressionIndex 
                 and ((currentExpression in expressionList[expressionIndex[animName]].requires 
                      or expressionList[expressionIndex[animName]].requires == [None]) or (queuedExpression != "" and queuedExpression in expressionList[expressionIndex[animName]].requires))
-                and animName != currentExpression and currentAnimationType != "canned"):
-                # print(f"queuing {animName}")
+                and animName != currentExpression and currentAnimationType != "canned"
+                and not isBlocked):
                 # it's an expression and the needed anim is ready. check if the required animation is already playing
                 queuedExpression = animName
                 queuedAnimationType = "expression"
@@ -242,7 +250,8 @@ def pushHotKey(key):
             elif(animName in cannedAnimationIndex 
                  and (currentExpression in cannedAnimationList[cannedAnimationIndex[animName]].requires 
                       or cannedAnimationList[cannedAnimationIndex[animName]].requires == [None]) 
-                 and animName != currentExpression):
+                 and animName != currentExpression
+                 and not isBlocked):
                 # it's a canned animation. check if the required animation is already playing
                 queuedExpression = animName
                 queuedAnimationType = "canned"
@@ -330,7 +339,7 @@ idleTimer_thread.daemon = True
 
 MISSING_IMAGE = pygame.image.load("assets\MissingImage.png")
 
-def load_images(paths, fps):
+def load_animation_images(paths, fps):
     # create a list of Pygame images from the selected files
     images = []
     for file_path in paths:
@@ -367,7 +376,7 @@ class Animation:
             self.fps = None
             self.locking = None
         else:
-            (self.frames, self.fps) = load_images(frames, fps)
+            (self.frames, self.fps) = load_animation_images(frames, fps)
             self.locking = locking          # bool
 
     def __str__(self):
@@ -457,7 +466,7 @@ class IdleSet:
         return randAnim
 
 class ExpressionSet:
-    def __init__(self, name, main, idleSet, talk, peak, trIn, trOut, requires, hotkey):
+    def __init__(self, name, main, idleSet, talk, peak, trIn, trOut, requires, blockers, hotkey):
         self.name = name                # string
         self.main = main                # Animation object
         self.idleSet = idleSet          # IdleSet object
@@ -466,6 +475,7 @@ class ExpressionSet:
         self.trIn = trIn          # Animation object
         self.trOut = trOut        # Animation object
         self.requires = requires        # list of ExpressionSets
+        self.blockers = blockers        # list of ExpressionSets
         self.hotkey = hotkey            # Hotkey object
 
     def __str__(self):
@@ -515,6 +525,11 @@ class ExpressionSet:
             print("Required state not found.")
         else:
             self.requires.remove(oldRequires)
+    
+    def getBlockers(self):
+        return self.blockers
+    def addBlockers(self, newBlockers):
+        self.blockers.append(newBlockers)
 
     def getHotkey(self):
         return self.hotkey
@@ -528,11 +543,12 @@ class ExpressionSet:
             self.hotkey = None
 
 class CannedAnimation:
-    def __init__(self, name, animation, hotkey, requires, result):
+    def __init__(self, name, animation, hotkey, requires, blockers, result):
         self.name = name                # string
         self.animation = animation      # Animation object
         self.hotkey = hotkey            # Hotkey object
         self.requires = requires        # list of ExpressionSets
+        self.blockers = blockers        # list of ExpressionSets
         self.result = result            # ExpressionSet object
 
     def __str__(self):
@@ -573,6 +589,11 @@ class CannedAnimation:
         return self.result
     def setResult(self, result):
         self.result = result
+    
+    def getBlockers(self):
+        return self.blockers
+    def addBlockers(self, newBlockers):
+        self.blockers.append(newBlockers)
 
 def update_render_thread():
     global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, openingScreen, audioDeviceScreen
@@ -704,8 +725,6 @@ audioDeviceScreen = False
 # Button Actions
 def openEditor():
     print("Open Editor")
-
-
 
 audioDeviceScreenText = [
     ClickableText("Audio Device", (30, 15), UniFont, (255, 255, 255)),
@@ -877,7 +896,7 @@ def loadTuber():
         transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"], expressionData["anims"]["TransitionOUT"]["locking"])
 
         # create ExpressionSet
-        expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["hotkey"]))
+        expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["blockers"], expressionData["hotkey"]))
         expressionIndex[expressionData["name"]] = len(expressionList) - 1
 
         # add to hotkey dictionary
@@ -890,7 +909,7 @@ def loadTuber():
 
     for cannedAnimationData in data["canned_anims"]:
         # name, animation, hotkey, requires, result
-        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkey"], cannedAnimationData["requires"], cannedAnimationData["result"]))
+        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkey"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["result"]))
         cannedAnimationIndex[cannedAnimationData["name"]] = len(cannedAnimationList) - 1
 
         if(cannedAnimationData["hotkey"] not in hotkeyDictionary):
