@@ -25,13 +25,13 @@ When a tuber is loaded, all the images are imported and organized into Animation
 - *locking*               (if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is recommended for Transition animations, but can be enabled for any.)
 
     (**JSON**):
-    `{
+    ```{
         "frames": [
         "relative path to PNG/GIF used (use commas to separate PNG file names.)"
         ],
         "fps": number,
         "locking": true or false
-    }`
+    }```
 
 # Idle Set objects: (object to contain a set of Animations designated as "Idle" animations)
 - *animations*            (A list of *Animation* objects, described above)
@@ -41,7 +41,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 - *max random seconds*    (represents the maximum seconds allowed before an Idle is selected)
 
     (**JSON**):
-    `{
+    ```{
         "randomSecMin": number,
         "randomSecMax": bigger number,
         "idleAnims": [
@@ -52,7 +52,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
                 another Animation JSON Object(s)
             }
         ]
-    }`
+    }```
 
 # Expression Set objects:
 - *name*            The name of the Expression
@@ -64,22 +64,28 @@ When a tuber is loaded, all the images are imported and organized into Animation
 - *blockers*        A list of Expression Set names. This functions similar to the "requires" list, but it will prevent this Expression from playing if the Expression that is currently playing is within this list. (IE: If you have a "Happy," and "Sad" Expression, you can prevent the "Sad" Expression from triggering when "Happy" is playing.) Typing the word "null" (without the quotation marks) will mean no Expressions will block this one.
 
 - *animations*        A specific list of 6 Animation objects:
+    
     -- the "Main" Animation.            Play when your character is doing nothing. (**REQUIRED**)
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/mainEx.png)
+    
     -- the "Idles" IdleSet.             Contains the set of Idle animations to randomly be played when your character is doing nothing. (Can be NULL)
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/idleEx.gif)
+    
     -- the "Talk" Animation.            Plays when your character is speaking
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/talkEx.gif)
+    
     -- the "Peak" Animation.            Plays when your character is yelling
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/peakEx.gif)
+    
     -- the "TransitionIN" Animation     Plays when your character is ENTERING this Expression (**REQUIRED**)
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trInEx.gif)
+    
     -- the "TransitionOut" Animation    Plays when your character is LEAVING this Expression (**REQUIRED**)
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trOutEx.gif)
 
 
     (**JSON**):
-    `{
+    ```{
         "name": type the name of the animation surrounded by quotation marks,
         "hotkey": type the text shown by the "hotkey names" program, surrounded by quotation marks,
         "requires": [
@@ -112,5 +118,5 @@ When a tuber is loaded, all the images are imported and organized into Animation
             Animation JSON Object (**REQUIRED**)
         } 
         }
-    }`
+    }```
 
