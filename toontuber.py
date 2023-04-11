@@ -16,27 +16,30 @@ import configparser
 
 debugMode = True
 
+version = "v1.0.0"
+
 peakThreshold = 90
 talkThreshold = 50
 
-print("Toon Tuber Player v1.0.0")
+print(f"ToonTuber Player {version}")
 
 # play sound when crash happens so user is alerted
 def handle_exception(exc_type, exc_value, exc_traceback):
     global stream
-    if(debugMode):
-        return # so i dont keep hearing this every time i test something
     # Quit Pygame
     pygame.quit()
 
     stream.stop_stream()
     stream.close()
     pa.terminate()
-    # Play a sound when an exception occurs
-    winsound.PlaySound("assets\error.wav", winsound.SND_FILENAME)
+    
 
     # Print the exception information
     print("Unhandled exception:", exc_type, exc_value)
+
+    # Play a sound when an exception occurs
+    if(not debugMode):
+        winsound.PlaySound("assets\error.wav", winsound.SND_FILENAME)
 
     # Call the default exception handler
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -63,11 +66,11 @@ modified = "NONE"
 randomDuplicateReduction = 0
 expressionList = []
 cannedAnimationList = []
-tuberFrames = []
-expressionIndex = {}
-cannedAnimationIndex = {}
+tuberFrames = []            # array of frames for the current animation being played
+expressionIndex = {}        # key: expression name, value: index of this animation within the expressionList array
+cannedAnimationIndex = {}   # key: canned animation name, value: index of this animation within the cannedAnimationList array
 
-hotkeyDictionary = {}   # key: key pressed, value: an array of strings for each animation name
+hotkeyDictionary = {}   # key: key pressed, value: an array of strings for each animation name that this hotkey can trigger
 
 currentAnimation = None
 currentExpression = ""
@@ -93,6 +96,7 @@ latestUnicode = None
 selectedBox = ""
 
 audioDeviceText = "1"
+audio_device_id = 1
 
 debugPrint("Global variables initialized. Reading preferences.ini...")
 
@@ -100,14 +104,38 @@ debugPrint("Global variables initialized. Reading preferences.ini...")
 try:
     prefini = configparser.ConfigParser()
     prefini.read("preferences.ini")
+except Exception as e:
+    print(f"Error reading preferences.ini: {e}")
+    print("Creating new preferences.ini file...")
+    prefini = configparser.ConfigParser()
+    prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "1"}
+    prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
+    with open("preferences.ini", "w") as f:
+        prefini.write(f)
+    print("preferences.ini created with default values.")
 
+try:
     lastTuberLoaded = prefini["LastUsed"]["lastLoaded"]
-    lastMicUsed = prefini["LastUsed"]["lastMic"]
+except Exception as e:
+    print("Error reading last loaded tuber from preferences.ini. Setting to NONE...")
+    lastTuberLoaded = "NONE"
+
+try:
+    lastAudioDevice = prefini["LastUsed"]["lastMic"]
+except Exception as e:
+    print("Error reading last used mic from preferences.ini. Setting to NONE...")
+    lastAudioDevice = "NONE"
+
+try:
     talkThreshold = int(prefini["Thresholds"]["talkThresh"])
+except Exception as e:
+    print("Error reading talk threshold from preferences.ini. Setting to 50...")
+    talkThreshold = 50
+try:
     peakThreshold = int(prefini["Thresholds"]["peakThresh"])
 except Exception as e:
-    print(f"EXCEPTION: {e}")
-    exit()
+    print("Error reading peak threshold from preferences.ini. Setting to 90...")
+    peakThreshold = 90
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
@@ -120,7 +148,6 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
 debugPrint("Preferences.ini succesfully read from. Initializing Pygame...")
-
 
 pygame.init()
 
@@ -135,6 +162,7 @@ pygame.display.set_caption("Toon Tuber Player")
 # Opening screen
 UniFont = pygame.font.Font('freesansbold.ttf', 24)
 UniFontSmaller = pygame.font.Font('freesansbold.ttf', 18)
+UniFontBigger = pygame.font.Font('freesansbold.ttf', 36)
 text = UniFont.render("Toon Tuber Player", True, (255, 255, 255))
 textRect = text.get_rect()
 textRect.center = (width // 2, height // 2)
@@ -152,7 +180,20 @@ volRollingAverageLength = 10
 
 pa = pyaudio.PyAudio()
 
-audio_device_id = 1
+audioDeviceList = {}
+
+audioDevice_options = []
+
+#populate audio device table
+deviceList = pa.get_host_api_info_by_index(0)
+numdevices = deviceList.get('deviceCount')
+for i in range(0, numdevices):
+    if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+        deviceName = pa.get_device_info_by_host_api_device_index(0, i).get('name')
+        if(deviceName == lastAudioDevice):
+            audio_device_id = i
+            audioDeviceText = str(i)
+        audioDeviceList[i] = deviceName
 
 def audio_callback(in_data, frame_count, time_info, status):
     global rms, avgVol
@@ -187,18 +228,7 @@ stream = pa.open(format=pyaudio.paInt16,
 # Start the audio stream
 stream.start_stream()
 
-audioDeviceList = {}
-
-audioDevice_options = []
-
-#populate audio device table
-deviceList = pa.get_host_api_info_by_index(0)
-numdevices = deviceList.get('deviceCount')
-for i in range(0, numdevices):
-    if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-        audioDeviceList[i] = pa.get_device_info_by_host_api_device_index(0, i).get('name')
-
-# Prompt user to select a new input device
+# Prompts user to select a new input device
 def select_audio_device(id):
     global audio_device_id, stream
     # info = pa.get_host_api_info_by_index(0)
@@ -315,15 +345,11 @@ def keyboard_input_thread():
             # print(f"Key released: {event.name}")
             releaseHotKey(event.name)
 
-
 keyboard_input_thread = threading.Thread(target=keyboard_input_thread)
 keyboard_input_thread.daemon = True
 keyboard_input_thread.start()
 
 debugPrint("Input reader thread started.\nCreating animation classes...")
-
-
-
 
 resetIdleTimer = threading.Event()
 
@@ -386,7 +412,6 @@ def load_animation_images(paths, fps):
         else:
             images.append(MISSING_IMAGE)
     return (images, fps)
-    
 
 class Animation:
     def __init__(self, frames, fps, locking):
@@ -644,7 +669,7 @@ def update_render_thread():
                 # can change animation. check what kind of animation we need to switch to, if we need to
 
                 # queued expression and transitions
-                if((queuedExpression != currentAnimation and queuedExpression != "") and transition == "" and currentAnimationType != "canned"):
+                if((queuedExpression != currentExpression and queuedExpression != "") and transition == "" and currentAnimationType != "canned"):
                     transition = "out"
                     loadExpression(expressionList[expressionIndex[currentExpression]], "out")
                 elif(transition == "out" and animationFinished):
@@ -852,8 +877,9 @@ def loadCanned(cannedAnimation):
     currentExpression = cannedAnimation.getName()
 
 def loadTuber(path):
-    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin
+    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settingsScreen, settings_options
     openingScreen = False
+    settingsScreen = False
 
     if(path == None):
         # file dialog to select json file   
@@ -866,7 +892,7 @@ def loadTuber(path):
         )
 
         # print("Selected file:", file_path)
-
+        path = file_path
         # load json file
         with open(file_path) as json_file:
             data = json.load(json_file)
@@ -874,7 +900,8 @@ def loadTuber(path):
         with open(path) as json_file:
             data = json.load(json_file)
         # print(data)
-    name = data["name"]
+    # print("Loading tuber: " + data["name"])
+    tuberName = data["name"]
     creator = data["creator"]
     created = data["created"]
     modified = data["last_modified"]
@@ -951,16 +978,26 @@ def loadTuber(path):
     
     # print(hotkeyDictionary)
     loadExpression(expressionList[expressionIndex[name1]], "main")
-    print("Loaded Tuber: " + name)
+    # print(f"Path = {path}")
+    prefini.set("LastUsed", "lastloaded", "\"" + str(path) + "\"")
+    settings_options[6].setText(f"Current Tuber: {tuberName} by {creator}")
+    with open("preferences.ini", "w") as configfile:
+        prefini.write(configfile)
+
+    print("Loaded Tuber: " + tuberName)
 
 # Define the clickable text options
 settings_options = [
-    ClickableText("Load ToonTuber", (0, 0), UniFont, WHITE, openTuber),
-    ClickableText("Change Audio Input", (0, 50), UniFont, WHITE, openAudioSettings),
-    ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor),
+    ClickableText("Load ToonTuber", (0, 150), UniFont, WHITE, openTuber),
+    ClickableText("Change Audio Input", (0, 200), UniFont, WHITE, openAudioSettings),
+    ClickableText("Open Editor", (0, 250), UniFont, WHITE, openEditor),
     ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-50), UniFontSmaller, WHITE, talkThreshSelected),
     ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-100), UniFontSmaller, WHITE, peakThreshSelected),
     ClickableText(f"Current Device: {audioDeviceList[audio_device_id]}", (100, height-200), UniFontSmaller, WHITE, None),
+    ClickableText(f"Current Tuber: {tuberName} by {creator}", (0, 0), UniFontBigger, WHITE, None),
+    ClickableText(f"ToonTuber Player {version}", (0, 40), UniFontSmaller, WHITE, None),
+    ClickableText("program by JNS", (0, 60), UniFontSmaller, WHITE, None),
+
 ]
 
 opening_options = [
@@ -1124,7 +1161,13 @@ while running:
             elif(event.key == pygame.K_RETURN):
                 audio_device_id = newAudioDevice
                 audioDeviceScreen = False
+                # get the name of this audio device and write it to the "lastMic" value in preferences.ini
+                audioDeviceName = audioDeviceList[audio_device_id]
+                prefini.set("LastUsed", "lastMic", "\"" + str(audioDeviceName) + "\"" )
+                with open("preferences.ini", "w") as configfile:
+                    prefini.write(configfile)
                 select_audio_device(audio_device_id)
+                
 
             for option in audioDevice_options:
                 option.setFont(UniFontSmaller)
@@ -1142,6 +1185,10 @@ while running:
                 peakThreshold = talkThreshold
                 peakThreshText = str(talkThreshold)
                 settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
+            prefini.set("Thresholds", "talkthresh", str(talkThreshold))
+            prefini.set("Thresholds", "peakthresh", str(peakThreshold))
+            with open("preferences.ini", "w") as ini:
+                prefini.write(ini)
 
 
             if openingScreen:
