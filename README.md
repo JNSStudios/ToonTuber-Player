@@ -18,7 +18,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *locking*               (if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is recommended for Transition animations, but can be enabled for any.)
 
-(**JSON**):
+    (**JSON**):
     {
         "frames": [
         "relative path to png/gif used (use commas to separate png file names.)"
@@ -34,19 +34,19 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *max random seconds*    (represents the maximum seconds allowed before an Idle is selected)
 
-(**JSON**):
-{
-    "randomSecMin": number,
-    "randomSecMax": bigger number,
-    "idleAnims": [
-        {
-            Animation JSON Object
-        },
-        {
-            another Animation JSON Object(s)
-        }
-    ]
-}
+    (**JSON**):
+    {
+        "randomSecMin": number,
+        "randomSecMax": bigger number,
+        "idleAnims": [
+            {
+                Animation JSON Object
+            },
+            {
+                another Animation JSON Object(s)
+            }
+        ]
+    }
 
 # Expression Set objects:
 - *name*            The name of the Expression
@@ -65,39 +65,39 @@ When a tuber is loaded, all the images are imported and organized into Animation
     -- the "TransitionIN" Animation     Plays when your character is ENTERING this Expression (**REQUIRED**)
     -- the "TransitionOut" Animation    Plays when your character is LEAVING this Expression (**REQUIRED**)
 
-(**JSON**):
-{
-    "name": type the name of the animation surrounded by quotation marks,
-    "hotkey": type the text shown by the "hotkey names" program, surrounded by quotation marks,
-    "requires": [
-    list all the names of the Expression Sets that ALLOW this one to play
-    ],
-    "blockers": [
-    list all the names of the Expression sets that PREVENT this one from playing
-    ],
-    "anims": {
-    "Main": {
-        Animation JSON Object (**REQUIRED**)
-    },
-    "Idles": {
-        IdleSet JSON Object (or null)
-    },
-    "Talk": 
+    (**JSON**):
     {
-        Animation JSON Object (or null)
-    },
-    "Peak":
-    {
-        Animation JSON Object (or null)
-    },
-    "TransitionIN":
-    {
-        Animation JSON Object (**REQUIRED**)
-    }, 
-    "TransitionOUT": 
-    {
-        Animation JSON Object (**REQUIRED**)
-    } 
+        "name": type the name of the animation surrounded by quotation marks,
+        "hotkey": type the text shown by the "hotkey names" program, surrounded by quotation marks,
+        "requires": [
+        list all the names of the Expression Sets that ALLOW this one to play
+        ],
+        "blockers": [
+        list all the names of the Expression sets that PREVENT this one from playing
+        ],
+        "anims": {
+        "Main": {
+            Animation JSON Object (**REQUIRED**)
+        },
+        "Idles": {
+            IdleSet JSON Object (or null)
+        },
+        "Talk": 
+        {
+            Animation JSON Object (or null)
+        },
+        "Peak":
+        {
+            Animation JSON Object (or null)
+        },
+        "TransitionIN":
+        {
+            Animation JSON Object (**REQUIRED**)
+        }, 
+        "TransitionOUT": 
+        {
+            Animation JSON Object (**REQUIRED**)
+        } 
+        }
     }
-}
 
