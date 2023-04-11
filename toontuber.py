@@ -12,11 +12,14 @@ import sys
 import winsound
 from StreamDeck.DeviceManager import DeviceManager
 import imageio
+import configparser
 
 debugMode = True
 
-peakThreshold = 82
+peakThreshold = 90
 talkThreshold = 50
+
+print("Toon Tuber Player v1.0.0")
 
 # play sound when crash happens so user is alerted
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -87,11 +90,27 @@ currentTotalFrames = 0
 locked = False
 
 latestUnicode = None
-talkThreshText = f"{talkThreshold}"
-peakThreshText = f"{peakThreshold}"
 selectedBox = ""
 
 audioDeviceText = "1"
+
+debugPrint("Global variables initialized. Reading preferences.ini...")
+
+# read from preferences.ini file
+try:
+    prefini = configparser.ConfigParser()
+    prefini.read("preferences.ini")
+
+    lastTuberLoaded = prefini["LastUsed"]["lastLoaded"]
+    lastMicUsed = prefini["LastUsed"]["lastMic"]
+    talkThreshold = int(prefini["Thresholds"]["talkThresh"])
+    peakThreshold = int(prefini["Thresholds"]["peakThresh"])
+except Exception as e:
+    print(f"EXCEPTION: {e}")
+    exit()
+
+talkThreshText = f"{talkThreshold}"
+peakThreshText = f"{peakThreshold}"
 
 # Define some colors
 WHITE = (255, 255, 255)
@@ -100,8 +119,8 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
+debugPrint("Preferences.ini succesfully read from. Initializing Pygame...")
 
-print("Toon Tuber Player v1.0.0")
 
 pygame.init()
 
@@ -735,6 +754,10 @@ audioDevice_selected = [
     ClickableText(f"Selected Audio Device: {audioDeviceText}", (30, height - 50), UniFont, (255, 255, 255))
 ]
 
+def openTuber():
+    print("Open Tuber")
+    loadTuber(None)
+
 def openAudioSettings():
     global audioDeviceScreen, openingScreen, settingsScreen
     print("Change Audio Device")
@@ -828,23 +851,28 @@ def loadCanned(cannedAnimation):
     fpsClock = pygame.time.Clock()
     currentExpression = cannedAnimation.getName()
 
-def loadTuber():
+def loadTuber(path):
     global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin
     openingScreen = False
-    # file dialog to select json file   
-    root = tk.Tk()
-    root.withdraw()
 
-    file_path = filedialog.askopenfilename(
-        filetypes=[("JSON files", "*.json")],
-        title="Select a JSON file",
-    )
+    if(path == None):
+        # file dialog to select json file   
+        root = tk.Tk()
+        root.withdraw()
 
-    # print("Selected file:", file_path)
+        file_path = filedialog.askopenfilename(
+            filetypes=[("JSON files", "*.json")],
+            title="Select a JSON file",
+        )
 
-    # load json file
-    with open(file_path) as json_file:
-        data = json.load(json_file)
+        # print("Selected file:", file_path)
+
+        # load json file
+        with open(file_path) as json_file:
+            data = json.load(json_file)
+    else:
+        with open(path) as json_file:
+            data = json.load(json_file)
         # print(data)
     name = data["name"]
     creator = data["creator"]
@@ -854,7 +882,10 @@ def loadTuber():
     # an RDR of 0 means it will NEVER try to stop the same idle from playing multiple times in a row, 
     # 1 means it will ALWAYS prevent repetition
     # decimals are allowed
+    name1 = ""
     for expressionData in data["expressions"]:
+        if name1 == "":
+            name1 = expressionData["name"]
         # print("Loading expression: " + expressionData["name"])
         # expression set requires a main animation, an idle set, and loop animations
 
@@ -918,13 +949,13 @@ def loadTuber():
             hotkeyDictionary[cannedAnimationData["hotkey"]].append(cannedAnimationData["name"])
         # print(cannedAnimationDictionary)
     
-    print(hotkeyDictionary)
-    loadExpression(expressionList[expressionIndex["Main"]], "main")
+    # print(hotkeyDictionary)
+    loadExpression(expressionList[expressionIndex[name1]], "main")
     print("Loaded Tuber: " + name)
 
 # Define the clickable text options
 settings_options = [
-    ClickableText("Load ToonTuber", (0, 0), UniFont, WHITE, loadTuber),
+    ClickableText("Load ToonTuber", (0, 0), UniFont, WHITE, openTuber),
     ClickableText("Change Audio Input", (0, 50), UniFont, WHITE, openAudioSettings),
     ClickableText("Open Editor", (0, 100), UniFont, WHITE, openEditor),
     ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-50), UniFontSmaller, WHITE, talkThreshSelected),
@@ -934,7 +965,7 @@ settings_options = [
 
 opening_options = [
     ClickableText("New Tuber", (width/3, 75), UniFont, WHITE, createNewTuber),
-    ClickableText("Load Tuber", (width/3, 125), UniFont, WHITE, loadTuber)
+    ClickableText("Load Tuber", (width/3, 125), UniFont, WHITE, openTuber)
 ]
 
 debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
@@ -1010,7 +1041,9 @@ debugPrint("Audio and render threads started.\nBeginning main Pygame loop...")
 running = True
 
 # TEMPORARY INSTANT-LOAD PROMPT
-# loadTuber()
+# check if lastTuberLoaded is valid
+if(os.path.exists(lastTuberLoaded)):
+    loadTuber(lastTuberLoaded)
 
 while running:
     if(not updateFrameRunning and not openingScreen):
