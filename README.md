@@ -16,13 +16,13 @@ If the program is unable to load the last JSON file for any reason, the program 
 When a tuber is loaded, all the images are imported and organized into Animation objects, which are then further organized into Canned Animation objects and Expression Sets. The exact structure of each type is described below, as well as how they are represented within the JSON file. You can use these JSON representations to build your own by copying and pasting it in, and by referencing the "referenceTuber.json" file
 
 # Animation objects 
-- *frames*                (path(s) to PNG(s) or a GIF. You can have a single PNG, a sequence of PNGs, or a GIF.)
+- *frames*:                path(s) to a single PNG, a sequence of PNGs, or a GIF.
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/pngsequenceEx.png)
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/gifEx.png)
 
-- *frames per second*     (the framerate at which the images should be played. If you're using a GIF, the framerate will be taken from that, but it is still recommended to enter the framerate manually just to be safe)
+- *frames per second*:     the framerate at which the images should be played. If you're using a GIF, the framerate will be taken from that, but it is still recommended to enter the framerate manually just to be safe
 
-- *locking*               (if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is recommended for Transition animations, but can be enabled for any.)
+- *locking*:               if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is recommended for Transition animations, but can be enabled for any.
 
     (**JSON**):
     ```
@@ -36,11 +36,11 @@ When a tuber is loaded, all the images are imported and organized into Animation
     ```
 
 # Idle Set objects
-- *animations*            (A list of *Animation* objects, described above)
+- *animations*:            A list of *Animation* objects, described above
 
-- *min random seconds*    (represents the minimum number of seconds needed before an Idle animation is selected)
+- *min random seconds*:    represents the minimum number of seconds needed before an Idle animation is selected
 
-- *max random seconds*    (represents the maximum seconds allowed before an Idle is selected)
+- *max random seconds*:    represents the maximum seconds allowed before an Idle is selected
 
     (**JSON**):
     ```
@@ -59,15 +59,15 @@ When a tuber is loaded, all the images are imported and organized into Animation
     ```
 
 # Expression Set objects
-- *name*            The name of the Expression
+- *name*:            The name of the Expression
 
-- *hotkey*          The text representing the key you have to press in order to trigger this expression. Use the "hotkey names" program that displays the name of the keys you press to figure out what to put for this data.
+- *hotkey*:          The text representing the key you have to press in order to trigger this expression. Use the "hotkey names" program that displays the name of the keys you press to figure out what to put for this data.
 
-- *requires*        A list of Expression Set names. You can have multiple of them, but *only one of them needs to currently be playing in order for this one to play next*. (IE: If I have three Expressions called "Happy," "Laughing," and "Wheezing," I can tell the "Wheezing" animation to require the "Happy" or "Laughing" animations here. If either of those animations are playing when the "Wheezing" animation is requested, it will play "Wheezing" next. Otherwise, it won't trigger the animation.) If you do not want an animation to require anything, type the word "null" (without the quotation marks).
+- *requires*:        A list of Expression Set names. You can have multiple of them, but *only one of them needs to currently be playing in order for this one to play next*. (IE: If I have three Expressions called "Happy," "Laughing," and "Wheezing," I can tell the "Wheezing" animation to require the "Happy" or "Laughing" animations here. If either of those animations are playing when the "Wheezing" animation is requested, it will play "Wheezing" next. Otherwise, it won't trigger the animation.) If you do not want an animation to require anything, type the word "null" (without the quotation marks).
 
-- *blockers*        A list of Expression Set names. This functions similar to the "requires" list, but it will prevent this Expression from playing if the Expression that is currently playing is within this list. (IE: If you have a "Happy," and "Sad" Expression, you can prevent the "Sad" Expression from triggering when "Happy" is playing.) Typing the word "null" (without the quotation marks) will mean no Expressions will block this one.
+- *blockers*:        A list of Expression Set names. This functions similar to the "requires" list, but it will prevent this Expression from playing if the Expression that is currently playing is within this list. (IE: If you have a "Happy," and "Sad" Expression, you can prevent the "Sad" Expression from triggering when "Happy" is playing.) Typing the word "null" (without the quotation marks) will mean no Expressions will block this one.
 
-- *animations*        A specific list of 6 Animation objects:
+- *animations*:        A specific list of 6 Animation objects:
     
     -- the "Main" Animation.            Plays when your character is doing nothing. (**REQUIRED**)
     
