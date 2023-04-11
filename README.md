@@ -25,13 +25,15 @@ When a tuber is loaded, all the images are imported and organized into Animation
 - *locking*               (if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is recommended for Transition animations, but can be enabled for any.)
 
     (**JSON**):
-    ```{
+    ```
+    {
         "frames": [
         "relative path to PNG/GIF used (use commas to separate PNG file names.)"
         ],
         "fps": number,
         "locking": true or false
-    }```
+    }
+    ```
 
 # Idle Set objects: (object to contain a set of Animations designated as "Idle" animations)
 - *animations*            (A list of *Animation* objects, described above)
@@ -41,7 +43,8 @@ When a tuber is loaded, all the images are imported and organized into Animation
 - *max random seconds*    (represents the maximum seconds allowed before an Idle is selected)
 
     (**JSON**):
-    ```{
+    ```
+    {
         "randomSecMin": number,
         "randomSecMax": bigger number,
         "idleAnims": [
@@ -52,7 +55,8 @@ When a tuber is loaded, all the images are imported and organized into Animation
                 another Animation JSON Object(s)
             }
         ]
-    }```
+    }
+    ```
 
 # Expression Set objects:
 - *name*            The name of the Expression
