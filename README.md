@@ -15,7 +15,7 @@ If the program is unable to load the last JSON file for any reason, the program 
 
 When a tuber is loaded, all the images are imported and organized into Animation objects, which are then further organized into Canned Animation objects and Expression Sets. The exact structure of each type is described below, as well as how they are represented within the JSON file. You can use these JSON representations to build your own by copying and pasting it in, and by referencing the "referenceTuber.json" file
 
-# Animation objects: (object for all animation types) 
+# Animation objects 
 - *frames*                (path(s) to PNG(s) or a GIF. You can have a single PNG, a sequence of PNGs, or a GIF.)
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/pngsequenceEx.png)
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/gifEx.png)
@@ -35,7 +35,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-# Idle Set objects: (object to contain a set of Animations designated as "Idle" animations)
+# Idle Set objects
 - *animations*            (A list of *Animation* objects, described above)
 
 - *min random seconds*    (represents the minimum number of seconds needed before an Idle animation is selected)
@@ -58,7 +58,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-# Expression Set objects:
+# Expression Set objects
 - *name*            The name of the Expression
 
 - *hotkey*          The text representing the key you have to press in order to trigger this expression. Use the "hotkey names" program that displays the name of the keys you press to figure out what to put for this data.
@@ -95,7 +95,8 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 
     (**JSON**):
-    ```{
+    ```
+    {
         "name": type the name of the animation surrounded by quotation marks,
         "hotkey": type the text shown by the "hotkey names" program, surrounded by quotation marks,
         "requires": [
@@ -128,5 +129,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
             Animation JSON Object (**REQUIRED**)
         } 
         }
-    }```
+    }
+    ```
 
