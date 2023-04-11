@@ -1,9 +1,13 @@
 ## ToonTuber-Player
 A standalone program designed to recreate, consolidate, and optimize the ToonTuber system created by ScottFalco. (Original tutorial here: https://www.youtube.com/watch?v=i-yW-3dI1oE)
 
+![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+
+
 # How it works
-ToonTubers are created by organizing a set of animations (either *PNG sequences* or *GIFs*) and referencing them in *JSON* data files. 
-(NOTE: As of right now, **the only way to create these JSON files is MANUALLY.* I do want to add some sort of graphical program for constructing these to make the user experience smoother, but for now this will have to do. I have provided a "referenceTuber.json" users can refer to for the creation of their own.)
+ToonTubers are created by organizing a set of animations (either *PNG(s)* or *GIFs*) and referencing them in *JSON* data files. 
+
+(NOTE: As of right now, **the only way to create these JSON files is MANUALLY.** I do want to add some sort of graphical program for constructing these to make the user experience smoother, but for now this will have to do. I have provided a "referenceTuber.json" users can refer to for the creation of their own.)
 
 When the program begins, the program reads from a "preferences.ini" file to get select information preserved from previous sessions. This includes the last JSON file loaded, the last microphone used, and the talk volume and peak volume threshold values.
 
@@ -12,16 +16,18 @@ If the program is unable to load the last JSON file for any reason, the program 
 When a tuber is loaded, all the images are imported and organized into Animation objects, which are then further organized into Canned Animation objects and Expression Sets. The exact structure of each type is described below, as well as how they are represented within the JSON file. You can use these JSON representations to build your own by copying and pasting it in, and by referencing the "referenceTuber.json" file
 
 # Animation objects: (object for all animation types) 
-- *frames*                (series of images)
+- *frames*                (path(s) to PNG(s) or a GIF. You can have a single PNG, a sequence of PNGs, or a GIF.)
+![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
 
-- *frames per second*     (the framerate at which the images should be played)
+- *frames per second*     (the framerate at which the images should be played. If you're using a GIF, the framerate will be taken from that, but it is still recommended to enter the framerate manually just to be safe)
 
 - *locking*               (if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is recommended for Transition animations, but can be enabled for any.)
 
     (**JSON**):
     {
         "frames": [
-        "relative path to png/gif used (use commas to separate png file names.)"
+        "relative path to PNG/GIF used (use commas to separate PNG file names.)"
         ],
         "fps": number,
         "locking": true or false
@@ -59,11 +65,18 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *animations*        A specific list of 6 Animation objects:
     -- the "Main" Animation.            Play when your character is doing nothing. (**REQUIRED**)
+    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
     -- the "Idles" IdleSet.             Contains the set of Idle animations to randomly be played when your character is doing nothing. (Can be NULL)
+    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
     -- the "Talk" Animation.            Plays when your character is speaking
+    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
     -- the "Peak" Animation.            Plays when your character is yelling
+    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
     -- the "TransitionIN" Animation     Plays when your character is ENTERING this Expression (**REQUIRED**)
+    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
     -- the "TransitionOut" Animation    Plays when your character is LEAVING this Expression (**REQUIRED**)
+    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+
 
     (**JSON**):
     {
