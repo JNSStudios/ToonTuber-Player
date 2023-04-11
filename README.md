@@ -69,7 +69,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *animations*        A specific list of 6 Animation objects:
     
-    -- the "Main" Animation.            Play when your character is doing nothing. (**REQUIRED**)
+    -- the "Main" Animation.            Plays when your character is doing nothing. (**REQUIRED**)
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/mainEx.png)
     
     -- the "Idles" IdleSet.             Contains the set of Idle animations to randomly be played when your character is doing nothing. (Can be NULL)
