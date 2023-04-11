@@ -1,0 +1,383 @@
+{
+  "name": "Jay",
+  "creator": "JNS",
+  "created": "2023-03-25T6:23:21Z",
+  "last_modified": "2023-03-25T6:23:21Z",
+  "random_duplicate_reduction": 0.75,
+  "expressions": [
+    {
+      "name": "Main",
+      "hotkey": "insert",
+      "requires": [
+        null
+      ],
+      "blockers": [
+        "HIDDEN"
+      ],
+      "anims": {
+        "Main": {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0001.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+          "randomSecMin": 3,
+          "randomSecMax": 8,
+          "idleAnims": [
+            {
+              "frames": [
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0002.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0003.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0004.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0005.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0006.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0007.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0008.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0009.png"
+              ],
+              "fps": 24,
+              "locking": false
+            },
+            {
+              "frames": [
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0010.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0011.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0012.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0013.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0014.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0015.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0016.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0017.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0018.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0019.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0020.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0021.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0022.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0023.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0024.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0025.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0026.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0027.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0028.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0029.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0030.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0031.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0032.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0033.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0034.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0035.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0036.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0037.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0038.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0039.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0040.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0041.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0042.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0043.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0044.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0045.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0046.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0047.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0048.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0049.png"
+              ],
+              "fps": 24,
+              "locking": false
+            }
+          ]
+        },
+        "Talk": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0051.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0052.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0053.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0054.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0055.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak":
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0057.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0058.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0059.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0060.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN":
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0066.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0067.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0068.png"
+          ],
+          "fps": 24,
+          "locking": true
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0062.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0063.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0064.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Basic0065.png"
+          ],
+          "fps": 24,
+          "locking": true
+        } 
+      }
+    },
+    {
+      "name": "Happy",
+      "hotkey": "end",
+      "requires": [
+        null
+      ],
+      "blockers": [
+        "HIDDEN"
+      ],
+      "anims": 
+      {
+        "Main": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0001.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": 
+        {
+          "randomSecMin": 1,
+          "randomSecMax": 6,
+          "idleAnims": [
+            {
+              "frames": [
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0002.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0003.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0004.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0005.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0006.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0007.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0008.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0009.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0010.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0011.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0012.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0013.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0014.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0015.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0016.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0017.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0018.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0019.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0020.png",
+                "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0021.png"
+              ],
+              "fps": 24,
+              "locking": false
+            }
+          ]
+        },
+        "Talk": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0024.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0025.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0026.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0027.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0029.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0030.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0035.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0036.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0037.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0038.png"
+          ],
+          "fps": 24,
+          "locking": true
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0031.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0032.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0033.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Happy0034.png"
+          ],
+          "fps": 24,
+          "locking": true
+        }
+      }
+    },
+    {
+      "name": "Laughing",
+      "hotkey": "end",
+      "requires": [
+        "Happy"
+      ],
+      "blockers": [
+        "HIDDEN"
+      ],
+      "anims": 
+      {
+        "Main": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0001.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0002.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0003.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0004.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0005.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0006.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+          
+        },
+        "Talk": {
+          
+        },
+        "Peak": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0007.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0008.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0009.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0010.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0015.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0016.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0017.png"
+          ],
+          "fps": 24,
+          "locking": true
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0011.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0012.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0013.png",
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0014.png"
+          ],
+          "fps": 24,
+          "locking": true
+        }
+      }
+    }, 
+    {
+      "name": "HIDDEN",
+      "hotkey": "delete",
+      "requires": [
+        "NAN"
+      ],
+      "blockers": [
+        null
+      ],
+      "anims": 
+      {
+        "Main": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Hidden.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+
+        },
+        "Talk": {
+          
+        },
+        "Peak": 
+        {
+
+        },
+        "TransitionIN": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Hidden.png"
+          ],
+          "fps": 24,
+          "locking": true
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "ToonTubers\\Jay ToonTuber\\frames\\Jay Hidden.png"
+          ],
+          "fps": 24,
+          "locking": true
+        }
+      }
+    }
+  ],
+  "canned_anims": [
+    {
+      "name": "Appear",
+      "hotkey": "delete",
+      "requires": [
+        "HIDDEN"
+      ],
+      "blockers": [
+        null
+      ],
+      "result": "Main",
+      "anim": 
+      {
+        "frames": [
+          "ToonTubers\\Jay ToonTuber\\frames\\JayAppearGif.gif"
+        ],
+        "fps": 2
+      }
+    },
+    {
+      "name": "Disappear",
+      "hotkey": "delete",
+      "requires": [
+        null
+      ],
+      "blockers": [
+        null
+      ],
+      "result": "HIDDEN",
+      "anim": 
+      {
+        "frames": [
+          "ToonTubers\\Jay ToonTuber\\frames\\JayDisappearGif.gif"
+        ],
+        "fps": 3
+      }
+    }
+  ]
+}

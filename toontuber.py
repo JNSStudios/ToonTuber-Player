@@ -102,11 +102,17 @@ debugPrint("Global variables initialized. Reading preferences.ini...")
 
 # read from preferences.ini file
 try:
+    if(not os.path.isfile("preferences.ini")):
+        raise Exception("preferences.ini does not exist")
     prefini = configparser.ConfigParser()
     prefini.read("preferences.ini")
 except Exception as e:
     print(f"Error reading preferences.ini: {e}")
     print("Creating new preferences.ini file...")
+    # create new blank file
+    with open("preferences.ini", 'w') as f:
+        pass
+
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "1"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
@@ -147,7 +153,7 @@ GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
-debugPrint("Preferences.ini succesfully read from. Initializing Pygame...")
+debugPrint("Preferences.ini successfully read from. Initializing Pygame...")
 
 pygame.init()
 
@@ -1111,7 +1117,6 @@ while running:
                         if(talkThreshold > 100):
                             talkThreshold = 100
                             talkThreshText = "100"
-                    settings_options[3].setText(f"Talk Threshold: {talkThreshold}/100")
                 elif(selectedBox == "peak"):
                     peakThreshText += latestUnicode
                     if(peakThreshText.isnumeric()):
@@ -1119,7 +1124,8 @@ while running:
                         if(peakThreshold > 100):
                             peakThreshold = 100
                             peakThreshText = "100"
-                    settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
+                settings_options[3].setText(f"Talk Threshold: {talkThreshold}/100")
+                settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
             elif(event.key == pygame.K_BACKSPACE):
                 if(selectedBox == "talk"):
                     talkThreshText = talkThreshText[:-1]
@@ -1128,7 +1134,6 @@ while running:
                         if(talkThreshold > 100):
                             talkThreshold = 100
                             talkThreshText = "100"
-                    settings_options[3].setText(f"Talk Threshold: {talkThreshText}/100")
                 elif(selectedBox == "peak"):
                     peakThreshText = peakThreshText[:-1]
                     if(peakThreshText.isnumeric()):
@@ -1136,7 +1141,8 @@ while running:
                         if(peakThreshold > 100):
                             peakThreshold = 100
                             peakThreshText = "100"
-                    settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
+                settings_options[3].setText(f"Talk Threshold: {talkThreshText}/100")
+                settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
         
         # key pressed on audio device screen
         elif event.type == pygame.KEYDOWN and audioDeviceScreen:
