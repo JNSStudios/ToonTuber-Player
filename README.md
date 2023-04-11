@@ -1,7 +1,7 @@
 ## ToonTuber-Player
 A standalone program designed to recreate, consolidate, and optimize the ToonTuber system created by ScottFalco. (Original tutorial here: https://www.youtube.com/watch?v=i-yW-3dI1oE)
 
-![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/PlayerScreenshot.png)
 
 
 # How it works
@@ -17,21 +17,21 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 # Animation objects: (object for all animation types) 
 - *frames*                (path(s) to PNG(s) or a GIF. You can have a single PNG, a sequence of PNGs, or a GIF.)
-![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
-![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/pngsequenceEx.png)
+![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/gifEx.png)
 
 - *frames per second*     (the framerate at which the images should be played. If you're using a GIF, the framerate will be taken from that, but it is still recommended to enter the framerate manually just to be safe)
 
 - *locking*               (if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is recommended for Transition animations, but can be enabled for any.)
 
     (**JSON**):
-    {
+    `{
         "frames": [
         "relative path to PNG/GIF used (use commas to separate PNG file names.)"
         ],
         "fps": number,
         "locking": true or false
-    }
+    }`
 
 # Idle Set objects: (object to contain a set of Animations designated as "Idle" animations)
 - *animations*            (A list of *Animation* objects, described above)
@@ -41,7 +41,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 - *max random seconds*    (represents the maximum seconds allowed before an Idle is selected)
 
     (**JSON**):
-    {
+    `{
         "randomSecMin": number,
         "randomSecMax": bigger number,
         "idleAnims": [
@@ -52,7 +52,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
                 another Animation JSON Object(s)
             }
         ]
-    }
+    }`
 
 # Expression Set objects:
 - *name*            The name of the Expression
@@ -65,21 +65,21 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *animations*        A specific list of 6 Animation objects:
     -- the "Main" Animation.            Play when your character is doing nothing. (**REQUIRED**)
-    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+    ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/mainEx.png)
     -- the "Idles" IdleSet.             Contains the set of Idle animations to randomly be played when your character is doing nothing. (Can be NULL)
-    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+    ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/idleEx.gif)
     -- the "Talk" Animation.            Plays when your character is speaking
-    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+    ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/talkEx.gif)
     -- the "Peak" Animation.            Plays when your character is yelling
-    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+    ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/peakEx.gif)
     -- the "TransitionIN" Animation     Plays when your character is ENTERING this Expression (**REQUIRED**)
-    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+    ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trInEx.gif)
     -- the "TransitionOut" Animation    Plays when your character is LEAVING this Expression (**REQUIRED**)
-    ![](https://github.com/Your_Repository_Name/Your_GIF_Name.gif)
+    ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trOutEx.gif)
 
 
     (**JSON**):
-    {
+    `{
         "name": type the name of the animation surrounded by quotation marks,
         "hotkey": type the text shown by the "hotkey names" program, surrounded by quotation marks,
         "requires": [
@@ -112,5 +112,5 @@ When a tuber is loaded, all the images are imported and organized into Animation
             Animation JSON Object (**REQUIRED**)
         } 
         }
-    }
+    }`
 
