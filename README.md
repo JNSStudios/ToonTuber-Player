@@ -70,21 +70,27 @@ When a tuber is loaded, all the images are imported and organized into Animation
 - *animations*        A specific list of 6 Animation objects:
     
     -- the "Main" Animation.            Plays when your character is doing nothing. (**REQUIRED**)
+    
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/mainEx.png)
     
     -- the "Idles" IdleSet.             Contains the set of Idle animations to randomly be played when your character is doing nothing. (Can be NULL)
+    
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/idleEx.gif)
     
     -- the "Talk" Animation.            Plays when your character is speaking
+    
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/talkEx.gif)
     
     -- the "Peak" Animation.            Plays when your character is yelling
+    
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/peakEx.gif)
     
     -- the "TransitionIN" Animation     Plays when your character is ENTERING this Expression (**REQUIRED**)
+    
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trInEx.gif)
     
     -- the "TransitionOut" Animation    Plays when your character is LEAVING this Expression (**REQUIRED**)
+    
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trOutEx.gif)
 
 
