@@ -15,7 +15,7 @@ import imageio
 import configparser
 import pygame_gui
 
-debugMode = True
+debugMode = False
 
 version = "v1.0.0"
 
@@ -42,7 +42,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     print("Unhandled exception:", exc_type, exc_value)
 
     # Play a sound when an exception occurs
-    if(not debugMode):
+    if(not debugMode and exc_type != KeyboardInterrupt):
         winsound.PlaySound("assets\error.wav", winsound.SND_FILENAME)
 
     # Call the default exception handler
@@ -149,7 +149,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"keybindID": "112", "keybind": "p", "bgcolor": (0, 255, 0)}
+    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255)}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -180,17 +180,12 @@ except Exception as e:
     peakThreshold = 90
 
 try:
-    settingsKeybind = pygame.key.key_code(prefini["Settings"]["keybindID"].strip("\""))
-except Exception as e:
-    print("Error reading keybindID from preferences.ini. Setting to p...")
-    settingsKeybind = pygame.key.key_code("p")
-
-try:
     settingsKeybindName = prefini["Settings"]["keybind"].strip("\"")
 except Exception as e:
-    print("Error reading keybind from preferences.ini. Setting to the key from the ID...")
-    settingsKeybindName = settingsKeybind.name()
-
+    print("Error reading keybind from preferences.ini. Setting to \"p\"...")
+    settingsKeybindName = pygame.key.key_code("p")
+    
+settingsKeybind = pygame.key.key_code(settingsKeybindName)
 try:
     BGCOLOR = eval(prefini["Settings"]["bgcolor"].strip("\""))
 except Exception as e:
@@ -200,7 +195,6 @@ except Exception as e:
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
-
 
 debugPrint("preferences.ini read.\Initializing audio data stuff...")
 
@@ -226,23 +220,18 @@ numdevices = 0
 
 def getAudioDevices(initial=False):
     global deviceList, numdevices, audioDeviceList, audioDeviceNames, audio_device_id, audioDeviceText
-    print("Refreshing audio device list...\n\n")
     deviceList = pa.get_host_api_info_by_index(0)
     numdevices = deviceList.get('deviceCount')
     audioDeviceList.clear()
     audioDeviceNames.clear()
-    print("audioDeviceList.clear() =", audioDeviceList)
-    print("audioDeviceNames.clear() =", audioDeviceNames)
     for i in range(0, numdevices):
         if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
             deviceName = pa.get_device_info_by_host_api_device_index(0, i).get('name')             
-            print(deviceName)
             if(deviceName == lastAudioDevice and initial):
                 audio_device_id = i
                 audioDeviceText = str(i)
             audioDeviceList[deviceName] = i
             audioDeviceNames.append(deviceName)
-    print("\n")
 
 getAudioDevices(True)
 
@@ -1182,15 +1171,14 @@ while running:
         # key pressed during settings        
         elif event.type == pygame.KEYDOWN and currentScreen == "settings":
             if(changingKeybind):
-                print(event.key)
+                # print(event.key)
                 settingsKeybind = event.key
                 settingsKeybindName = pygame.key.name(event.key)
-                print("keybind changed to " + settingsKeybindName)
+                # print("keybind changed to " + settingsKeybindName)
 
                 changeSettingsKeybindButton.text = f'Change Settings Keybind (\"{settingsKeybindName}\")'
                 changeSettingsKeybindButton.rebuild()
 
-                prefini.set("Settings", "keybindid", str(settingsKeybind) )
                 prefini.set("Settings", "keybind", "\"" + str(settingsKeybindName) + "\"" )
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
@@ -1243,7 +1231,7 @@ while running:
             changeBGColorButton.enable()
         
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
-            print("dropdown changed")
+            # print("dropdown changed")
             getAudioDevices()
             audioDeviceDropdown.options_list = audioDeviceNames
             audioDeviceDropdown.kill()
@@ -1311,7 +1299,7 @@ while running:
         display_fps("anim FPS: ", fpsClock, 50)
 
         if(changingKeybind):
-            print("changing keybind")
+            # print("changing keybind")
             draw_text_options([ClickableText("Press a key to change keybind", (0, 400), UniFont, WHITE, None)])
 
         # these values assume that the top left corner of the sprite is 0,0
