@@ -1051,22 +1051,27 @@ opening_options = [
 
 debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
 
-openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 250), (200, 50)),
-                                             text='Open Editor',
-                                             manager=settings_UImanager)
-
 loadToonTuberButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 150), (200, 50)),
                                              text='Load ToonTuber',
                                              manager=settings_UImanager)
 
-changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 300), (400, 50)),
+changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 200), (300, 50)),
                                                 text=f'Change Settings Keybind (\"{settingsKeybindName}\")',
+                                                manager=settings_UImanager)
+
+changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 250), (225, 50)),
+                                                text='Change Background Color',
                                                 manager=settings_UImanager)
 
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                         starting_option=lastAudioDevice,
-                                                        relative_rect=pygame.Rect((0, 200), (350, 50)),
+                                                        relative_rect=pygame.Rect((0, 300), (350, 50)),
                                                         manager=settings_UImanager)
+
+openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 350), (200, 50)),
+                                             text='Open Editor',
+                                             manager=settings_UImanager)
+
 
 talk_textEntry = pygame_gui.elements.UITextEntryLine(
     pygame.Rect((250, height-55), (50, 25)),
@@ -1084,9 +1089,6 @@ peak_textEntry = pygame_gui.elements.UITextEntryLine(
 peak_textEntry.set_allowed_characters('numbers')
 peak_textEntry.set_text(str(peakThreshold))
 
-changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 350), (225, 50)),
-                                                text='Change Background Color',
-                                                manager=settings_UImanager)
 
 
 # text_settings = UniFont.render("SETTINGS", True, BLACK)
@@ -1247,7 +1249,7 @@ while running:
             audioDeviceDropdown.kill()
             audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                                     starting_option=lastAudioDevice,
-                                                                    relative_rect=pygame.Rect((0, 200), (350, 50)),
+                                                                    relative_rect=pygame.Rect((0, 300), (350, 50)),
                                                                     manager=settings_UImanager)
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == loadToonTuberButton:
