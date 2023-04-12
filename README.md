@@ -15,7 +15,10 @@ If the program is unable to load the last JSON file for any reason, the program 
 
 When a tuber is loaded, all the images are imported and organized into Animation objects, which are then further organized into Canned Animation objects and Expression Sets. The exact structure of each type is described below, as well as how they are represented within the JSON file. You can use these JSON representations to build your own by copying and pasting it in, and by referencing the "referenceTuber.json" file
 
-# Animation objects 
+# A guide to making your own ToonTuber JSON
+**(since the editor program doesn't exist yet)**
+
+**Animation objects** 
 - *frames*:                path(s) to a single PNG, a sequence of PNGs, or a GIF.
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/pngsequenceEx.png)
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/gifEx.png)
@@ -35,7 +38,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-# Idle Set objects
+**Idle Set objects**
 - *animations*:            A list of *Animation* objects, described above
 
 - *min random seconds*:    represents the minimum number of seconds needed before an Idle animation is selected
@@ -58,7 +61,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-# Expression Set objects
+**Expression Set objects**
 - *name*:            The name of the Expression
 
 - *hotkeys*:         The text representing the key(s) you have to press in order to trigger this expression. Use the "hotkey names" program that displays the name of the keys you press to figure out what to put for this data. If you have multiple, separate them with commas. If you do not want a hotkey for an expression set (for example, if you want a "Hidden" Expression that makes your character invisible, and you only want accessible after a canned "Disappear" animation), you can type the word "null" (without the quotation marks).
@@ -134,7 +137,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-# Canned Animation objects
+**Canned Animation objects**
 - *name*:            The name of the Canned Animation
 
 - *hotkeys*          Same as the Expression Set "hotkeys" list. List as many as you want in quotation marks, separated by commas, or type "null" (without the quotation marks) if you don't want a hotkey.
@@ -168,7 +171,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-# Full ToonTuber JSON data structure
+**Full ToonTuber JSON data structure**
 - *name*:                          The name of the ToonTuber
 
 - *creator*:                       The name of the person who created the ToonTuber
@@ -186,16 +189,16 @@ When a tuber is loaded, all the images are imported and organized into Animation
     (**JSON**)
     ```
     {
-    "name": "type the name of your ToonTuber here",
-    "creator": "type your username and/or real name here",
-    "created": "don't worry about this, it'll be overwritten by the editor program",
-    "last_modified": "same with this one",
-    "random_duplicate_reduction": 0 to 1,
-    "expressions": [
-        List of ExpressionSet Objects
-    ],
-    "canned_anims": [
-        List of Canned Animation Objects
-    ]
+        "name": "type the name of your ToonTuber here",
+        "creator": "type your username and/or real name here",
+        "created": "don't worry about this, it'll be overwritten by the editor program",
+        "last_modified": "same with this one",
+        "random_duplicate_reduction": 0 to 1,
+        "expressions": [
+            List of ExpressionSet Objects
+        ],
+        "canned_anims": [
+            List of Canned Animation Objects
+        ]
     }
     ```
