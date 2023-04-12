@@ -71,7 +71,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
             "relative path to PNG/GIF used (use commas to separate PNG file names.)",
             "(a relative path is the path from the "toontuber.py" file to the image.)",
             "(usually, these should be inside of the ToonTuber's folder. If it is, use the below template:)",
-            "ToonTubers\\(name of the ToonTuber folder)\\(name of folder that contains your grames)\\(file name)",
+            "ToonTubers\\(name of the ToonTuber folder)\\(name of folder that contains your frames)\\(file name)",
         ],
         "fps": number,
         "locking": true or false
@@ -184,15 +184,15 @@ When a tuber is loaded, all the images are imported and organized into Animation
 ### Canned Animation objects
 - *name*:            The name of the Canned Animation
 
-- *hotkeys*          Same as the Expression Set "hotkeys" list. List as many as you want in quotation marks, separated by commas, or type "null" (without the quotation marks) if you don't want a hotkey.
+- *hotkeys*:          Same as the Expression Set "hotkeys" list. List as many as you want in quotation marks, separated by commas, or type "null" (without the quotation marks) if you don't want a hotkey.
 
-- *requires*        Same as the Expression Set "requires" list. List as many as you want, or type "null."
+- *requires*:        Same as the Expression Set "requires" list. List as many as you want, or type "null."
 
-- *blockers*        Same as the Expression Set "blockers" list. List as many as you want, or type "null."
+- *blockers*:        Same as the Expression Set "blockers" list. List as many as you want, or type "null."
 
-- *result*            The name of the Expression Set or Canned Animation that will be played after this Canned Animation is finished. **THIS IS REQUIRED.** If you do not list a result, the Canned Animation will get stuck in an infinite loop.
+- *result*:            The name of the Expression Set or Canned Animation that will be played after this Canned Animation is finished. **THIS IS REQUIRED.** If you do not list a result, the Canned Animation will get stuck in an infinite loop.
 
-- *animation*        The Animation object that will be played when this Canned Animation is triggered.
+- *animation*:        The Animation object that will be played when this Canned Animation is triggered.
 
     (**JSON**)
     ```
