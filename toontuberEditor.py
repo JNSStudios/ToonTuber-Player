@@ -1,3 +1,8 @@
+# ATTENTION: THIS CODE IS NOT OPERATIONAL YET. YOU CANNOT CREATE/EDIT TOONTUBERS USING THIS SCRIPT AS OF RIGHT NOW.
+# For now, you will have to manually edit the toontuber.py file to create your own toontuber.
+# This script is really old anyway, and a lot of stuff has changed since I wrote it. I'll probably rewrite it from scratch at some point.
+# Please refer to the README for info on how to create your own toontuber JSON file.
+
 import tkinter as tk
 from tkinter import filedialog
 
