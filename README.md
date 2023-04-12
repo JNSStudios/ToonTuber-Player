@@ -15,6 +15,33 @@ If the program is unable to load the last JSON file for any reason, the program 
 
 When a tuber is loaded, all the images are imported and organized into Animation objects, which are then further organized into Canned Animation objects and Expression Sets. The exact structure of each type is described below, as well as how they are represented within the JSON file. You can use these JSON representations to build your own by copying and pasting it in, and by referencing the "referenceTuber.json" file
 
+# Program features
+ - Press "p" key (or other assigned key) to open the Settings screen
+    - "Load Tuber" button to load in new JSON data
+     - Change the key used to open the Settings screen
+     - Change background color
+     - A dropdown menu to change audio input device used for the program
+     - "Open ToonTuber Editor" (not working yet, as editor doesn't exist yet)
+ - Press hotkeys assigned by the Tuber JSON to play the related animation (even if the window is out of focus!)
+   (**NOTE:** While the Player window will continue to run when minimized, it can't be minimized in order for OBS to capture it. This is unfortunately an issue that I have no control over.)
+ - If the program crashes, an error report is saved in the same folder. A loud error sound will also play so the user will know that the program crashed even if they cannot see it.
+ - This program supports pressing keyboard hotkeys, and I want it to support StreamDecks in the future (I have some code ready for it, but I cannot test if it works as I do not own a StreamDeck. If one of you does and would like to contribute, fork this repository and program in StreamDeck functionality into this program.)
+
+# What you will need:
+   - for running as Python code:
+      - Python 3.10
+      - an IDE to run the code (I use VSCode with Python extensions)
+      - import the following libraries using "pip":
+         - pygame (pip install pygame)
+         - pygame-gui (pip install pygame_gui)
+         - PyAudio (pip install pyaudio)
+         - numpy (pip install numpy)
+         - keyboard (pip install keyboard)
+         - streamdeck (pip install streamdeck)
+         - imageio (pip install imageio)
+      
+   - if you are running this as a compiled EXE file, you should be all set!
+
 # A guide to making your own ToonTuber JSON
 **(since the editor program doesn't exist yet)**
 
@@ -101,6 +128,8 @@ When a tuber is loaded, all the images are imported and organized into Animation
     -- the "TransitionOut" Animation    Plays when your character is LEAVING this Expression (**REQUIRED**)
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trOutEx.gif)
+
+    (Please note that **just because some animations are required, that doesn't mean they can be "removed."** For example, I have a "HIDDEN" Expression Set that is supposed to be used when my character is offscreen, and all I did for the Main, Transition In, and Transition Out animations was a single blank frame. In essence, I made it so there was no visual animation occurring, and it could be overwritten at a moments notice because it was only one frame.)
 
     (**JSON**):
     ```
