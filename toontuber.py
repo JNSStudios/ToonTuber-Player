@@ -1,9 +1,14 @@
-import traceback
+# you'll need to use pip to get these libraries up here
 import pygame
+import pygame_gui
 import pyaudio
 import numpy as np
-import threading
 import keyboard
+from StreamDeck.DeviceManager import DeviceManager
+import imageio
+
+# these should be built-in
+import threading
 import tkinter as tk
 from tkinter import filedialog
 import json
@@ -11,11 +16,9 @@ import os
 import random
 import sys
 import winsound
-from StreamDeck.DeviceManager import DeviceManager
-import imageio
 import configparser
-import pygame_gui
 import datetime
+import traceback
 
 debugMode = False
 
