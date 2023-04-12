@@ -1,3 +1,4 @@
+import traceback
 import pygame
 import pyaudio
 import numpy as np
@@ -14,6 +15,7 @@ from StreamDeck.DeviceManager import DeviceManager
 import imageio
 import configparser
 import pygame_gui
+import datetime
 
 debugMode = False
 
@@ -47,6 +49,21 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
     # Call the default exception handler
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+    # save the exception and traceback to a file called "Player Crash Report {date and time}.txt"
+    # and have the file contain the error and traceback
+    errorFileID = 0
+    while(os.path.isfile(f"Player Crash Report {datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')}{f' ({errorFileID})' if errorFileID != 0 else ''}.txt")):
+        errorFileID += 1
+
+    if(exc_type != KeyboardInterrupt):
+        with open(f"Player Crash Report {datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')}{f' ({errorFileID})' if errorFileID != 0 else ''}.txt", "w") as f:
+            f.write("Oops! The player crashed! Sorry about that.\nThe text below is the error report. If you don't know what this means, please send this file to the developer, along with a description of what happened (which you can type here).\n\nWhat I was doing: \n\n")
+            f.write(f"Unhandled exception: {exc_type} {exc_value}")
+            for line in traceback.format_tb(exc_traceback):
+                f.write(line)
+            f.close()
+    
 
 # Set the exception handler
 sys.excepthook = handle_exception
