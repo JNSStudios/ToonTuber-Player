@@ -116,6 +116,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "1"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
+    prefini["Settings"] = {"keybindID": "112", "keybind": "p"}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -144,6 +145,19 @@ try:
 except Exception as e:
     print("Error reading peak threshold from preferences.ini. Setting to 90...")
     peakThreshold = 90
+
+try:
+    settingsKeybind = pygame.key.key_code(prefini["Settings"]["keybindID"].strip("\""))
+except Exception as e:
+    print("Error reading keybindID from preferences.ini. Setting to p...")
+    settingsKeybind = pygame.key.key_code("p")
+
+try:
+    settingsKeybindName = prefini["Settings"]["keybind"].strip("\"")
+except Exception as e:
+    print("Error reading keybind from preferences.ini. Setting to the key from the ID...")
+    settingsKeybindName = settingsKeybind.name()
+
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
@@ -265,7 +279,10 @@ def select_audio_device(id):
 debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 
 def pushHotKey(key):
-    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType
+    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingKeybind
+    if(changingKeybind):
+        return 
+   
     # print(hotkeyDictionary)
     if(key in hotkeyDictionary):
         # print(f"Hotkey pressed: {key}")
@@ -648,9 +665,9 @@ class CannedAnimation:
         self.blockers.append(newBlockers)
 
 def update_render_thread():
-    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, openingScreen, audioDeviceScreen
+    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, currentScreen
     while True:
-        if(openingScreen or audioDeviceScreen):
+        if(currentScreen == "opening" or currentScreen == "audio"):
             continue
         timeElapsed = fpsClock.tick(framerate) / 1000.0  # Get the time passed since last frame
         # print(get_idle_timer())
@@ -775,9 +792,11 @@ class ClickableText:
         if(self.action is not None):
             self.action()
 
-openingScreen = True
+currentScreen = "opening"
+# can be "opening", "settings", "audio", and "tuber"
+
+
 updateFrameRunning = False
-audioDeviceScreen = False
 
 # Button Actions
 def openEditor():
@@ -797,11 +816,9 @@ def openTuber():
     loadTuber(None)
 
 def openAudioSettings():
-    global audioDeviceScreen, openingScreen, settingsScreen
+    global currentScreen
     print("Change Audio Device")
-    audioDeviceScreen = True
-    openingScreen = False
-    settingsScreen = False
+    currentScreen = "audio"
     # get the list of all connected audio devices
     deviceList = pa.get_host_api_info_by_index(0)
     numdevices = deviceList.get('deviceCount')
@@ -812,8 +829,8 @@ def openAudioSettings():
             audioDeviceList[i] = pa.get_device_info_by_host_api_device_index(0, i).get('name')
 
 def createNewTuber():
-    global openingScreen
-    openingScreen = False
+    global currentScreen
+    currentScreen = "tuber"
     print("New Tuber")
 
 def talkThreshSelected():
@@ -827,6 +844,14 @@ def peakThreshSelected():
     settings_options[4].setFont(UniFont)
     selectedBox = "peak"
     peakThreshText = ""
+
+changingKeybind = False
+
+def beginKeybindChange():
+    global changingKeybind
+    settings_options[10].setFont(UniFontBigger)
+    settings_options[10].setText("Press a key to change the keybind")
+    changingKeybind = True
 
 debugPrint("GUI classes created.\nCreating Tuber loading functions...")
 
@@ -890,9 +915,8 @@ def loadCanned(cannedAnimation):
     currentExpression = cannedAnimation.getName()
 
 def loadTuber(path):
-    global openingScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settingsScreen, settings_options
-    openingScreen = False
-    settingsScreen = False
+    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options
+    currentScreen = "tuber"
 
     if(path == None):
         # file dialog to select json file   
@@ -1009,11 +1033,12 @@ settings_options = [
     ClickableText("Open Editor", (0, 250), UniFont, WHITE, openEditor),
     ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-50), UniFontSmaller, WHITE, talkThreshSelected),
     ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-100), UniFontSmaller, WHITE, peakThreshSelected),
-    ClickableText(f"Current Device: {audioDeviceList[audio_device_id]}", (100, height-200), UniFontSmaller, WHITE, None),
+    ClickableText(f"Audio Device: {audioDeviceList[audio_device_id]}", (100, height-200), UniFontSmaller, WHITE, None),
     ClickableText(f"Current Tuber: {tuberName} by {creator}", (0, 0), UniFontBigger, WHITE, None),
     ClickableText(f"ToonTuber Player {version}", (0, 40), UniFontSmaller, WHITE, None),
     ClickableText("program by JNS", (0, 60), UniFontSmaller, WHITE, None),
-
+    ClickableText("original idea by ScottFalco", (0, 80), UniFontSmaller, WHITE, None),
+    ClickableText(f"Change Settings Screen Keybind (\"{settingsKeybindName}\")", (0, 300), UniFont, WHITE, beginKeybindChange)
 ]
 
 opening_options = [
@@ -1024,9 +1049,6 @@ opening_options = [
 debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
 
 # text_settings = UniFont.render("SETTINGS", True, BLACK)
-
-# Define a variable to keep track of whether the settings screen is active
-settingsScreen = False
 
 # Define a function to draw the text options on the screen
 def draw_text_options(text):
@@ -1092,24 +1114,41 @@ debugPrint("Audio and render threads started.\nBeginning main Pygame loop...")
 if(os.path.exists(lastTuberLoaded)):
     loadTuber(lastTuberLoaded)
 
+newAudioDevice = ""
+
 # Main Pygame loop
 running = True
 while running:
-    if(not updateFrameRunning and not openingScreen):
+    if(not updateFrameRunning and currentScreen != "opening"):
         updateFrameRunning = True
         render_thread.start()
         idleTimer_thread.start()
     # Measure the time between frames and limit the FPS to 60
     delta_time = clock.tick(60) / 1000.0
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_p and not openingScreen and not audioDeviceScreen:
+        elif event.type == pygame.KEYDOWN and (event.key == settingsKeybind and not changingKeybind) and (currentScreen == "tuber" or currentScreen == "settings"):
             # print("toggling settings")
-            settingsScreen = not settingsScreen
+            currentScreen = "tuber" if currentScreen == "settings" else "settings"
         # key pressed during settings
-        elif event.type == pygame.KEYDOWN and settingsScreen:
+        elif event.type == pygame.KEYDOWN and currentScreen == "settings":
+            if(changingKeybind):
+                print(event.key)
+                settingsKeybind = event.key
+                try:
+                    settingsKeybindName = pygame.key.name(event.key)
+                    print("keybind changed to " + settingsKeybindName)
+                except Exception as e:
+                    print(e)
+                    exit()
+                settings_options[10].setText(f"Change Settings Screen Keybind (\"{settingsKeybindName}\")")
+                settings_options[10].setFont(UniFont)
+                prefini.set("Settings", "keybindid", str(settingsKeybind) )
+                prefini.set("Settings", "keybind", "\"" + str(settingsKeybindName) + "\"" )
+                with open("preferences.ini", "w") as configfile:
+                    prefini.write(configfile)
+                changingKeybind = False
             # print("key pressed and settings is active")
             # save the latest key pressed in case the user is typing a value for the mic threshold
             latestUnicode = event.unicode
@@ -1151,10 +1190,9 @@ while running:
                 settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
         
         # key pressed on audio device screen
-        elif event.type == pygame.KEYDOWN and audioDeviceScreen:
+        elif event.type == pygame.KEYDOWN and currentScreen == "audio":
             # print("key pressed on audio screen", event.key)
             latestUnicode = event.unicode
-            newAudioDevice = ""
             # print(latestUnicode)
             acceptableChars = "0123456789"
             if(latestUnicode in acceptableChars):
@@ -1173,9 +1211,10 @@ while running:
                     audioDeviceText = str(newAudioDevice)
             elif(event.key == pygame.K_RETURN):
                 audio_device_id = newAudioDevice
-                audioDeviceScreen = False
+                currentScreen = "settings"
                 # get the name of this audio device and write it to the "lastMic" value in preferences.ini
                 audioDeviceName = audioDeviceList[audio_device_id]
+                settings_options[5].setText(f"Audio Device: {audioDeviceName}")
                 prefini.set("LastUsed", "lastMic", "\"" + str(audioDeviceName) + "\"" )
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
@@ -1184,7 +1223,8 @@ while running:
 
             for option in audioDevice_options:
                 option.setFont(UniFontSmaller)
-            audioDevice_options[newAudioDevice].setFont(UniFont)
+            if(newAudioDevice != ""):
+                audioDevice_options[newAudioDevice].setFont(UniFont)
             audioDevice_selected[0].setText(f"Selected Audio Device: {audioDeviceText}")
         
         # if the user clicks on a text option, do the action
@@ -1204,11 +1244,11 @@ while running:
                 prefini.write(ini)
 
 
-            if openingScreen:
+            if currentScreen == "opening":
                 for option in opening_options:
                     if option.isClicked(mousePos):
                         option.doAction()
-            if settingsScreen:
+            if currentScreen == "settings":
                 for option in settings_options:
                     if option.isClicked(mousePos):
                         option.doAction()
@@ -1217,7 +1257,7 @@ while running:
     screen.fill(GREEN)
 
     # draw Tuber to screen
-    if(not audioDeviceScreen and not openingScreen):
+    if(currentScreen == "tuber" or currentScreen == "settings"):
         tuber_rect = pygame.Rect(0, 0, width, height)
         # failsafe. will repeat a frame if the current frame is out of range
         if(currentFrame >= len(tuberFrames)):
@@ -1230,19 +1270,19 @@ while running:
         screen.blit(render, tuber_rect)
 
     # if on the opening screen, prompt user if they want to open an existing tuber or make a new one
-    if openingScreen:
+    if currentScreen == "opening":
         # print("opening screen")
         darken_screen()
         draw_text_options(opening_options)
         # if user clicks on "Open ToonTuber", open the file explorer and allow them to select a tuber
         # if user clicks on "New ToonTuber", open the editor
-    elif audioDeviceScreen:
+    elif currentScreen == "audio":
         darken_screen()
         draw_text_options(audioDeviceScreenText)
         draw_text_options(audioDevice_options)
         draw_text_options(audioDevice_selected)
 
-    elif settingsScreen:
+    elif currentScreen == "settings":
         darken_screen()
         draw_text_options(settings_options)
         # Display the FPS counter in the bottom right corner
