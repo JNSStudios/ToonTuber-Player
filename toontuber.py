@@ -13,6 +13,7 @@ import winsound
 from StreamDeck.DeviceManager import DeviceManager
 import imageio
 import configparser
+import pygame_gui
 
 debugMode = True
 
@@ -20,6 +21,9 @@ version = "v1.0.0"
 
 peakThreshold = 90
 talkThreshold = 50
+
+GREEN = (0, 255, 0)
+BGCOLOR = GREEN
 
 print(f"ToonTuber Player {version}")
 
@@ -98,7 +102,36 @@ selectedBox = ""
 audioDeviceText = "1"
 audio_device_id = 1
 
-debugPrint("Global variables initialized. Reading preferences.ini...")
+# Define some colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+
+debugPrint("Global variables initialized.\nInitializing Pygame...")
+
+pygame.init()
+
+debugPrint("Pygame initialized. Setting up window...")
+# Set up the Pygame window
+width, height = 750, 750
+screen = pygame.display.set_mode((width, height))
+
+settings_UImanager = pygame_gui.UIManager((width, height))
+audio_UImanager = pygame_gui.UIManager((width, height))
+
+# Set the window name (NOTE: changing the caption might screw up existing Window Captures in OBS. Best not to change this.)
+pygame.display.set_caption("ToonTuber Player")
+
+# Opening screen
+UniFont = pygame.font.Font('freesansbold.ttf', 24)
+UniFontSmaller = pygame.font.Font('freesansbold.ttf', 18)
+UniFontBigger = pygame.font.Font('freesansbold.ttf', 36)
+text = UniFont.render("Toon Tuber Player", True, (255, 255, 255))
+textRect = text.get_rect()
+textRect.center = (width // 2, height // 2)
+
+debugPrint("PyGame set up.\nReading from preferences.ini....")
 
 # read from preferences.ini file
 try:
@@ -114,9 +147,9 @@ except Exception as e:
         pass
 
     prefini = configparser.ConfigParser()
-    prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "1"}
+    prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"keybindID": "112", "keybind": "p"}
+    prefini["Settings"] = {"keybindID": "112", "keybind": "p", "bgcolor": (0, 255, 0)}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -158,38 +191,18 @@ except Exception as e:
     print("Error reading keybind from preferences.ini. Setting to the key from the ID...")
     settingsKeybindName = settingsKeybind.name()
 
+try:
+    BGCOLOR = eval(prefini["Settings"]["bgcolor"].strip("\""))
+except Exception as e:
+    print("Error reading background color from preferences.ini. Setting to green...")
+    BGCOLOR = GREEN
+
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
 
-# Define some colors
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GREEN = (0, 255, 0)
-RED = (255, 0, 0)
-BLUE = (0, 0, 255)
 
-debugPrint("Preferences.ini successfully read from. Initializing Pygame...")
-
-pygame.init()
-
-debugPrint("Pygame initialized. Setting up window...")
-# Set up the Pygame window
-width, height = 750, 750
-screen = pygame.display.set_mode((width, height))
-
-# Set the window name
-pygame.display.set_caption("ToonTuber Player")
-
-# Opening screen
-UniFont = pygame.font.Font('freesansbold.ttf', 24)
-UniFontSmaller = pygame.font.Font('freesansbold.ttf', 18)
-UniFontBigger = pygame.font.Font('freesansbold.ttf', 36)
-text = UniFont.render("Toon Tuber Player", True, (255, 255, 255))
-textRect = text.get_rect()
-textRect.center = (width // 2, height // 2)
-
-debugPrint("Opening screen set up.\nInitializing audio data stuff...")
+debugPrint("preferences.ini read.\Initializing audio data stuff...")
 
 # audio stuff
 rms = 0
@@ -206,6 +219,8 @@ audioDeviceList = {}
 
 audioDevice_options = []
 
+audioDeviceNames = []
+
 #populate audio device table
 deviceList = pa.get_host_api_info_by_index(0)
 numdevices = deviceList.get('deviceCount')
@@ -215,7 +230,9 @@ for i in range(0, numdevices):
         if(deviceName == lastAudioDevice):
             audio_device_id = i
             audioDeviceText = str(i)
-        audioDeviceList[i] = deviceName
+        audioDeviceList[deviceName] = i
+        audioDeviceNames.append(deviceName)
+
 
 def audio_callback(in_data, frame_count, time_info, status):
     global rms, avgVol
@@ -252,14 +269,13 @@ stream.start_stream()
 
 # Prompts user to select a new input device
 def select_audio_device(id):
-    global audio_device_id, stream
+    global stream
     # info = pa.get_host_api_info_by_index(0)
     # numdevices = info.get('deviceCount')
     # print("Available input devices:")
     # for i in range(0, numdevices):
     #     if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
     #         print("ID:", i, "- Name:", pa.get_device_info_by_host_api_device_index(0, i).get('name'))
-    audio_device_id = id
     print("Stopping audio stream...")
     stream.stop_stream()
     print("Closing audio stream...")
@@ -795,7 +811,6 @@ class ClickableText:
 currentScreen = "opening"
 # can be "opening", "settings", "audio", and "tuber"
 
-
 updateFrameRunning = False
 
 # Button Actions
@@ -815,43 +830,23 @@ def openTuber():
     print("Open Tuber")
     loadTuber(None)
 
-def openAudioSettings():
-    global currentScreen
-    print("Change Audio Device")
-    currentScreen = "audio"
-    # get the list of all connected audio devices
-    deviceList = pa.get_host_api_info_by_index(0)
-    numdevices = deviceList.get('deviceCount')
-    audioDevice_options.clear()
-    for i in range(0, numdevices):
-        if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-            audioDevice_options.append(ClickableText(f"{i} - {pa.get_device_info_by_host_api_device_index(0, i).get('name')}", (30, (i*50)+150), UniFontSmaller, (255, 255, 255), openAudioSettings))
-            audioDeviceList[i] = pa.get_device_info_by_host_api_device_index(0, i).get('name')
-
 def createNewTuber():
     global currentScreen
     currentScreen = "tuber"
     print("New Tuber")
 
-def talkThreshSelected():
-    global selectedBox, settings_options, talkThreshText
-    settings_options[3].setFont(UniFont)
-    selectedBox = "talk"
-    talkThreshText = ""
-
-def peakThreshSelected():
-    global selectedBox, settings_options, peakThreshText
-    settings_options[4].setFont(UniFont)
-    selectedBox = "peak"
-    peakThreshText = ""
-
 changingKeybind = False
 
 def beginKeybindChange():
     global changingKeybind
-    settings_options[10].setFont(UniFontBigger)
-    settings_options[10].setText("Press a key to change the keybind")
     changingKeybind = True
+
+colorPickerGUI = None
+
+def changeBGColor():
+    global BGCOLOR, colorPickerGUI
+    colorPickerGUI = pygame_gui.windows.UIColourPickerDialog(pygame.Rect(160,50,420,400), settings_UImanager, window_title="Choose Background Color", initial_colour=pygame.Color(BGCOLOR[0], BGCOLOR[1], BGCOLOR[2]))
+    changeBGColorButton.disable()
 
 debugPrint("GUI classes created.\nCreating Tuber loading functions...")
 
@@ -1020,7 +1015,7 @@ def loadTuber(path):
     loadExpression(expressionList[expressionIndex[name1]], "main")
     # print(f"Path = {path}")
     prefini.set("LastUsed", "lastloaded", "\"" + str(path) + "\"")
-    settings_options[6].setText(f"Current Tuber: {tuberName} by {creator}")
+    settings_options[2].setText(f"Current Tuber: {tuberName} by {creator}")
     with open("preferences.ini", "w") as configfile:
         prefini.write(configfile)
 
@@ -1028,17 +1023,13 @@ def loadTuber(path):
 
 # Define the clickable text options
 settings_options = [
-    ClickableText("Load ToonTuber", (0, 150), UniFont, WHITE, openTuber),
-    ClickableText("Change Audio Input", (0, 200), UniFont, WHITE, openAudioSettings),
-    ClickableText("Open Editor", (0, 250), UniFont, WHITE, openEditor),
-    ClickableText(f"Talk Threshold: {talkThreshText}/100", (100, height-50), UniFontSmaller, WHITE, talkThreshSelected),
-    ClickableText(f"Peak Threshold: {peakThreshText}/100", (100, height-100), UniFontSmaller, WHITE, peakThreshSelected),
-    ClickableText(f"Audio Device: {audioDeviceList[audio_device_id]}", (100, height-200), UniFontSmaller, WHITE, None),
+    ClickableText(f"Talk Threshold: ", (100, height-50), UniFontSmaller, WHITE, None),
+    ClickableText(f"Peak Threshold: ", (100, height-100), UniFontSmaller, WHITE, None),
     ClickableText(f"Current Tuber: {tuberName} by {creator}", (0, 0), UniFontBigger, WHITE, None),
     ClickableText(f"ToonTuber Player {version}", (0, 40), UniFontSmaller, WHITE, None),
     ClickableText("program by JNS", (0, 60), UniFontSmaller, WHITE, None),
-    ClickableText("original idea by ScottFalco", (0, 80), UniFontSmaller, WHITE, None),
-    ClickableText(f"Change Settings Screen Keybind (\"{settingsKeybindName}\")", (0, 300), UniFont, WHITE, beginKeybindChange)
+    ClickableText("original idea by ScottFalco", (0, 80), UniFontSmaller, WHITE, None)
+    
 ]
 
 opening_options = [
@@ -1047,6 +1038,44 @@ opening_options = [
 ]
 
 debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
+
+openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 250), (200, 50)),
+                                             text='Open Editor',
+                                             manager=settings_UImanager)
+
+loadToonTuberButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 150), (200, 50)),
+                                             text='Load ToonTuber',
+                                             manager=settings_UImanager)
+
+changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 300), (400, 50)),
+                                                text=f'Change Settings Keybind (\"{settingsKeybindName}\")',
+                                                manager=settings_UImanager)
+
+audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
+                                                        starting_option=lastAudioDevice,
+                                                        relative_rect=pygame.Rect((0, 200), (350, 50)),
+                                                        manager=settings_UImanager)
+
+talk_textEntry = pygame_gui.elements.UITextEntryLine(
+    pygame.Rect((250, height-55), (50, 25)),
+    manager=settings_UImanager
+)
+
+talk_textEntry.set_allowed_characters('numbers')
+talk_textEntry.set_text(str(talkThreshold))
+
+peak_textEntry = pygame_gui.elements.UITextEntryLine(
+    pygame.Rect((250, height-105), (50, 25)),
+    manager=settings_UImanager
+)
+
+peak_textEntry.set_allowed_characters('numbers')
+peak_textEntry.set_text(str(peakThreshold))
+
+changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 350), (225, 50)),
+                                                text='Change Background Color',
+                                                manager=settings_UImanager)
+
 
 # text_settings = UniFont.render("SETTINGS", True, BLACK)
 
@@ -1125,25 +1154,28 @@ while running:
         idleTimer_thread.start()
     # Measure the time between frames and limit the FPS to 60
     delta_time = clock.tick(60) / 1000.0
+    talkNotBlank = talk_textEntry.get_text() != "" 
+    peakNotBlank = peak_textEntry.get_text() != ""
+
+    
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN and (event.key == settingsKeybind and not changingKeybind) and (currentScreen == "tuber" or currentScreen == "settings"):
             # print("toggling settings")
             currentScreen = "tuber" if currentScreen == "settings" else "settings"
-        # key pressed during settings
+        # key pressed during settings        
         elif event.type == pygame.KEYDOWN and currentScreen == "settings":
             if(changingKeybind):
                 print(event.key)
                 settingsKeybind = event.key
-                try:
-                    settingsKeybindName = pygame.key.name(event.key)
-                    print("keybind changed to " + settingsKeybindName)
-                except Exception as e:
-                    print(e)
-                    exit()
-                settings_options[10].setText(f"Change Settings Screen Keybind (\"{settingsKeybindName}\")")
-                settings_options[10].setFont(UniFont)
+                settingsKeybindName = pygame.key.name(event.key)
+                print("keybind changed to " + settingsKeybindName)
+
+                changeSettingsKeybindButton.text = f'Change Settings Keybind (\"{settingsKeybindName}\")'
+                changeSettingsKeybindButton.rebuild()
+
                 prefini.set("Settings", "keybindid", str(settingsKeybind) )
                 prefini.set("Settings", "keybind", "\"" + str(settingsKeybindName) + "\"" )
                 with open("preferences.ini", "w") as configfile:
@@ -1154,90 +1186,26 @@ while running:
             latestUnicode = event.unicode
             # print(latestUnicode)
             acceptableChars = "0123456789."
-            if(latestUnicode in acceptableChars):
-                if(selectedBox == "talk"):
-                    talkThreshText += latestUnicode
-                    if(talkThreshText.isnumeric()):
-                        talkThreshold = int(talkThreshText)
-                        if(talkThreshold > 100):
-                            talkThreshold = 100
-                            talkThreshText = "100"
-                elif(selectedBox == "peak"):
-                    peakThreshText += latestUnicode
-                    if(peakThreshText.isnumeric()):
-                        peakThreshold = int(peakThreshText)
-                        if(peakThreshold > 100):
-                            peakThreshold = 100
-                            peakThreshText = "100"
-                settings_options[3].setText(f"Talk Threshold: {talkThreshold}/100")
-                settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
-            elif(event.key == pygame.K_BACKSPACE):
-                if(selectedBox == "talk"):
-                    talkThreshText = talkThreshText[:-1]
-                    if(talkThreshText.isnumeric()):
-                        talkThreshold = int(talkThreshText)
-                        if(talkThreshold > 100):
-                            talkThreshold = 100
-                            talkThreshText = "100"
-                elif(selectedBox == "peak"):
-                    peakThreshText = peakThreshText[:-1]
-                    if(peakThreshText.isnumeric()):
-                        peakThreshold = int(peakThreshText)
-                        if(peakThreshold > 100):
-                            peakThreshold = 100
-                            peakThreshText = "100"
-                settings_options[3].setText(f"Talk Threshold: {talkThreshText}/100")
-                settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
-        
-        # key pressed on audio device screen
-        elif event.type == pygame.KEYDOWN and currentScreen == "audio":
-            # print("key pressed on audio screen", event.key)
-            latestUnicode = event.unicode
-            # print(latestUnicode)
-            acceptableChars = "0123456789"
-            if(latestUnicode in acceptableChars):
-                audioDeviceText += latestUnicode
-                if(audioDeviceText.isnumeric() and int(audioDeviceText) <= len(audioDeviceList)-1):
-                    newAudioDevice = int(audioDeviceText)
-                elif(audioDeviceText.isnumeric() and int(audioDeviceText) > len(audioDeviceList)-1):
-                    newAudioDevice = len(audioDeviceList)-1
-                    audioDeviceText = str(newAudioDevice)
-            elif(event.key == pygame.K_BACKSPACE):
-                audioDeviceText = audioDeviceText[:-1]
-                if(audioDeviceText.isnumeric() and int(audioDeviceText) <= len(audioDeviceList)-1):
-                    newAudioDevice = int(audioDeviceText)
-                elif(audioDeviceText.isnumeric() and int(audioDeviceText) > len(audioDeviceList)-1):
-                    newAudioDevice = len(audioDeviceList)-1
-                    audioDeviceText = str(newAudioDevice)
-            elif(event.key == pygame.K_RETURN):
-                audio_device_id = newAudioDevice
-                currentScreen = "settings"
-                # get the name of this audio device and write it to the "lastMic" value in preferences.ini
-                audioDeviceName = audioDeviceList[audio_device_id]
-                settings_options[5].setText(f"Audio Device: {audioDeviceName}")
-                prefini.set("LastUsed", "lastMic", "\"" + str(audioDeviceName) + "\"" )
-                with open("preferences.ini", "w") as configfile:
-                    prefini.write(configfile)
-                select_audio_device(audio_device_id)
-                
+            
+            
 
-            for option in audioDevice_options:
-                option.setFont(UniFontSmaller)
-            if(newAudioDevice != ""):
-                audioDevice_options[newAudioDevice].setFont(UniFont)
-            audioDevice_selected[0].setText(f"Selected Audio Device: {audioDeviceText}")
-        
         # if the user clicks on a text option, do the action
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            # print("mouse clicked")
             mousePos = pygame.mouse.get_pos()
-            selectedBox = ""
-            settings_options[3].setFont(UniFontSmaller)
-            settings_options[4].setFont(UniFontSmaller)
-            if(peakThreshold < talkThreshold):
-                peakThreshold = talkThreshold
-                peakThreshText = str(talkThreshold)
-                settings_options[4].setText(f"Peak Threshold: {peakThreshText}/100")
+
+            if(talkNotBlank and int(talk_textEntry.get_text()) > 100):
+                talk_textEntry.set_text("100")
+            if(peakNotBlank and int(peak_textEntry.get_text()) > 100):
+                peak_textEntry.set_text("100")
+            if(peakNotBlank and talkNotBlank and int(peak_textEntry.get_text()) < int(talk_textEntry.get_text())):
+                peak_textEntry.set_text(talk_textEntry.get_text())
+
+            if(talkNotBlank):
+                talkThreshold = int(talk_textEntry.get_text())
+            if(peakNotBlank):
+                peakThreshold = int(peak_textEntry.get_text())
+            
+            # print("mouse clicked")
             prefini.set("Thresholds", "talkthresh", str(talkThreshold))
             prefini.set("Thresholds", "peakthresh", str(peakThreshold))
             with open("preferences.ini", "w") as ini:
@@ -1253,8 +1221,38 @@ while running:
                     if option.isClicked(mousePos):
                         option.doAction()
 
+        elif event.type == pygame_gui.UI_COLOUR_PICKER_COLOUR_PICKED:
+            BGCOLOR = event.colour
+            prefini.set("Settings", "bgcolor", str(BGCOLOR))
+            with open("preferences.ini", "w") as ini:
+                prefini.write(ini)
+            changeBGColorButton.enable()
+
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            if event.ui_element == loadToonTuberButton:
+                loadTuber(None)
+            elif(event.ui_element == openEditorButton):
+                openEditor()
+            elif(event.ui_element == changeSettingsKeybindButton):
+                beginKeybindChange()
+            elif(event.ui_element == changeBGColorButton):
+                changeBGColor()
+
+        settings_UImanager.process_events(event)
+    settings_UImanager.update(delta_time)
+
+    if(audioDeviceDropdown.selected_option != lastAudioDevice):
+        # get the ID of the selected option in the audio device list
+        newAudioDevice = audioDeviceDropdown.selected_option
+        lastAudioDevice = newAudioDevice
+        prefini.set("LastUsed", "lastmic", "\"" + str(lastAudioDevice) + "\"")
+        with open("preferences.ini", "w") as ini:
+            prefini.write(ini)
+        audio_device_id = audioDeviceList[newAudioDevice]
+        select_audio_device(audio_device_id)
+
     # Draw the green background
-    screen.fill(GREEN)
+    screen.fill(BGCOLOR)
 
     # draw Tuber to screen
     if(currentScreen == "tuber" or currentScreen == "settings"):
@@ -1288,6 +1286,11 @@ while running:
         # Display the FPS counter in the bottom right corner
         display_fps("program FPS: ",clock, 0)
         display_fps("anim FPS: ", fpsClock, 50)
+
+        if(changingKeybind):
+            print("changing keybind")
+            draw_text_options([ClickableText("Press a key to change keybind", (0, 400), UniFont, WHITE, None)])
+
         # these values assume that the top left corner of the sprite is 0,0
         # therefore, the bottom right of the sprite is the width and height
         
@@ -1310,6 +1313,9 @@ while running:
         # draw talk threshold arrow
         screen.blit(talkThresholdSprite, talkThreshPos)
         screen.blit(peakThresholdSprite, peakThreshPos)
+    
+    if(currentScreen == "settings"):
+        settings_UImanager.draw_ui(screen)
 
     # Update the Pygame window
     pygame.display.flip()
