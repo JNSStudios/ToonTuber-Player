@@ -195,6 +195,10 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *animation*:        The Animation object that will be played when this Canned Animation is triggered.
 
+(Below are two examples of Canned animations, one of the character appearing and waving, and another of the character leaving)
+
+![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/cannedEx1.gif) ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/cannedEx2.gif)
+
     (**JSON**)
     ```
     {
