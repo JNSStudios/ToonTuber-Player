@@ -59,9 +59,12 @@ while not done:
     screen.fill((255, 255, 255))
 
     # Draw the keys being pressed on the screen
+    keysPressed = ""
     for key in keys_pressed:
-        text = font.render(key, True, (0, 0, 0))
-        screen.blit(text, (size[0] // 2 - text.get_width() // 2, size[1] // 2 - text.get_height() // 2))
+        keysPressed += key + ", "
+    keysPressed = keysPressed[:-2]
+    text = font.render(keysPressed, True, (0, 0, 0))
+    screen.blit(text, (size[0] // 2 - text.get_width() // 2, size[1] // 2 - text.get_height() // 2))
 
     # Update the screen
     pygame.display.flip()
