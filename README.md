@@ -31,7 +31,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     ```
     {
         "frames": [
-        "relative path to PNG/GIF used (use commas to separate PNG file names.)"
+            "relative path to PNG/GIF used (use commas to separate PNG file names.)"
         ],
         "fps": number,
         "locking": true or false
@@ -56,6 +56,9 @@ When a tuber is loaded, all the images are imported and organized into Animation
             },
             {
                 another Animation JSON Object(s)
+            },
+            {
+                etc.
             }
         ]
     }
@@ -70,7 +73,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *blockers*:        A list of Expression Set names. This functions similar to the "requires" list, but it will prevent this Expression from playing if the Expression that is currently playing is within this list. (IE: If you have a "Happy," and "Sad" Expression, you can prevent the "Sad" Expression from triggering when "Happy" is playing.) Typing the word "null" (without the quotation marks) will mean no Expressions will block this one.
 
-- *animations*:        A specific list of 6 Animation objects:
+- *animations*:        A **specific list of 6 Animation objects**:
     
     -- the "Main" Animation.            Plays when your character is doing nothing. (**REQUIRED**)
     
@@ -166,7 +169,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
       "result": type the name of the resulting Expression Set surrounded by quotation marks,
       "anim": 
       {
-        Animation JSON Object
+        A SINGLE Animation JSON Object
       }
     }
     ```
@@ -195,10 +198,26 @@ When a tuber is loaded, all the images are imported and organized into Animation
         "last_modified": "same with this one",
         "random_duplicate_reduction": 0 to 1,
         "expressions": [
-            List of ExpressionSet Objects
+            {
+                Expression Set JSON Object
+            }, 
+            {
+                Another Expression Set JSON Object
+            }, 
+            {
+                etc.
+            }
         ],
         "canned_anims": [
-            List of Canned Animation Objects
+            {
+                Canned Animation JSON Object
+            }, 
+            {
+                Another Canned Animation JSON Object
+            }, 
+            {
+                etc.
+            }
         ]
     }
     ```
