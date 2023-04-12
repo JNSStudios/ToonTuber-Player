@@ -1090,10 +1090,10 @@ smoothPixels = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), 
                                                 text=f"Smooth Pixels ({'Yes' if antialiasing else 'No'})",
                                                 manager=settings_UImanager)
 
-
+dropdownPos = pygame.Rect((0, 325), (325, 50))
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                         starting_option=lastAudioDevice,
-                                                        relative_rect=pygame.Rect((0, 325), (325, 50)),
+                                                        relative_rect=dropdownPos,
                                                         manager=settings_UImanager)
 
 openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 375), (200, 50)),
@@ -1274,7 +1274,7 @@ while running:
             audioDeviceDropdown.kill()
             audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                                     starting_option=lastAudioDevice,
-                                                                    relative_rect=pygame.Rect((0, 275), (325, 50)),
+                                                                    relative_rect=dropdownPos,
                                                                     manager=settings_UImanager)
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == loadToonTuberButton:
