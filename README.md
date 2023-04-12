@@ -1,4 +1,4 @@
-## ToonTuber-Player
+# ToonTuber-Player
 A standalone program designed to recreate, consolidate, and optimize the ToonTuber system created by ScottFalco. 
 
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/PlayerScreenshot.png)
@@ -14,7 +14,7 @@ With ToonTuber Player, all you need is the one program which you can then do a W
 
 This program is FREE and OPEN-SOURCE, so anyone can use it and change it as their heart desires. The goal is to make it so the user doesn't need to mess with as much technical stuff, and all they have to provide is their animations. 
 
-# How it works
+## How it works
 ToonTubers are created by organizing a set of animations (either *PNG(s)* or *GIFs*) and referencing them in *JSON* data files. 
 
 (NOTE: As of right now, **the only way to create these JSON files is MANUALLY.** I do want to add some sort of graphical program for constructing these to make the user experience smoother, but for now this will have to do. I have provided a "referenceTuber.json" users can refer to for the creation of their own.)
@@ -25,7 +25,7 @@ If the program is unable to load the last JSON file for any reason, the program 
 
 When a tuber is loaded, all the images are imported and organized into Animation objects, which are then further organized into Canned Animation objects and Expression Sets. The exact structure of each type is described below, as well as how they are represented within the JSON file. You can use these JSON representations to build your own by copying and pasting it in, and by referencing the "referenceTuber.json" file
 
-# Program features
+## Program features
  - Press "p" key (or other assigned key) to open the Settings screen
     - "Load Tuber" button to load in new JSON data
      - Change the key used to open the Settings screen
@@ -37,7 +37,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
  - If the program crashes, an error report is saved in the same folder. A loud error sound will also play so the user will know that the program crashed even if they cannot see it.
  - This program supports pressing keyboard hotkeys, and I want it to support StreamDecks in the future (I have some code ready for it, but I cannot test if it works as I do not own a StreamDeck. If one of you does and would like to contribute, fork this repository and program in StreamDeck functionality into this program.)
 
-# What you will need:
+## What you will need:
    - for running as Python code:
       - Python 3.10
       - an IDE to run the code (I use VSCode with Python extensions)
@@ -52,10 +52,10 @@ When a tuber is loaded, all the images are imported and organized into Animation
       
    - if you are running this as a compiled EXE file, you should be all set!
 
-# A guide to making your own ToonTuber JSON
+## A guide to making your own ToonTuber JSON
 **(since the editor program doesn't exist yet)**
 
-**Animation objects** 
+### Animation objects
 - *frames*:                path(s) to a single PNG, a sequence of PNGs, or a GIF.
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/pngsequenceEx.png)
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/gifEx.png)
@@ -78,7 +78,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-**Idle Set objects**
+### Idle Set objects
 - *animations*:            A list of *Animation* objects, described above
 
 - *min random seconds*:    represents the minimum number of seconds needed before an Idle animation is selected
@@ -104,7 +104,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-**Expression Set objects**
+### Expression Set objects
 - *name*:            The name of the Expression
 
 - *hotkeys*:         The text representing the key(s) you have to press in order to trigger this expression. Use the "hotkey names" program that displays the name of the keys you press to figure out what to put for this data. If you have multiple, separate them with commas. If you do not want a hotkey for an expression set (for example, if you want a "Hidden" Expression that makes your character invisible, and you only want accessible after a canned "Disappear" animation), you can type the word "null" (without the quotation marks).
@@ -181,7 +181,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-**Canned Animation objects**
+### Canned Animation objects
 - *name*:            The name of the Canned Animation
 
 - *hotkeys*          Same as the Expression Set "hotkeys" list. List as many as you want in quotation marks, separated by commas, or type "null" (without the quotation marks) if you don't want a hotkey.
@@ -215,7 +215,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     }
     ```
 
-**Full ToonTuber JSON data structure**
+### Full ToonTuber JSON data structure
 - *name*:                          The name of the ToonTuber
 
 - *creator*:                       The name of the person who created the ToonTuber
