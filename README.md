@@ -79,15 +79,15 @@ When a tuber is loaded, all the images are imported and organized into Animation
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/mainEx.png)
     
-    -- the "Idles" IdleSet.             Contains the set of Idle animations to randomly be played when your character is doing nothing. (Can be NULL)
+    -- the "Idles" IdleSet.             Contains the set of Idle animations to randomly be played when your character is doing nothing. Can be NULL.
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/idleEx.gif)
     
-    -- the "Talk" Animation.            Plays when your character is speaking
+    -- the "Talk" Animation.            Plays when your character is speaking. Can be NULL.
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/talkEx.gif)
     
-    -- the "Peak" Animation.            Plays when your character is yelling
+    -- the "Peak" Animation.            Plays when your character is yelling. Can be NULL.
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/peakEx.gif)
     
@@ -98,7 +98,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
     -- the "TransitionOut" Animation    Plays when your character is LEAVING this Expression (**REQUIRED**)
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trOutEx.gif)
-
 
     (**JSON**):
     ```

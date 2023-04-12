@@ -7,7 +7,11 @@
   "expressions": [
     {
       "name": "Main",
-      "hotkey": "insert",
+      "hotkeys": [
+        "insert",
+        "right ctrl",
+        "ctrl"
+      ],
       "requires": [
         null
       ],
@@ -136,7 +140,10 @@
     },
     {
       "name": "Happy",
-      "hotkey": "end",
+      "hotkeys": [
+        "end",
+        "h"
+      ],
       "requires": [
         null
       ],
@@ -232,7 +239,10 @@
     },
     {
       "name": "Laughing",
-      "hotkey": "end",
+      "hotkeys": [
+        "end",
+        "h"
+      ], 
       "requires": [
         "Happy"
       ],
@@ -296,9 +306,11 @@
     }, 
     {
       "name": "HIDDEN",
-      "hotkey": "delete",
+      "hotkeys": [
+        null
+      ],
       "requires": [
-        "NAN"
+        null
       ],
       "blockers": [
         null
@@ -345,7 +357,10 @@
   "canned_anims": [
     {
       "name": "Appear",
-      "hotkey": "delete",
+      "hotkeys": [
+        "delete",
+        "="
+      ],
       "requires": [
         "HIDDEN"
       ],
@@ -356,14 +371,17 @@
       "anim": 
       {
         "frames": [
-          "ToonTubers\\Jay ToonTuber\\frames\\JayAppearGif.gif"
+          "ToonTubers\\Jay ToonTuber\\frames\\JayAppear.gif"
         ],
-        "fps": 2
+        "fps": 24
       }
     },
     {
       "name": "Disappear",
-      "hotkey": "delete",
+      "hotkeys": [
+        "delete",
+        "="
+      ],
       "requires": [
         null
       ],
@@ -374,9 +392,9 @@
       "anim": 
       {
         "frames": [
-          "ToonTubers\\Jay ToonTuber\\frames\\JayDisappearGif.gif"
+          "ToonTubers\\Jay ToonTuber\\frames\\JayDisappear.gif"
         ],
-        "fps": 3
+        "fps": 24
       }
     }
   ]
