@@ -113,6 +113,8 @@ When a tuber is loaded, all the images are imported and organized into Animation
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trOutEx.gif)
 
+    (Please note that **just because some animations are required, that doesn't mean they can be "removed."** For example, I have a "HIDDEN" Expression Set that is supposed to be used when my character is offscreen, and all I did for the Main, Transition In, and Transition Out animations was a single blank frame. In essence, I made it so there was no visual animation occurring, and it could be overwritten at a moments notice because it was only one frame.)
+
     (**JSON**):
     ```
     {
