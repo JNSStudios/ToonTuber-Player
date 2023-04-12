@@ -1,3 +1,10 @@
-This is where you create your ToonTuber folder. 
+This is where you create your folders that represent each of your ToonTubers. 
 
 It should contain the JSON file that constructs the ToonTuber, and the folder that contains the ToonTuber's animation frames. 
+
+The folder structure doesn't have to be a specific way, but the recommended structure is this:
+ToonTubers (this folder):
+  > Name of your ToonTuber
+     > TooberName.json
+     > frames
+        > (PNGs and/or GIFs go here)
