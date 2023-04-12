@@ -61,7 +61,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 # Expression Set objects
 - *name*:            The name of the Expression
 
-- *hotkey*:          The text representing the key you have to press in order to trigger this expression. Use the "hotkey names" program that displays the name of the keys you press to figure out what to put for this data.
+- *hotkeys*:         The text representing the key(s) you have to press in order to trigger this expression. Use the "hotkey names" program that displays the name of the keys you press to figure out what to put for this data. If you have multiple, separate them with commas. If you do not want a hotkey for an expression set (for example, if you want a "Hidden" Expression that makes your character invisible, and you only want accessible after a canned "Disappear" animation), you can type the word "null" (without the quotation marks).
 
 - *requires*:        A list of Expression Set names. You can have multiple of them, but *only one of them needs to currently be playing in order for this one to play next*. (IE: If I have three Expressions called "Happy," "Laughing," and "Wheezing," I can tell the "Wheezing" animation to require the "Happy" or "Laughing" animations here. If either of those animations are playing when the "Wheezing" animation is requested, it will play "Wheezing" next. Otherwise, it won't trigger the animation.) If you do not want an animation to require anything, type the word "null" (without the quotation marks).
 
@@ -98,37 +98,102 @@ When a tuber is loaded, all the images are imported and organized into Animation
     ```
     {
         "name": type the name of the animation surrounded by quotation marks,
-        "hotkey": type the text shown by the "hotkey names" program, surrounded by quotation marks,
+        "hotkeys": [
+            for each hotkey desired, type the text shown by the "hotkey names" program, surrounded by quotation marks. Separate them with commas. If you don't want a hotkey, type null.
+        ],
         "requires": [
-        list all the names of the Expression Sets that ALLOW this one to play
+            list all the names of the Expression Sets that ALLOW this one to play
         ],
         "blockers": [
-        list all the names of the Expression sets that PREVENT this one from playing
+            list all the names of the Expression sets that PREVENT this one from playing
         ],
         "anims": {
-        "Main": {
-            Animation JSON Object (**REQUIRED**)
-        },
-        "Idles": {
-            IdleSet JSON Object (or null)
-        },
-        "Talk": 
-        {
-            Animation JSON Object (or null)
-        },
-        "Peak":
-        {
-            Animation JSON Object (or null)
-        },
-        "TransitionIN":
-        {
-            Animation JSON Object (**REQUIRED**)
-        }, 
-        "TransitionOUT": 
-        {
-            Animation JSON Object (**REQUIRED**)
-        } 
+            "Main": {
+                Animation JSON Object (**REQUIRED**)
+            },
+            "Idles": {
+                IdleSet JSON Object (or null)
+            },
+            "Talk": 
+            {
+                Animation JSON Object (or null)
+            },
+            "Peak":
+            {
+                Animation JSON Object (or null)
+            },
+            "TransitionIN":
+            {
+                Animation JSON Object (**REQUIRED**)
+            }, 
+            "TransitionOUT": 
+            {
+                Animation JSON Object (**REQUIRED**)
+            } 
         }
     }
     ```
 
+# Canned Animation objects
+- *name*:            The name of the Canned Animation
+
+- *hotkeys*          Same as the Expression Set "hotkeys" list. List as many as you want in quotation marks, separated by commas, or type "null" (without the quotation marks) if you don't want a hotkey.
+
+- *requires*        Same as the Expression Set "requires" list. List as many as you want, or type "null."
+
+- *blockers*        Same as the Expression Set "blockers" list. List as many as you want, or type "null."
+
+- *result*            The name of the Expression Set or Canned Animation that will be played after this Canned Animation is finished. **THIS IS REQUIRED.** If you do not list a result, the Canned Animation will get stuck in an infinite loop.
+
+- *animation*        The Animation object that will be played when this Canned Animation is triggered.
+
+    (**JSON**)
+    ```
+    {
+      "name": type the name of the animation surrounded by quotation marks,
+      "hotkeys": [
+        for each hotkey desired, type the text shown by the "hotkey names" program, surrounded by quotation marks. Separate them with commas. If you don't want a hotkey, type null.
+      ], 
+      "requires": [
+        list all the names of the Expression Sets that ALLOW this one to play (or null)
+      ],
+      "blockers": [
+        list all the names of the Expression sets that PREVENT this one from playing (or null)
+      ],
+      "result": type the name of the resulting Expression Set surrounded by quotation marks,
+      "anim": 
+      {
+        Animation JSON Object
+      }
+    }
+    ```
+
+# Full ToonTuber JSON data structure
+- *name*:                          The name of the ToonTuber
+
+- *creator*:                       The name of the person who created the ToonTuber
+
+- *created*:                       The date the ToonTuber was created (this will be added automatically by the editor program)
+
+- *last_modified*:                 The date the ToonTuber was last modified (this will be added automatically by the editor program)
+
+- *random_duplicate_reduction*:    A number between 0 and 1. This is the percentage of the time that the player will attempt to reduce the chance of playing the same animation twice in a row. (IE: If this number is 0, the player will NOT try to prevent the same animation from playing twice in a row. If this number is 1, the player will ALWAYS try to prevent the same animation from playing twice in a row.)
+
+- *expressions*:                   A list of Expression Set objects
+
+- *canned_anims*:                  A list of Canned Animation objects
+
+(**JSON**)
+{
+  "name": "type the name of your ToonTuber here",
+  "creator": "type your username and/or real name here",
+  "created": "don't worry about this, it'll be overwritten by the editor program",
+  "last_modified": "same with this one",
+  "random_duplicate_reduction": 0 to 1,
+  "expressions": [
+    List of ExpressionSet Objects
+  ],
+  "canned_anims": [
+    List of Canned Animation Objects
+  ]
+}

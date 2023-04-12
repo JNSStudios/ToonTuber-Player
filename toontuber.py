@@ -120,14 +120,15 @@ except Exception as e:
         prefini.write(f)
     print("preferences.ini created with default values.")
 
+# read from each element in preferences.ini and have failsafes for each
 try:
-    lastTuberLoaded = prefini["LastUsed"]["lastLoaded"]
+    lastTuberLoaded = prefini["LastUsed"]["lastLoaded"].strip("\"")
 except Exception as e:
     print("Error reading last loaded tuber from preferences.ini. Setting to NONE...")
     lastTuberLoaded = "NONE"
 
 try:
-    lastAudioDevice = prefini["LastUsed"]["lastMic"]
+    lastAudioDevice = prefini["LastUsed"]["lastMic"].strip("\"")
 except Exception as e:
     print("Error reading last used mic from preferences.ini. Setting to NONE...")
     lastAudioDevice = "NONE"
@@ -137,6 +138,7 @@ try:
 except Exception as e:
     print("Error reading talk threshold from preferences.ini. Setting to 50...")
     talkThreshold = 50
+
 try:
     peakThreshold = int(prefini["Thresholds"]["peakThresh"])
 except Exception as e:
@@ -163,7 +165,7 @@ width, height = 750, 750
 screen = pygame.display.set_mode((width, height))
 
 # Set the window name
-pygame.display.set_caption("Toon Tuber Player")
+pygame.display.set_caption("ToonTuber Player")
 
 # Opening screen
 UniFont = pygame.font.Font('freesansbold.ttf', 24)
@@ -676,31 +678,36 @@ def update_render_thread():
 
                 # queued expression and transitions
                 if((queuedExpression != currentExpression and queuedExpression != "") and transition == "" and currentAnimationType != "canned"):
+                    # animation queued, no transition happening, not in canned animation
                     transition = "out"
                     loadExpression(expressionList[expressionIndex[currentExpression]], "out")
                 elif(transition == "out" and animationFinished):
-                    # print("trying to transition out")
+                    # transition out finished, load queued animation
                     currentExpression = queuedExpression
                     currentAnimationType = queuedAnimationType
                     queuedExpression = ""
                     queuedAnimationType = ""
                     if(currentAnimationType == "expression"):
-                        # print("expression")
+                        # if the queued animation is an expression
                         transition = "in"
                         currentAnimationType = "expression"
                         loadExpression(expressionList[expressionIndex[currentExpression]], "in")                        
                     elif(currentAnimationType == "canned"):
-                        # print("canned animation")
+                        # if the queued animation is a canned animation
                         transition = ""
                         currentAnimationType = "canned"
                         loadCanned(cannedAnimationList[cannedAnimationIndex[currentExpression]])
                 elif(transition == "in" and animationFinished):
+                    # transition in finished, load main animation
                     transition = ""
                     loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                 elif(currentAnimationType == "canned" and animationFinished):
-                    # print("canned animation ended")
+                    # if we're in a canned animation, and it's finished
                     resultingExpression = cannedAnimationList[cannedAnimationIndex[currentExpression]].getResult()
-                    loadExpression(expressionList[expressionIndex[resultingExpression]], "main")
+                    if(resultingExpression in expressionIndex):
+                        loadExpression(expressionList[expressionIndex[resultingExpression]], "main")
+                    elif(resultingExpression in cannedAnimationIndex):
+                        loadCanned(cannedAnimationList[cannedAnimationIndex[resultingExpression]])
                 # peak and talk
                 elif(avgVol >= peakThreshold 
                      and expressionList[expressionIndex[currentExpression]].getPeak().exists() 
@@ -960,27 +967,30 @@ def loadTuber(path):
         transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"], expressionData["anims"]["TransitionOUT"]["locking"])
 
         # create ExpressionSet
-        expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["blockers"], expressionData["hotkey"]))
+        expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["blockers"], expressionData["hotkeys"]))
         expressionIndex[expressionData["name"]] = len(expressionList) - 1
 
-        # add to hotkey dictionary
-        if(expressionData["hotkey"] not in hotkeyDictionary):
-            hotkeyDictionary[expressionData["hotkey"]] = [expressionData["name"]]
-        else:
-            hotkeyDictionary[expressionData["hotkey"]].append(expressionData["name"])
+        for key in expressionData["hotkeys"]:
+            # add to hotkey dictionary
+            if(key is None):
+                continue
+            if(key not in hotkeyDictionary):
+                hotkeyDictionary[key] = [expressionData["name"]]
+            else:
+                hotkeyDictionary[key].append(expressionData["name"])
 
         # print(expressionDictionary)
 
     for cannedAnimationData in data["canned_anims"]:
         # name, animation, hotkey, requires, result
-        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkey"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["result"]))
+        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkeys"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["result"]))
         cannedAnimationIndex[cannedAnimationData["name"]] = len(cannedAnimationList) - 1
 
-        if(cannedAnimationData["hotkey"] not in hotkeyDictionary):
-            hotkeyDictionary[cannedAnimationData["hotkey"]] = [cannedAnimationData["name"]]
-        else:
-            hotkeyDictionary[cannedAnimationData["hotkey"]].append(cannedAnimationData["name"])
-        # print(cannedAnimationDictionary)
+        for key in cannedAnimationData["hotkeys"]:
+            if(key not in hotkeyDictionary):
+                hotkeyDictionary[key] = [cannedAnimationData["name"]]
+            else:
+                hotkeyDictionary[key].append(cannedAnimationData["name"])
     
     # print(hotkeyDictionary)
     loadExpression(expressionList[expressionIndex[name1]], "main")
@@ -1073,21 +1083,17 @@ peakThreshPos = 0
 debugPrint("Mic meter sprites created.\nBeginning audio and render threads...")
 
 # begin threads
-
-
 render_thread = threading.Thread(target=update_render_thread)
 render_thread.daemon = True
 
 debugPrint("Audio and render threads started.\nBeginning main Pygame loop...")
 
-# Main Pygame loop
-running = True
-
-# TEMPORARY INSTANT-LOAD PROMPT
-# check if lastTuberLoaded is valid
+# load the tuber from the preferences file if it exists
 if(os.path.exists(lastTuberLoaded)):
     loadTuber(lastTuberLoaded)
 
+# Main Pygame loop
+running = True
 while running:
     if(not updateFrameRunning and not openingScreen):
         updateFrameRunning = True
