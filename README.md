@@ -30,6 +30,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     - "Load Tuber" button to load in new JSON data
      - Change the key used to open the Settings screen
      - Change background color
+     - Toggle pixel smoothing (antialiasing)
      - A dropdown menu to change audio input device used for the program
      - "Open ToonTuber Editor" (not working yet, as editor doesn't exist yet)
  - Press hotkeys assigned by the Tuber JSON to play the related animation (even if the window is out of focus!)
