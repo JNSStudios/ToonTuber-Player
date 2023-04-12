@@ -183,17 +183,19 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *canned_anims*:                  A list of Canned Animation objects
 
-(**JSON**)
-{
-  "name": "type the name of your ToonTuber here",
-  "creator": "type your username and/or real name here",
-  "created": "don't worry about this, it'll be overwritten by the editor program",
-  "last_modified": "same with this one",
-  "random_duplicate_reduction": 0 to 1,
-  "expressions": [
-    List of ExpressionSet Objects
-  ],
-  "canned_anims": [
-    List of Canned Animation Objects
-  ]
-}
+    (**JSON**)
+    ```
+    {
+    "name": "type the name of your ToonTuber here",
+    "creator": "type your username and/or real name here",
+    "created": "don't worry about this, it'll be overwritten by the editor program",
+    "last_modified": "same with this one",
+    "random_duplicate_reduction": 0 to 1,
+    "expressions": [
+        List of ExpressionSet Objects
+    ],
+    "canned_anims": [
+        List of Canned Animation Objects
+    ]
+    }
+    ```
