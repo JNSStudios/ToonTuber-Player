@@ -1,5 +1,5 @@
 ## ToonTuber-Player
-A standalone program designed to recreate, consolidate, and optimize the ToonTuber system created by ScottFalco. (Original tutorial here: https://www.youtube.com/watch?v=i-yW-3dI1oE)
+A standalone program designed to recreate, consolidate, and optimize the ToonTuber system created by ScottFalco. (Original concept here: https://www.youtube.com/watch?v=i-yW-3dI1oE)
 
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/PlayerScreenshot.png)
 
