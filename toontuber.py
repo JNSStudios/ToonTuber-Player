@@ -1040,24 +1040,24 @@ opening_options = [
 
 debugPrint("Tuber loading functions created.\nSetting up final GUI elements and functions...")
 
-loadToonTuberButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 150), (200, 50)),
+loadToonTuberButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 125), (200, 50)),
                                              text='Load ToonTuber',
                                              manager=settings_UImanager)
 
-changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 200), (300, 50)),
+changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 175), (300, 50)),
                                                 text=f'Change Settings Keybind (\"{settingsKeybindName}\")',
                                                 manager=settings_UImanager)
 
-changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 250), (225, 50)),
+changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 225), (225, 50)),
                                                 text='Change Background Color',
                                                 manager=settings_UImanager)
 
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                         starting_option=lastAudioDevice,
-                                                        relative_rect=pygame.Rect((0, 300), (350, 50)),
+                                                        relative_rect=pygame.Rect((0, 275), (325, 50)),
                                                         manager=settings_UImanager)
 
-openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 350), (200, 50)),
+openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (200, 50)),
                                              text='Open Editor',
                                              manager=settings_UImanager)
 
@@ -1237,7 +1237,7 @@ while running:
             audioDeviceDropdown.kill()
             audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                                     starting_option=lastAudioDevice,
-                                                                    relative_rect=pygame.Rect((0, 300), (350, 50)),
+                                                                    relative_rect=pygame.Rect((0, 275), (325, 50)),
                                                                     manager=settings_UImanager)
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == loadToonTuberButton:
