@@ -121,7 +121,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     
     -- the "Idles" IdleSet.             Contains the set of Idle animations to randomly be played when your character is doing nothing. Can be NULL.
     
-    ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/idleEx.gif)
+    ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/idleEx1.gif)![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/idleEx2.gif)
     
     -- the "Talk" Animation.            Plays when your character is speaking. Can be NULL.
     
