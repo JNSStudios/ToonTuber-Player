@@ -1154,6 +1154,7 @@ while running:
         elif event.type == pygame.KEYDOWN and audioDeviceScreen:
             # print("key pressed on audio screen", event.key)
             latestUnicode = event.unicode
+            newAudioDevice = ""
             # print(latestUnicode)
             acceptableChars = "0123456789"
             if(latestUnicode in acceptableChars):
