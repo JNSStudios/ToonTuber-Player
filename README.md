@@ -8,7 +8,7 @@ ToonTubers were originally created by YouTuber ScottFalco as "a middle-ground be
 
 ToonTubers consist of a set of animation frames that play back to create expressions and movement. These animations can be triggered with a hotkey or button, and react to you speaking and/or yelling. It's like having a hand-animated character as your avatar!
 
-ScottFalco released [his original tutorial](https://www.youtube.com/watch?v=i-yW-3dI1oE) for creating a ToonTuber on Feburary 4th, 2023, and his original setup required multiple programs (one of which became paywalled) and possibly needed you to mess with a bunch of files for OBS in order for the encoder to work correctly. As this system wasn't perfect (ScottFalco said so himself, he called this system a "public beta"), I decided to create my own ToonTuber player (inspired by veadotube mini) using Python. 
+ScottFalco released [his original tutorial](https://www.youtube.com/watch?v=i-yW-3dI1oE) for creating a ToonTuber on Feburary 4th, 2023, and his original setup required multiple programs (one of which became paywalled) and possibly needed you to mess with a bunch of files for OBS in order for the encoder to work correctly. As this system wasn't perfect (ScottFalco said so himself, he called this system a "public beta"), I decided to create my own ToonTuber player (inspired by [veadotube mini](https://olmewe.itch.io/veadotube-mini)) using Python. 
 
 With ToonTuber Player, all you need is the one program which you can then do a Window Capture of in OBS!
 
