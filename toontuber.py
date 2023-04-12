@@ -221,18 +221,30 @@ audioDevice_options = []
 
 audioDeviceNames = []
 
-#populate audio device table
-deviceList = pa.get_host_api_info_by_index(0)
-numdevices = deviceList.get('deviceCount')
-for i in range(0, numdevices):
-    if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-        deviceName = pa.get_device_info_by_host_api_device_index(0, i).get('name')
-        if(deviceName == lastAudioDevice):
-            audio_device_id = i
-            audioDeviceText = str(i)
-        audioDeviceList[deviceName] = i
-        audioDeviceNames.append(deviceName)
+deviceList = None
+numdevices = 0
 
+def getAudioDevices(initial=False):
+    global deviceList, numdevices, audioDeviceList, audioDeviceNames, audio_device_id, audioDeviceText
+    print("Refreshing audio device list...\n\n")
+    deviceList = pa.get_host_api_info_by_index(0)
+    numdevices = deviceList.get('deviceCount')
+    audioDeviceList.clear()
+    audioDeviceNames.clear()
+    print("audioDeviceList.clear() =", audioDeviceList)
+    print("audioDeviceNames.clear() =", audioDeviceNames)
+    for i in range(0, numdevices):
+        if (pa.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+            deviceName = pa.get_device_info_by_host_api_device_index(0, i).get('name')             
+            print(deviceName)
+            if(deviceName == lastAudioDevice and initial):
+                audio_device_id = i
+                audioDeviceText = str(i)
+            audioDeviceList[deviceName] = i
+            audioDeviceNames.append(deviceName)
+    print("\n")
+
+getAudioDevices(True)
 
 def audio_callback(in_data, frame_count, time_info, status):
     global rms, avgVol
@@ -1227,7 +1239,16 @@ while running:
             with open("preferences.ini", "w") as ini:
                 prefini.write(ini)
             changeBGColorButton.enable()
-
+        
+        elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
+            print("dropdown changed")
+            getAudioDevices()
+            audioDeviceDropdown.options_list = audioDeviceNames
+            audioDeviceDropdown.kill()
+            audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
+                                                                    starting_option=lastAudioDevice,
+                                                                    relative_rect=pygame.Rect((0, 200), (350, 50)),
+                                                                    manager=settings_UImanager)
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == loadToonTuberButton:
                 loadTuber(None)
