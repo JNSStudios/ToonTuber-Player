@@ -33,7 +33,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
      - A dropdown menu to change audio input device used for the program
      - "Open ToonTuber Editor" (not working yet, as editor doesn't exist yet)
  - Press hotkeys assigned by the Tuber JSON to play the related animation (even if the window is out of focus!)
-   (**NOTE:** While the Player window will continue to run when minimized, it can't be minimized in order for OBS to capture it. This is unfortunately an issue that I have no control over.)
+   (**NOTE:** While the Player window will continue to run when minimized, OBS cannot capture it while it's minimized. This is unfortunately an issue that I have no control over.)
  - If the program crashes, an error report is saved in the same folder. A loud error sound will also play so the user will know that the program crashed even if they cannot see it.
  - This program supports pressing keyboard hotkeys, and I want it to support StreamDecks in the future (I have some code ready for it, but I cannot test if it works as I do not own a StreamDeck. If one of you does and would like to contribute, fork this repository and program in StreamDeck functionality into this program.)
 
