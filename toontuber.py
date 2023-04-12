@@ -22,7 +22,7 @@ import traceback
 
 debugMode = False
 
-version = "v1.0.0"
+version = "v1.0.1"
 
 peakThreshold = 90
 talkThreshold = 50
@@ -169,7 +169,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255)}
+    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -212,6 +212,12 @@ except Exception as e:
     print("Error reading background color from preferences.ini. Setting to green...")
     BGCOLOR = GREEN
 
+antialiasing = False
+try:
+    antialiasing = bool(int(prefini["Settings"]["antialiasing"]))
+except Exception as e:
+    print("Error reading antialiasing from preferences.ini. Setting to False...")
+    
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
@@ -869,6 +875,14 @@ def changeBGColor():
     colorPickerGUI = pygame_gui.windows.UIColourPickerDialog(pygame.Rect(160,50,420,400), settings_UImanager, window_title="Choose Background Color", initial_colour=pygame.Color(BGCOLOR[0], BGCOLOR[1], BGCOLOR[2]))
     changeBGColorButton.disable()
 
+def toggleAntiAliasing():
+    global antialiasing, smoothPixels, prefini
+    antialiasing = not antialiasing
+    smoothPixels.set_text(f"Smooth Pixels ({'Yes' if antialiasing else 'No'})")
+    prefini.set("Settings", "antialiasing", f"{'1' if antialiasing else '0'}")
+    with open("preferences.ini", "w") as f:
+        prefini.write(f)
+
 debugPrint("GUI classes created.\nCreating Tuber loading functions...")
 
 # tuber loading definitions
@@ -1072,12 +1086,17 @@ changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0,
                                                 text='Change Background Color',
                                                 manager=settings_UImanager)
 
+smoothPixels = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (200, 50)),
+                                                text=f"Smooth Pixels ({'Yes' if antialiasing else 'No'})",
+                                                manager=settings_UImanager)
+
+
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                         starting_option=lastAudioDevice,
-                                                        relative_rect=pygame.Rect((0, 275), (325, 50)),
+                                                        relative_rect=pygame.Rect((0, 325), (325, 50)),
                                                         manager=settings_UImanager)
 
-openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (200, 50)),
+openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 375), (200, 50)),
                                              text='Open Editor',
                                              manager=settings_UImanager)
 
@@ -1097,8 +1116,6 @@ peak_textEntry = pygame_gui.elements.UITextEntryLine(
 
 peak_textEntry.set_allowed_characters('numbers')
 peak_textEntry.set_text(str(peakThreshold))
-
-
 
 # text_settings = UniFont.render("SETTINGS", True, BLACK)
 
@@ -1268,6 +1285,8 @@ while running:
                 beginKeybindChange()
             elif(event.ui_element == changeBGColorButton):
                 changeBGColor()
+            elif(event.ui_element == smoothPixels):
+                toggleAntiAliasing()
 
         settings_UImanager.process_events(event)
     settings_UImanager.update(delta_time)
@@ -1295,7 +1314,10 @@ while running:
         
         render = currentImage.convert_alpha()
         # scale tuber image to fill screen
-        render = pygame.transform.smoothscale(render, (width, height))
+        if(antialiasing):
+            render = pygame.transform.smoothscale(render, (width, height))
+        else:
+            render = pygame.transform.scale(render, (width, height))
         screen.blit(render, tuber_rect)
 
     # if on the opening screen, prompt user if they want to open an existing tuber or make a new one
