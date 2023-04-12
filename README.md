@@ -31,7 +31,10 @@ When a tuber is loaded, all the images are imported and organized into Animation
     ```
     {
         "frames": [
-            "relative path to PNG/GIF used (use commas to separate PNG file names.)"
+            "relative path to PNG/GIF used (use commas to separate PNG file names.)",
+            "(a relative path is the path from the "toontuber.py" file to the image.)",
+            "(usually, these should be inside of the ToonTuber's folder. If it is, use the below template:)",
+            "ToonTubers\\(name of the ToonTuber folder)\\(name of folder that contains your grames)\\(file name)",
         ],
         "fps": number,
         "locking": true or false
