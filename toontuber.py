@@ -402,17 +402,18 @@ try:
 except Exception as e:
     debugPrint("NO StreamDecks were found.")
 
+
+
 # keyboard reading thread
 def keyboard_input_thread():
     while True:
         event = keyboard.read_event()
         if event.event_type == "down":
-            # print(f"Key pressed: {event.name}")
-            pushHotKey(event.name)
+            pushHotKey(event.scan_code)
         elif event.event_type == "up":
-            # print(f"Key released: {event.name}")
-            releaseHotKey(event.name)
-
+            releaseHotKey(event.scan_code)
+        
+            
 keyboard_input_thread = threading.Thread(target=keyboard_input_thread)
 keyboard_input_thread.daemon = True
 keyboard_input_thread.start()
@@ -855,7 +856,7 @@ audioDevice_selected = [
 
 def openTuber():
     print("Open Tuber")
-    loadTuber(None)
+    loadTuberThread(None)
 
 def createNewTuber():
     global currentScreen
@@ -944,29 +945,29 @@ def loadCanned(cannedAnimation):
     fpsClock = pygame.time.Clock()
     currentExpression = cannedAnimation.getName()
 
+load_thread = None
+
+def selectJSON():
+    root = tk.Tk()
+    root.withdraw()
+
+    file_path = filedialog.askopenfilename(
+        filetypes=[("JSON files", "*.json")],
+        title="Select a JSON file",
+    )
+
+    root.destroy()  # close the root window
+
+    return file_path
+
+
 def loadTuber(path):
-    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options
-    currentScreen = "tuber"
+    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options, screen, load_thread
+    currentScreen = "loading"
 
-    if(path == None):
-        # file dialog to select json file   
-        root = tk.Tk()
-        root.withdraw()
-
-        file_path = filedialog.askopenfilename(
-            filetypes=[("JSON files", "*.json")],
-            title="Select a JSON file",
-        )
-
-        # print("Selected file:", file_path)
-        path = file_path
-        # load json file
-        with open(file_path) as json_file:
-            data = json.load(json_file)
-    else:
-        with open(path) as json_file:
-            data = json.load(json_file)
-        # print(data)
+    with open(path) as json_file:
+        data = json.load(json_file)
+    # print(data)
     # print("Loading tuber: " + data["name"])
     tuberName = data["name"]
     creator = data["creator"]
@@ -1054,7 +1055,20 @@ def loadTuber(path):
     with open("preferences.ini", "w") as configfile:
         prefini.write(configfile)
 
+
+    currentScreen = "tuber"
     print("Loaded Tuber: " + tuberName)
+    
+    return
+
+
+#create thread for loadTuber
+def loadTuberThread(path=None):
+    if(path is None):
+        path = selectJSON()
+    load_thread = threading.Thread(target=loadTuber, args=(path,))
+    load_thread.start()
+
 
 # Define the clickable text options
 settings_options = [
@@ -1180,15 +1194,18 @@ render_thread.daemon = True
 debugPrint("Audio and render threads started.\nBeginning main Pygame loop...")
 
 # load the tuber from the preferences file if it exists
-if(os.path.exists(lastTuberLoaded)):
-    loadTuber(lastTuberLoaded)
+
 
 newAudioDevice = ""
 
 # Main Pygame loop
 running = True
 while running:
-    if(not updateFrameRunning and currentScreen != "opening"):
+    if(currentScreen == "opening" and os.path.exists(lastTuberLoaded)):
+        print("FILE EXISTS.")
+        loadTuberThread(lastTuberLoaded)
+    
+    if(not updateFrameRunning and (currentScreen != "opening" and currentScreen != "loading")):
         updateFrameRunning = True
         render_thread.start()
         idleTimer_thread.start()
@@ -1196,8 +1213,7 @@ while running:
     delta_time = clock.tick(60) / 1000.0
     talkNotBlank = talk_textEntry.get_text() != "" 
     peakNotBlank = peak_textEntry.get_text() != ""
-
-    
+ 
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -1220,12 +1236,7 @@ while running:
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
                 changingKeybind = False
-            # print("key pressed and settings is active")
-            # save the latest key pressed in case the user is typing a value for the mic threshold
-            latestUnicode = event.unicode
-            # print(latestUnicode)
-            acceptableChars = "0123456789."
-            
+            # print("key pressed and settings is active")            
             
 
         # if the user clicks on a text option, do the action
@@ -1278,7 +1289,7 @@ while running:
                                                                     manager=settings_UImanager)
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == loadToonTuberButton:
-                loadTuber(None)
+                loadTuberThread(None)
             elif(event.ui_element == openEditorButton):
                 openEditor()
             elif(event.ui_element == changeSettingsKeybindButton):
@@ -1327,11 +1338,6 @@ while running:
         draw_text_options(opening_options)
         # if user clicks on "Open ToonTuber", open the file explorer and allow them to select a tuber
         # if user clicks on "New ToonTuber", open the editor
-    elif currentScreen == "audio":
-        darken_screen()
-        draw_text_options(audioDeviceScreenText)
-        draw_text_options(audioDevice_options)
-        draw_text_options(audioDevice_selected)
 
     elif currentScreen == "settings":
         darken_screen()
@@ -1366,9 +1372,15 @@ while running:
         # draw talk threshold arrow
         screen.blit(talkThresholdSprite, talkThreshPos)
         screen.blit(peakThresholdSprite, peakThreshPos)
-    
-    if(currentScreen == "settings"):
+
         settings_UImanager.draw_ui(screen)
+
+
+    if(currentScreen == "loading"):
+        darken_screen()
+        # draw text in center
+        draw_text_options([ClickableText("Loading tuber, please wait...", (50, 50), UniFont, WHITE, None)])
+        
 
     # Update the Pygame window
     pygame.display.flip()

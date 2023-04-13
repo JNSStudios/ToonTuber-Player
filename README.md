@@ -67,7 +67,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
     (**JSON**):
     ```
-    {
         "frames": [
             "relative path to PNG/GIF used (use commas to separate PNG file names.)",
             "(a relative path is the path from the "toontuber.py" file to the image.)",
@@ -76,7 +75,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
         ],
         "fps": number,
         "locking": true or false
-    }
     ```
 
 ### Idle Set objects
@@ -88,7 +86,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
     (**JSON**):
     ```
-    {
         "randomSecMin": number,
         "randomSecMax": bigger number,
         "idleAnims": [
@@ -102,13 +99,12 @@ When a tuber is loaded, all the images are imported and organized into Animation
                 etc.
             }
         ]
-    }
     ```
 
 ### Expression Set objects
 - *name*:            The name of the Expression
 
-- *hotkeys*:         The text representing the key(s) you have to press in order to trigger this expression. Use the "hotkey names" program that displays the name of the keys you press to figure out what to put for this data. If you have multiple, separate them with commas. If you do not want a hotkey for an expression set (for example, if you want a "Hidden" Expression that makes your character invisible, and you only want accessible after a canned "Disappear" animation), you can type the word "null" (without the quotation marks).
+- *hotkeys*:         The numbers representing the IDs of the key(s) you have to press in order to trigger this expression. Use the "**hotkey names**" program that displays the ID of the keys you press to figure out what to put for this data. Separate numbers with commas. If you do not want a hotkey for an expression set, you can type the word "null" (without the quotation marks).
 
 - *requires*:        A list of Expression Set names. You can have multiple of them, but *only one of them needs to currently be playing in order for this one to play next*. (IE: If I have three Expressions called "Happy," "Laughing," and "Wheezing," I can tell the "Wheezing" animation to require the "Happy" or "Laughing" animations here. If either of those animations are playing when the "Wheezing" animation is requested, it will play "Wheezing" next. Otherwise, it won't trigger the animation.) If you do not want an animation to require anything, type the word "null" (without the quotation marks).
 
@@ -144,7 +140,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
     (**JSON**):
     ```
-    {
         "name": type the name of the animation surrounded by quotation marks,
         "hotkeys": [
             for each hotkey desired, type the text shown by the "hotkey names" program, surrounded by quotation marks. Separate them with commas. If you don't want a hotkey, type null.
@@ -179,7 +174,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
                 Animation JSON Object (**REQUIRED**)
             } 
         }
-    }
     ```
 
 ### Canned Animation objects
@@ -201,7 +195,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
     (**JSON**)
     ```
-    {
       "name": type the name of the animation surrounded by quotation marks,
       "hotkeys": [
         for each hotkey desired, type the text shown by the "hotkey names" program, surrounded by quotation marks. Separate them with commas. If you don't want a hotkey, type null.
@@ -217,7 +210,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
       {
         A SINGLE Animation JSON Object
       }
-    }
     ```
 
 ### Full ToonTuber JSON data structure
