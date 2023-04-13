@@ -65,16 +65,14 @@
           "frames": [
             "ToonTubers\\Jay ToonTuber\\frames\\Jay-Basic-TrIn.gif"
           ],
-          "fps": 24,
-          "locking": true
+          "fps": 24
         }, 
         "TransitionOUT": 
         {
           "frames": [
             "ToonTubers\\Jay ToonTuber\\frames\\Jay-Basic-TrOut.gif"
           ],
-          "fps": 24,
-          "locking": true
+          "fps": 24
         } 
       }
     },
@@ -135,16 +133,14 @@
           "frames": [
             "ToonTubers\\Jay ToonTuber\\frames\\Jay-Happy-TrIn.gif"
           ],
-          "fps": 24,
-          "locking": true
+          "fps": 24
         }, 
         "TransitionOUT": 
         {
           "frames": [
             "ToonTubers\\Jay ToonTuber\\frames\\Jay-Happy-TrOut.gif"
           ],
-          "fps": 24,
-          "locking": true
+          "fps": 24
         }
       }
     },
@@ -199,8 +195,7 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0016.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0017.png"
           ],
-          "fps": 24,
-          "locking": true
+          "fps": 24
         }, 
         "TransitionOUT": 
         {
@@ -210,8 +205,7 @@
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0013.png",
             "ToonTubers\\Jay ToonTuber\\frames\\Jay Laughing0014.png"
           ],
-          "fps": 24,
-          "locking": true
+          "fps": 24
         }
       }
     }, 
@@ -251,16 +245,14 @@
           "frames": [
             "ToonTubers\\Jay ToonTuber\\frames\\Jay-Hidden.png"
           ],
-          "fps": 24,
-          "locking": true
+          "fps": 24
         }, 
         "TransitionOUT": 
         {
           "frames": [
             "ToonTubers\\Jay ToonTuber\\frames\\Jay-Hidden.png"
           ],
-          "fps": 24,
-          "locking": true
+          "fps": 24
         }
       }
     },
@@ -317,16 +309,14 @@
             "frames": [
               "ToonTubers\\Jay ToonTuber\\frames\\Jay-Miffed-TrIn.gif"
             ],
-            "fps": 24,
-            "locking": true
+            "fps": 24
           }, 
           "TransitionOUT": 
           {
             "frames": [
               "ToonTubers\\Jay ToonTuber\\frames\\Jay-Miffed-TrOut.gif"
             ],
-            "fps": 24,
-            "locking": true
+            "fps": 24
           } 
       }
   }

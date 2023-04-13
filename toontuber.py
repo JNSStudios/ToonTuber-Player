@@ -337,12 +337,13 @@ def pushHotKey(key):
     if(changingKeybind or ignoreHotkey or currentScreen == "loading"):
         return 
    
+    # print(hotkeyDictionary)
     if(key in hotkeyDictionary):
         # a hotkey was pressed. check if it needs an existing animation
 
         possibleAnims = list(hotkeyDictionary[key])
 
-        # print(f"After pressing {key}, the possible animations are {possibleAnims}\nRemoving the current animation if it's in there...")
+        debugPrint(f"After pressing {key}, the possible animations are {possibleAnims}\nRemoving the current animation if it's in there...")
 
         # remove the current animation from the list of possible animations
         if(currentAnimationType == "expression" and currentExpression in possibleAnims):
@@ -350,7 +351,7 @@ def pushHotKey(key):
         elif(currentAnimationType == "canned" and currentExpression in possibleAnims):
             possibleAnims.remove(currentExpression)
         
-        # print(f"After removing the current animation, the possible animations are {possibleAnims}\nRemoving any animations that are blocked by the current animation...")
+        debugPrint(f"After removing the current animation, the possible animations are {possibleAnims}\nRemoving any animations that are blocked by the current animation...")
         
         # remove any animations that are blocked by the current animation
         i = 0
@@ -373,7 +374,7 @@ def pushHotKey(key):
                 else:
                     i += 1
 
-        # print(f"After removing blocked animations, the possible animations are {possibleAnims}. Getting only the ones where the current animation is a requirement...")
+        debugPrint(f"After removing blocked animations, the possible animations are {possibleAnims}. Getting only the ones where the current animation is a requirement...")
         
         # get only the animations where the current one is a requirement
         i=0
@@ -399,13 +400,13 @@ def pushHotKey(key):
 
         # if there are no animations left, return
         if(len(possibleAnims) == 0):
-            # print("No animations left to choose from. Returning.")
+            debugPrint("No animations left to choose from. Returning.")
             return
         
         # randomly select an animation from the remaining list
-        # print(f"Randomly selecting an animation from the remaining list of {possibleAnims} animations...")
+        debugPrint(f"Randomly selecting an animation from the remaining list of {possibleAnims} animations...")
         resultingAnim = random.choice(possibleAnims)
-        # print(f"Resulting animation: {resultingAnim}")
+        debugPrint(f"Resulting animation: {resultingAnim}")
 
 
         # for the animation to be queued, it must mee the following:
@@ -1034,7 +1035,7 @@ currentLoadProgress = 0
 progressText = "Loading JSON file..."
 
 def loadTuber(path):
-    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options, screen, load_thread, totalLoadStages, currentLoadProgress, progressText
+    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options, screen, load_thread, totalLoadStages, currentLoadProgress, progressText, hotkeyDictionary
 
     if(path is None or path == ""):
         print("No file selected.")
@@ -1120,10 +1121,10 @@ def loadTuber(path):
             peak = Animation(expressionData["anims"]["Peak"]["frames"], expressionData["anims"]["Peak"]["fps"], expressionData["anims"]["Peak"]["locking"])
 
         # transition in
-        transitionIn = Animation(expressionData["anims"]["TransitionIN"]["frames"], expressionData["anims"]["TransitionIN"]["fps"], expressionData["anims"]["TransitionIN"]["locking"])
+        transitionIn = Animation(expressionData["anims"]["TransitionIN"]["frames"], expressionData["anims"]["TransitionIN"]["fps"], True)
 
         # transition out
-        transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"], expressionData["anims"]["TransitionOUT"]["locking"])
+        transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"], True)
 
         # create ExpressionSet
         expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["blockers"], expressionData["hotkeys"]))

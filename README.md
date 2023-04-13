@@ -65,7 +65,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *frames per second*:     the framerate at which the images should be played. If you're using a GIF, the framerate will be taken from that, but it is still recommended to enter the framerate manually just to be safe
 
-- *locking*:               if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is recommended for Transition animations, but can be enabled for any.
+- *locking*:               if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is ALWAYS set to True for Transition animations and Canned Animations, and are not necessary to add in the JSON when setting transition or canned animations.
 
     (**JSON**):
     ```
@@ -76,7 +76,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
             "ToonTubers\\(name of the ToonTuber folder)\\(name of folder that contains your frames)\\(file name)",
         ],
         "fps": number,
-        "locking": true or false
+        "locking": true or false (no need to type this in if it's a canned animation or transition animation)
     ```
 
 ### Idle Set objects
@@ -139,6 +139,8 @@ When a tuber is loaded, all the images are imported and organized into Animation
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trOutEx.gif)
 
     (Please note that **just because some animations are required, that doesn't mean they can't be "removed."** For example, I have a "HIDDEN" Expression Set that is supposed to be used when my character is offscreen, and all I did for the Main, Transition In, and Transition Out animations was a single blank frame. In essence, I made it so there was no visual animation occurring, and it could be overwritten at a moments notice because it was only one frame.)
+
+    (Also note that **both transition animations MUST HAVE LOCKING ENABLED**. Otherwise, the program will have trouble getting out of the animation if it is interrupted.)
 
     (**JSON**):
     ```
@@ -210,7 +212,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
       "result": type the name of the resulting Expression Set surrounded by quotation marks,
       "anim": 
       {
-        A SINGLE Animation JSON Object
+        A SINGLE Animation JSON Object ("locking" parameter not necessary for Canned)
       }
     ```
 
@@ -227,7 +229,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *expressions*:                   A list of Expression Set objects
 
-- *canned_anims*:                  A list of Canned Animation objects
+- *canned_anims*:                  A list of Canned Animation objects. **NOTE: It is not necessary to list a "locking" parameter for Animations put inside of Canned Animations.** The program will **AUTOMATICALLY lock ALL Canned Animations.**
 
     (**JSON**)
     ```
@@ -261,3 +263,31 @@ When a tuber is loaded, all the images are imported and organized into Animation
         ]
     }
     ```
+
+## How ToonTubers are Controlled/Played Back
+When loading a ToonTuber JSON, the "Main" animation of the **first** Expression listed in the file is what the player will play first. 
+
+For **Main** animations, the player will simply loop them until the player is told to do something else.
+
+For **Idle** animations, the player will pick a random number between the two numbers provided in the Expression's IdleSet object, and will start a timer when the **Main** animation is played. The player will then wait that many seconds before randomly selecting an Idle animation from that Set. If any action happens to override the Main animation, this timer will be reset (but the number of seconds will not change).
+
+For **Talk** animations, the player will check the detected volume from the microphone input and check if it's over the "*Talk Threshold*." If it is, it will interrupt the current animation (if it isn't locked) and play the Talk animation until the volume drops below the threshold, in which case it will load the Main animation.
+
+For **Peak** animations, the player does the same thing as Talk, but compares the volume against the "*Peak Threshold*." If the volume is over the Peak Threshold, it will play the Peak animation until the volume drops below the threshold, in which case it will load the Main animation.
+
+**When a Hotkey is pressed,** the player will get a list of all Expressions and/or Canned Animations that are triggered by that hotkey. It will then filter the list down to any animations that meet ALL of the following criteria:
+    - NOT blocked by the current animation
+    - the current animation is in the "requires" list of the animation
+    - is NOT the current animation (to prevent duplicates)
+The player will then randomly select one of the animations from the filtered list, and **queue** that animation. (Or it will do nothing if the list is empty.)
+
+When **a new animation is queued**, the player will check if the current animation is locked. If it is, it will wait until the current animation is unlocked before playing the queued animation. (**NOTE: ALL Canned animations are automatically LOCKED.**)
+
+When the player is ready to play the queued animation, it will do one of two things:
+    - If the current animation is an **EXPRESSION**, it will load the "Transition Out" animation from that expression set and wait until that is finished. 
+    If the current animation is a **CANNED ANIMATION**, it will wait until that animation is finished.
+    Then:
+        - If the queued animation is an **EXPRESSION**, the player will load the "Transition In" animation from the queued expression set, and then load the "Main" animation from the queued expression set when the "Transition In" animation is finished.
+        - If the queued animation is a **CANNED ANIMATION**, the player will load the Canned Animation and start playing it immediately. When the animation is finished, the player will then load the Expression Set or Canned Animation designated as the "result" of completed Canned Animation.
+    
+
