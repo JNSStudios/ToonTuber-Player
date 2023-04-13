@@ -291,6 +291,7 @@ def audio_callback(in_data, frame_count, time_info, status):
     # return None and continue streaming
     return (None, pyaudio.paContinue)
 
+
 # Open the stream with the callback function
 stream = pa.open(format=pyaudio.paInt16,
                  channels=1,
@@ -331,9 +332,9 @@ def select_audio_device(id):
 debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 
 def pushHotKey(key):
-    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingKeybind, ignoreHotkey
+    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingKeybind, ignoreHotkey, currentScreen
     # ignore hotkeys if the user is changing a keybind, or if the user is ignoring hotkeys
-    if(changingKeybind or ignoreHotkey):
+    if(changingKeybind or ignoreHotkey or currentScreen == "loading"):
         return 
    
     if(key in hotkeyDictionary):
@@ -917,15 +918,6 @@ updateFrameRunning = False
 def openEditor():
     print("Open Editor")
 
-audioDeviceScreenText = [
-    ClickableText("Audio Device", (30, 15), UniFont, (255, 255, 255)),
-    ClickableText("Type the number of the audio device and hit Enter", (30, 90), UniFontSmaller, (255, 255, 255)),
-]
-
-audioDevice_selected = [
-    ClickableText(f"Selected Audio Device: {audioDeviceText}", (30, height - 50), UniFont, (255, 255, 255))
-]
-
 def openTuber():
     print("Open Tuber")
     loadTuberThread(None)
@@ -1050,13 +1042,27 @@ def loadTuber(path):
     # print(data)
     # print("Loading tuber: " + data["name"])
 
-    # get the number of expressions
+    # reset all of the tuber variables
+    tuberName = ""
+    creator = ""
+    created = ""
+    modified = ""
+    randomDuplicateReduction = 0
+    expressionList = []
+    cannedAnimationList = []
+    hotkeyDictionary = {}
+    expressionIndex = {}
+    cannedAnimationIndex = {}
+    
+    # loading screen info colelction
     expressionCount = len(data["expressions"])
     cannedCount = len(data["canned_anims"])
     totalLoadStages = expressionCount + cannedCount + 1
     currentLoadProgress = 0
-
     progressText = "Loading initial data..."
+
+    # load the tuber's data
+
     tuberName = data["name"]
     creator = data["creator"]
     created = data["created"]
