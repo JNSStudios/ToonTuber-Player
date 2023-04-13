@@ -332,57 +332,100 @@ debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 
 def pushHotKey(key):
     global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingKeybind, ignoreHotkey
+    # ignore hotkeys if the user is changing a keybind, or if the user is ignoring hotkeys
     if(changingKeybind or ignoreHotkey):
         return 
    
-    # print(hotkeyDictionary)
     if(key in hotkeyDictionary):
-        # print(f"Hotkey pressed: {key}")
         # a hotkey was pressed. check if it needs an existing animation
-        for animName in hotkeyDictionary[key]:
-            if(animName == queuedExpression):
-                # skip itself if its already queued
-                continue
-            # print(f"Checking animation: {animName}")
-            # print(f"name is {'' if animName in expressionIndex else 'NOT '}in the expression set" )
-            # print(f"current anim is {'' if currentExpression in expressionList[expressionIndex[animName]].requires else 'NOT '}in the required set {'(EMPTY)' if expressionList[expressionIndex[animName]].requires == [None] else ''}" )
-            # print(f"requested anim is {'NOT ' if animName != currentExpression else ''}already playing.")
 
-            # for the animation to be queued, it must mee the following:
-            # 1. it must be a valid expression
-            # 2. the required animation must be playing (or the required animation list is empty)
-            # 3. the requested animation must not be playing
-            # print(cannedAnimationList[cannedAnimationIndex[animName]].requires, "     current: ", currentExpression.name)
-            isBlocked = False
-            # print(f"Checking blockers for {animName}...")
-            if(animName in expressionIndex):
-                if currentExpression in expressionList[expressionIndex[animName]].getBlockers():
-                    isBlocked = True
-            elif(animName in cannedAnimationIndex):
-                if currentExpression in cannedAnimationList[cannedAnimationIndex[animName]].getBlockers():
-                    isBlocked = True
-            # print(f"Blocked: {isBlocked}")
+        possibleAnims = list(hotkeyDictionary[key])
 
-            if(animName in expressionIndex 
-                and ((currentExpression in expressionList[expressionIndex[animName]].requires 
-                     or expressionList[expressionIndex[animName]].requires == [None]) or (queuedExpression != "" and queuedExpression in expressionList[expressionIndex[animName]].requires))
-                and animName != currentExpression and currentAnimationType != "canned"
-                and not isBlocked):
-                # it's an expression and the needed anim is ready. check if the required animation is already playing
-                queuedExpression = animName
-                queuedAnimationType = "expression"
+        # print(f"After pressing {key}, the possible animations are {possibleAnims}\nRemoving the current animation if it's in there...")
+
+        # remove the current animation from the list of possible animations
+        if(currentAnimationType == "expression" and currentExpression in possibleAnims):
+            possibleAnims.remove(currentExpression)
+        elif(currentAnimationType == "canned" and currentExpression in possibleAnims):
+            possibleAnims.remove(currentExpression)
+        
+        # print(f"After removing the current animation, the possible animations are {possibleAnims}\nRemoving any animations that are blocked by the current animation...")
+        
+        # remove any animations that are blocked by the current animation
+        i = 0
+        while True:
+            if(i >= len(possibleAnims)):
                 break
+            anim = possibleAnims[i]
+            if(anim in expressionIndex):
+                if(not expressionList[expressionIndex[anim]].hasBlockers()):
+                    i += 1
+                elif currentExpression in expressionList[expressionIndex[anim]].getBlockers():
+                    possibleAnims.remove(anim)
+                else:
+                    i += 1
+            elif(anim in cannedAnimationIndex):
+                if(not cannedAnimationList[cannedAnimationIndex[anim]].hasBlockers()):
+                    i += 1
+                elif currentExpression in cannedAnimationList[cannedAnimationIndex[anim]].getBlockers():
+                    possibleAnims.remove(anim)
+                else:
+                    i += 1
 
-            elif(animName in cannedAnimationIndex 
-                 and (currentExpression in cannedAnimationList[cannedAnimationIndex[animName]].requires 
-                      or cannedAnimationList[cannedAnimationIndex[animName]].requires == [None]) 
-                 and animName != currentExpression
-                 and not isBlocked):
-                # it's a canned animation. check if the required animation is already playing
-                queuedExpression = animName
-                queuedAnimationType = "canned"
+        # print(f"After removing blocked animations, the possible animations are {possibleAnims}. Getting only the ones where the current animation is a requirement...")
+        
+        # get only the animations where the current one is a requirement
+        i=0
+        while True:
+            if(i >= len(possibleAnims)):
                 break
+            anim = possibleAnims[i]
+            if(anim in expressionIndex):
+                if(not expressionList[expressionIndex[anim]].hasRequires()):
+                    i += 1
+                elif currentExpression not in expressionList[expressionIndex[anim]].getRequires():
+                    possibleAnims.remove(anim)
+                else:
+                    i += 1
+            elif(anim in cannedAnimationIndex):
+                if(not cannedAnimationList[cannedAnimationIndex[anim]].hasRequires()):
+                    i += 1
+                elif currentExpression not in cannedAnimationList[cannedAnimationIndex[anim]].getRequires():
+                    possibleAnims.remove(anim)
+                else:
+                    i += 1
 
+
+        # if there are no animations left, return
+        if(len(possibleAnims) == 0):
+            # print("No animations left to choose from. Returning.")
+            return
+        
+        # randomly select an animation from the remaining list
+        # print(f"Randomly selecting an animation from the remaining list of {possibleAnims} animations...")
+        resultingAnim = random.choice(possibleAnims)
+        # print(f"Resulting animation: {resultingAnim}")
+
+
+        # for the animation to be queued, it must mee the following:
+        # 1. it must be a valid expression
+        # 2. the required animation must be playing (or the required animation list is empty)
+        # 3. the requested animation must not be playing
+        # 4. the requested animation must not be blocked by the current animation
+
+        
+        # print(f"Blocked: {isBlocked}")
+
+        if(resultingAnim in expressionIndex ):
+            # print(f"Queuing expression {resultingAnim}")
+            queuedExpression = resultingAnim
+            queuedAnimationType = "expression"
+            
+        elif(resultingAnim in cannedAnimationIndex ):
+            # print(f"Queuing canned animation {resultingAnim}")
+            queuedExpression = resultingAnim
+            queuedAnimationType = "canned"
+        # print()
     lastKeyPressed = latestKeyPressed
     latestKeyPressed = key
     keyHeld = True
@@ -596,6 +639,10 @@ class ExpressionSet:
         self.requires = requires        # list of ExpressionSets
         self.blockers = blockers        # list of ExpressionSets
         self.hotkey = hotkey            # Hotkey object
+        if(self.requires[0] == None):
+            self.requires = []
+        if(self.blockers[0] == None):
+            self.blockers = []
 
     def __str__(self):
         return f"ExpressionSet {self.name}:\nMain: {self.main}\n{self.idleSet}\nTalk: {self.talk}\nPeak: {self.peak}\nTransition In: {self.trIn}\nTransition Out: {self.trOut}\nRequires: {self.requires}\nHotkey: {self.hotkey}"
@@ -644,11 +691,22 @@ class ExpressionSet:
             print("Required state not found.")
         else:
             self.requires.remove(oldRequires)
+
+    def hasRequires(self):
+        return len(self.requires) > 0
     
     def getBlockers(self):
         return self.blockers
     def addBlockers(self, newBlockers):
         self.blockers.append(newBlockers)
+    def removeBlockers(self, oldBlockers):
+        if(oldBlockers not in self.blockers):
+            print("Blocker state not found.")
+        else:
+            self.blockers.remove(oldBlockers)
+    def hasBlockers(self):
+        return len(self.blockers) > 0
+    
 
     def getHotkey(self):
         return self.hotkey
@@ -669,6 +727,10 @@ class CannedAnimation:
         self.requires = requires        # list of ExpressionSets
         self.blockers = blockers        # list of ExpressionSets
         self.result = result            # ExpressionSet object
+        if(self.requires[0] == None):
+            self.requires = []
+        if(self.blockers[0] == None):
+            self.blockers = []
 
     def __str__(self):
         return f"CannedAnimation {self.name}:\nAnimation: {self.animation}\nHotkey: {self.hotkey}\nRequires: {self.requires}\nResult: {self.result}"
@@ -703,6 +765,8 @@ class CannedAnimation:
             print("Required state not found.")
         else:
             self.requires.remove(oldRequires)
+    def hasRequires(self):
+        return len(self.requires) > 0
 
     def getResult(self):
         return self.result
@@ -713,36 +777,40 @@ class CannedAnimation:
         return self.blockers
     def addBlockers(self, newBlockers):
         self.blockers.append(newBlockers)
+    def removeBlockers(self, oldBlockers):
+        if(oldBlockers not in self.blockers):
+            print("Blocker state not found.")
+        else:
+            self.blockers.remove(oldBlockers)
+    def hasBlockers(self):
+        return len(self.blockers) > 0
 
 def update_render_thread():
     global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, currentScreen
     while True:
-        if(currentScreen == "opening" or currentScreen == "audio"):
+        if(currentScreen == "opening" or currentScreen == "loading"):
             continue
         timeElapsed = fpsClock.tick(framerate) / 1000.0  # Get the time passed since last frame
-        # print(get_idle_timer())
         image_timer += timeElapsed
-        # print(timeElapsed, "  ", image_timer)
+
         if image_timer > 1 / framerate: # time equivelent to one frame has passed
             currentFrame = currentFrame + 1
-            # print("queued:", queuedExpression, "   current:", currentExpression)
             # time to change frame! 
-            # print(expressionList[expressionIndex[currentExpression]].getTalk())
             animationFinished = currentFrame >= len(tuberFrames)
             idlesExist = timeUntilNextIdle != -1
+            # load random idle if it's been long enough (and there are idles), and are current;y in an expression
             if(currentAnimationType == "expression" and not idling and get_idle_timer() >= timeUntilNextIdle and idlesExist):
-                # print("idling")
                 loadExpression(expressionList[expressionIndex[currentExpression]], "idle")
                 idling = True
+            # if the idle has finished, return to the main expression
             elif(currentAnimationType == "expression" and idling and animationFinished and idlesExist):
-                # print("ending idle")
                 loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                 idling = False
                 idle_timer_reset()
-                # print(get_idle_timer())
+            # otherwise, check if we aren't locked in the current animation and if it has finished
             elif(not locked or animationFinished):
                 # can change animation. check what kind of animation we need to switch to, if we need to
-
+        
                 # queued expression and transitions
                 if((queuedExpression != currentExpression and queuedExpression != "") and transition == "" and currentAnimationType != "canned"):
                     # animation queued, no transition happening, not in canned animation
@@ -780,14 +848,12 @@ def update_render_thread():
                      and expressionList[expressionIndex[currentExpression]].getPeak().exists() 
                      and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
                     # peak animation is set, and we're not locked
-                    # print("peak")
                     loadExpression(expressionList[expressionIndex[currentExpression]], "peak")
                 elif(avgVol >= talkThreshold 
                      and expressionList[expressionIndex[currentExpression]].getTalk().exists() 
                      and currentAnimation is not expressionList[expressionIndex[currentExpression]].getTalk() 
                      and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
                     # talk animation is set, and we're not locked
-                    # print("talk")
                     loadExpression(expressionList[expressionIndex[currentExpression]], "talk")
                 elif( avgVol < talkThreshold 
                      and (currentAnimation is expressionList[expressionIndex[currentExpression]].getTalk() 
@@ -971,7 +1037,7 @@ def selectJSON():
 
     return file_path
 
-totalLoadStages = 0
+totalLoadStages = 1
 currentLoadProgress = 0
 progressText = "Loading JSON file..."
 
