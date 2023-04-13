@@ -960,15 +960,27 @@ def selectJSON():
 
     return file_path
 
+totalLoadStages = 0
+currentLoadProgress = 0
+progressText = "Loading JSON file..."
+
 
 def loadTuber(path):
-    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options, screen, load_thread
+    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options, screen, load_thread, totalLoadStages, currentLoadProgress, progressText
     currentScreen = "loading"
 
     with open(path) as json_file:
         data = json.load(json_file)
     # print(data)
     # print("Loading tuber: " + data["name"])
+
+    # get the number of expressions
+    expressionCount = len(data["expressions"])
+    cannedCount = len(data["canned_anims"])
+    totalLoadStages = expressionCount + cannedCount + 1
+    currentLoadProgress = 0
+
+    progressText = "Loading initial data..."
     tuberName = data["name"]
     creator = data["creator"]
     created = data["created"]
@@ -978,7 +990,13 @@ def loadTuber(path):
     # 1 means it will ALWAYS prevent repetition
     # decimals are allowed
     name1 = ""
+
+    expDone = 0
     for expressionData in data["expressions"]:
+        currentLoadProgress += 1
+        expDone += 1
+        progressText = f"Loading expression \"{expressionData['name']}\" ({expDone}/{expressionCount})..."
+        
         if name1 == "":
             name1 = expressionData["name"]
         # print("Loading expression: " + expressionData["name"])
@@ -1036,7 +1054,12 @@ def loadTuber(path):
 
         # print(expressionDictionary)
 
+    canDone = 0
     for cannedAnimationData in data["canned_anims"]:
+        currentLoadProgress += 1
+        canDone += 1
+        progressText = f"Loading canned animation \"{cannedAnimationData['name']}\" ({canDone}/{cannedCount})..."
+
         # name, animation, hotkey, requires, result
         cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkeys"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["result"]))
         cannedAnimationIndex[cannedAnimationData["name"]] = len(cannedAnimationList) - 1
@@ -1058,7 +1081,6 @@ def loadTuber(path):
 
     currentScreen = "tuber"
     print("Loaded Tuber: " + tuberName)
-    
     return
 
 
@@ -1202,7 +1224,6 @@ newAudioDevice = ""
 running = True
 while running:
     if(currentScreen == "opening" and os.path.exists(lastTuberLoaded)):
-        print("FILE EXISTS.")
         loadTuberThread(lastTuberLoaded)
     
     if(not updateFrameRunning and (currentScreen != "opening" and currentScreen != "loading")):
@@ -1378,8 +1399,23 @@ while running:
 
     if(currentScreen == "loading"):
         darken_screen()
+
+        # draw full dark progress bar
+        baseBar = pygame.Rect(15, 155, width-22, 52)
+
+        # draw progress bar
+        percent = (currentLoadProgress / totalLoadStages)
+        # range is 0 to width-28
+        loadLen = (width-28) * percent
+        loadBar = pygame.Rect(20, 160, loadLen, 42)
+        # draw bars to screen
+        pygame.draw.rect(screen, BLACK, baseBar)
+        pygame.draw.rect(screen, WHITE, loadBar)
+
         # draw text in center
-        draw_text_options([ClickableText("Loading tuber, please wait...", (50, 50), UniFont, WHITE, None)])
+        draw_text_options([ClickableText("Loading tuber, please wait...", (50, 50), UniFont, WHITE, None),
+                           ClickableText(progressText, (50, 100), UniFont, WHITE, None)])
+        
         
 
     # Update the Pygame window
