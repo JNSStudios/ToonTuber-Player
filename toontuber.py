@@ -1035,8 +1035,12 @@ progressText = "Loading JSON file..."
 
 def loadTuber(path):
     global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options, screen, load_thread, totalLoadStages, currentLoadProgress, progressText
-    currentScreen = "loading"
 
+    if(path is None or path == ""):
+        print("No file selected.")
+        return
+
+    currentScreen = "loading"
     with open(path) as json_file:
         data = json.load(json_file)
     # print(data)
@@ -1053,7 +1057,7 @@ def loadTuber(path):
     hotkeyDictionary = {}
     expressionIndex = {}
     cannedAnimationIndex = {}
-    
+
     # loading screen info colelction
     expressionCount = len(data["expressions"])
     cannedCount = len(data["canned_anims"])
@@ -1220,9 +1224,9 @@ audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDevic
                                                         relative_rect=dropdownPos,
                                                         manager=settings_UImanager)
 
-openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 425), (200, 50)),
-                                             text='Open Editor',
-                                             manager=settings_UImanager)
+# openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 425), (200, 50)),
+#                                              text='Open Editor',
+#                                              manager=settings_UImanager)
 
 
 talk_textEntry = pygame_gui.elements.UITextEntryLine(
@@ -1416,8 +1420,8 @@ while running:
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == loadToonTuberButton:
                 loadTuberThread(None)
-            elif(event.ui_element == openEditorButton):
-                openEditor()
+            # elif(event.ui_element == openEditorButton):
+            #     openEditor()
             elif(event.ui_element == changeSettingsKeybindButton):
                 beginKeybindChange()
             elif(event.ui_element == changeBGColorButton):
