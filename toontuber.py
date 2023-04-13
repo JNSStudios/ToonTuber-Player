@@ -169,7 +169,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0}
+    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl"}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -218,6 +218,15 @@ try:
 except Exception as e:
     print("Error reading antialiasing from preferences.ini. Setting to False...")
     
+ignoreHotkey = False
+
+try:
+    ignoreHotkeyBindName = prefini["Settings"]["ignorehotkey"].strip("\"")
+except Exception as e:
+    print("Error reading ignorehotkey from preferences.ini. Setting to \"right ctrl\"...")
+    ignoreHotkeyBindName = "right ctrl"
+# print(ignoreHotkeyBindName)
+ignoreHotkeyBind = pygame.key.key_code(ignoreHotkeyBindName)
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
@@ -322,8 +331,8 @@ def select_audio_device(id):
 debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 
 def pushHotKey(key):
-    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingKeybind
-    if(changingKeybind):
+    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingKeybind, ignoreHotkey
+    if(changingKeybind or ignoreHotkey):
         return 
    
     # print(hotkeyDictionary)
@@ -402,8 +411,6 @@ try:
 except Exception as e:
     debugPrint("NO StreamDecks were found.")
 
-
-
 # keyboard reading thread
 def keyboard_input_thread():
     while True:
@@ -411,8 +418,7 @@ def keyboard_input_thread():
         if event.event_type == "down":
             pushHotKey(event.scan_code)
         elif event.event_type == "up":
-            releaseHotKey(event.scan_code)
-        
+            releaseHotKey(event.scan_code)     
             
 keyboard_input_thread = threading.Thread(target=keyboard_input_thread)
 keyboard_input_thread.daemon = True
@@ -864,10 +870,15 @@ def createNewTuber():
     print("New Tuber")
 
 changingKeybind = False
+changingHotKeybind = False
 
 def beginKeybindChange():
     global changingKeybind
     changingKeybind = True
+
+def beginHotKeybindChange():
+    global changingHotKeybind
+    changingHotKeybind = True
 
 colorPickerGUI = None
 
@@ -963,7 +974,6 @@ def selectJSON():
 totalLoadStages = 0
 currentLoadProgress = 0
 progressText = "Loading JSON file..."
-
 
 def loadTuber(path):
     global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options, screen, load_thread, totalLoadStages, currentLoadProgress, progressText
@@ -1083,7 +1093,6 @@ def loadTuber(path):
     print("Loaded Tuber: " + tuberName)
     return
 
-
 #create thread for loadTuber
 def loadTuberThread(path=None):
     if(path is None):
@@ -1118,21 +1127,28 @@ changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.
                                                 text=f'Change Settings Keybind (\"{settingsKeybindName}\")',
                                                 manager=settings_UImanager)
 
-changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 225), (225, 50)),
+changeHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 225), (400, 50)),
+                                                text=f'Change HotkeyIgnore Keybind (\"{ignoreHotkeyBindName}\")',
+                                                manager=settings_UImanager)
+
+changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (225, 50)),
                                                 text='Change Background Color',
                                                 manager=settings_UImanager)
 
-smoothPixels = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (200, 50)),
+smoothPixels = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (200, 50)),
                                                 text=f"Smooth Pixels ({'Yes' if antialiasing else 'No'})",
                                                 manager=settings_UImanager)
 
-dropdownPos = pygame.Rect((0, 325), (325, 50))
+
+
+
+dropdownPos = pygame.Rect((0, 375), (325, 50))
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                         starting_option=lastAudioDevice,
                                                         relative_rect=dropdownPos,
                                                         manager=settings_UImanager)
 
-openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 375), (200, 50)),
+openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 425), (200, 50)),
                                              text='Open Editor',
                                              manager=settings_UImanager)
 
@@ -1243,6 +1259,9 @@ while running:
             # print("toggling settings")
             currentScreen = "tuber" if currentScreen == "settings" else "settings"
         # key pressed during settings        
+        elif event.type == pygame.KEYDOWN and event.key == ignoreHotkeyBind:
+            ignoreHotkey = not ignoreHotkey
+            # print(f"hotkeyignore is now {'ON' if ignoreHotkey else 'OFF'}")
         elif event.type == pygame.KEYDOWN and currentScreen == "settings":
             if(changingKeybind):
                 # print(event.key)
@@ -1257,6 +1276,20 @@ while running:
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
                 changingKeybind = False
+
+            elif(changingHotKeybind):
+                # print(event.key)
+                ignoreHotkeyBind = event.key
+                ignoreHotkeyBindName = pygame.key.name(event.key)
+                # print("keybind changed to " + hotKeybindName)
+
+                changeHotkeyButton.text = f'Change HotkeyIgnore Keybind (\"{ignoreHotkeyBindName}\")'
+                changeHotkeyButton.rebuild()
+
+                prefini.set("Settings", "ignorehotkey", "\"" + str(ignoreHotkeyBindName) + "\"" )
+                with open("preferences.ini", "w") as configfile:
+                    prefini.write(configfile)
+                changingHotKeybind = False
             # print("key pressed and settings is active")            
             
 
@@ -1319,6 +1352,8 @@ while running:
                 changeBGColor()
             elif(event.ui_element == smoothPixels):
                 toggleAntiAliasing()
+            elif(event.ui_element == changeHotkeyButton):
+                beginHotKeybindChange()
 
         settings_UImanager.process_events(event)
     settings_UImanager.update(delta_time)
@@ -1366,10 +1401,12 @@ while running:
         # Display the FPS counter in the bottom right corner
         display_fps("program FPS: ",clock, 0)
         display_fps("anim FPS: ", fpsClock, 50)
+        draw_text_options([ClickableText(f"Ignoring Hotkeys: {'ON' if ignoreHotkey else 'OFF'}", (width-300, height-150), UniFont, WHITE, None)])
 
-        if(changingKeybind):
+        if(changingKeybind or changingHotKeybind):
             # print("changing keybind")
-            draw_text_options([ClickableText("Press a key to change keybind", (0, 400), UniFont, WHITE, None)])
+            draw_text_options([ClickableText("Press a key to change keybind", (0, height-200), UniFont, WHITE, None)])
+
 
         # these values assume that the top left corner of the sprite is 0,0
         # therefore, the bottom right of the sprite is the width and height
