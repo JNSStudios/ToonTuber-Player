@@ -140,8 +140,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
     (Please note that **just because some animations are required, that doesn't mean they can't be "removed."** For example, I have a "HIDDEN" Expression Set that is supposed to be used when my character is offscreen, and all I did for the Main, Transition In, and Transition Out animations was a single blank frame. In essence, I made it so there was no visual animation occurring, and it could be overwritten at a moments notice because it was only one frame.)
 
-    (Also note that **both transition animations MUST HAVE LOCKING ENABLED**. Otherwise, the program will have trouble getting out of the animation if it is interrupted.)
-
     (**JSON**):
     ```
         "name": type the name of the animation surrounded by quotation marks,
@@ -229,7 +227,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *expressions*:                   A list of Expression Set objects
 
-- *canned_anims*:                  A list of Canned Animation objects. **NOTE: It is not necessary to list a "locking" parameter for Animations put inside of Canned Animations.** The program will **AUTOMATICALLY lock ALL Canned Animations.**
+- *canned_anims*:                  A list of Canned Animation objects. **NOTE: It is not necessary to list a "locking" parameter for Animations put inside of Canned Animations, as the program will AUTOMATICALLY lock ALL Canned Animations.**
 
     (**JSON**)
     ```
