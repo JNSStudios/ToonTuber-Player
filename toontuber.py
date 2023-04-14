@@ -27,6 +27,8 @@ version = "v1.1.0"
 peakThreshold = 90
 talkThreshold = 50
 
+nonrequiredWeight = 0.25
+
 GREEN = (0, 255, 0)
 BGCOLOR = GREEN
 
@@ -169,7 +171,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl"}
+    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "-"}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -228,6 +230,15 @@ except Exception as e:
 # print(ignoreHotkeyBindName)
 ignoreHotkeyBind = pygame.key.key_code(ignoreHotkeyBindName)
 
+muteKeyName = "-"
+muted = False
+try:
+    muteKeyName = prefini["Settings"]["mutekey"].strip("\"")
+except Exception as e:
+    print("Error reading mutekey from preferences.ini. Setting to \"-\"...")
+muteKey = pygame.key.key_code(muteKeyName)
+print(f"muteKey: {muteKey}")
+
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
 
@@ -272,6 +283,10 @@ getAudioDevices(True)
 
 def audio_callback(in_data, frame_count, time_info, status):
     global rms, avgVol
+
+    if(muted):
+        avgVol = 0
+        return (None, pyaudio.paContinue)
     # convert audio data to a numpy array
     audio = np.frombuffer(in_data, dtype=np.int16)
 
@@ -332,9 +347,9 @@ def select_audio_device(id):
 debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 
 def pushHotKey(key):
-    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, queuedAnimation, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingKeybind, ignoreHotkey, currentScreen
+    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingSettingsKeybind, ignoreHotkey, currentScreen, nonrequiredWeight
     # ignore hotkeys if the user is changing a keybind, or if the user is ignoring hotkeys
-    if(changingKeybind or ignoreHotkey or currentScreen == "loading"):
+    if(changingSettingsKeybind or ignoreHotkey or currentScreen == "loading"):
         return 
    
     # print(hotkeyDictionary)
@@ -342,7 +357,6 @@ def pushHotKey(key):
         # a hotkey was pressed. check if it needs an existing animation
 
         possibleAnims = list(hotkeyDictionary[key])
-
         debugPrint(f"After pressing {key}, the possible animations are {possibleAnims}\nRemoving the current animation if it's in there...")
 
         # remove the current animation from the list of possible animations
@@ -403,9 +417,24 @@ def pushHotKey(key):
             debugPrint("No animations left to choose from. Returning.")
             return
         
+         # create a set of weights for the remaining animations. 
+         # ones where the current animation is a requirement get a weight of 1, others get a weight of "vars".
+         # this way, animations with requirements are more likely to be chosen
+
+        # if you're looking to change the nonrequiredWeight value, it's at the top of the file.
+        requirementWeights = [nonrequiredWeight] * len(possibleAnims)
+        for i in range(len(possibleAnims)):
+            anim = possibleAnims[i]
+            if(anim in expressionIndex):
+                if(currentExpression in expressionList[expressionIndex[anim]].getRequires()):
+                    requirementWeights[i] = 1
+            elif(anim in cannedAnimationIndex):
+                if(currentExpression in cannedAnimationList[cannedAnimationIndex[anim]].getRequires()):
+                    requirementWeights[i] = 1
+
         # randomly select an animation from the remaining list
         debugPrint(f"Randomly selecting an animation from the remaining list of {possibleAnims} animations...")
-        resultingAnim = random.choice(possibleAnims)
+        resultingAnim = random.choices(possibleAnims, requirementWeights)[0]
         debugPrint(f"Resulting animation: {resultingAnim}")
 
 
@@ -928,16 +957,21 @@ def createNewTuber():
     currentScreen = "tuber"
     print("New Tuber")
 
-changingKeybind = False
+changingSettingsKeybind = False
 changingHotKeybind = False
+changingMuteKeybind = False
 
 def beginKeybindChange():
-    global changingKeybind
-    changingKeybind = True
+    global changingSettingsKeybind
+    changingSettingsKeybind = True
 
 def beginHotKeybindChange():
     global changingHotKeybind
     changingHotKeybind = True
+
+def beginMuteKeybindChange():
+    global changingMuteKeybind
+    changingMuteKeybind = True
 
 colorPickerGUI = None
 
@@ -1208,18 +1242,20 @@ changeHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 
                                                 text=f'Change HotkeyIgnore Keybind (\"{ignoreHotkeyBindName}\")',
                                                 manager=settings_UImanager)
 
-changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (225, 50)),
+changeMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (300, 50)),
+                                                text=f'Change Mute Keybind (\"{muteKeyName}\")',
+                                                manager=settings_UImanager)
+
+changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (225, 50)),
                                                 text='Change Background Color',
                                                 manager=settings_UImanager)
 
-smoothPixels = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (200, 50)),
+smoothPixels = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 375), (200, 50)),
                                                 text=f"Smooth Pixels ({'Yes' if antialiasing else 'No'})",
                                                 manager=settings_UImanager)
 
 
-
-
-dropdownPos = pygame.Rect((0, 375), (325, 50))
+dropdownPos = pygame.Rect((0, 425), (325, 50))
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                         starting_option=lastAudioDevice,
                                                         relative_rect=dropdownPos,
@@ -1298,6 +1334,12 @@ peakThresholdSprite = pygame.image.load("assets\ThresholdArrow.png").convert_alp
 talkThreshPos = 0
 peakThreshPos = 0
 
+# create sprite for mic mute
+micMuteSprite = pygame.image.load("assets\micmuted.png").convert_alpha()
+
+# scale sprite to fit height of mic meter
+micMuteSprite = pygame.transform.smoothscale(micMuteSprite, (mic_newWidth, mic_newHeight))
+
 # no need to scale the threshold arrows, they are already the correct size. prepare the sprites for drawing later
 
 debugPrint("Mic meter sprites created.\nBeginning audio and render threads...")
@@ -1328,19 +1370,23 @@ while running:
     talkNotBlank = talk_textEntry.get_text() != "" 
     peakNotBlank = peak_textEntry.get_text() != ""
  
-    
+    changingAnyKeybind = changingSettingsKeybind or changingHotKeybind or changingMuteKeybind
+
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN and (event.key == settingsKeybind and not changingKeybind) and (currentScreen == "tuber" or currentScreen == "settings"):
+        elif event.type == pygame.KEYDOWN and (event.key == settingsKeybind and not changingAnyKeybind) and (currentScreen == "tuber" or currentScreen == "settings"):
             # print("toggling settings")
             currentScreen = "tuber" if currentScreen == "settings" else "settings"
         # key pressed during settings        
         elif event.type == pygame.KEYDOWN and event.key == ignoreHotkeyBind:
             ignoreHotkey = not ignoreHotkey
             # print(f"hotkeyignore is now {'ON' if ignoreHotkey else 'OFF'}")
+        elif event.type == pygame.KEYDOWN and event.key == muteKey:
+            muted = not muted
         elif event.type == pygame.KEYDOWN and currentScreen == "settings":
-            if(changingKeybind):
+            if(changingSettingsKeybind):
                 # print(event.key)
                 settingsKeybind = event.key
                 settingsKeybindName = pygame.key.name(event.key)
@@ -1352,7 +1398,7 @@ while running:
                 prefini.set("Settings", "keybind", "\"" + str(settingsKeybindName) + "\"" )
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
-                changingKeybind = False
+                changingSettingsKeybind = False
 
             elif(changingHotKeybind):
                 # print(event.key)
@@ -1367,7 +1413,20 @@ while running:
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
                 changingHotKeybind = False
-            # print("key pressed and settings is active")            
+            # print("key pressed and settings is active")        
+            elif(changingMuteKeybind):
+                # print(event.key)
+                muteKey = event.key
+                muteKeyName = pygame.key.name(event.key)
+                # print("keybind changed to " + muteKeyName)
+
+                changeMuteKeybindButton.text = f'Change Mute Keybind (\"{muteKeyName}\")'
+                changeMuteKeybindButton.rebuild()
+
+                prefini.set("Settings", "mutekey", "\"" + str(muteKeyName) + "\"" )
+                with open("preferences.ini", "w") as configfile:
+                    prefini.write(configfile)
+                changingMuteKeybind = False
             
 
         # if the user clicks on a text option, do the action
@@ -1431,6 +1490,8 @@ while running:
                 toggleAntiAliasing()
             elif(event.ui_element == changeHotkeyButton):
                 beginHotKeybindChange()
+            elif(event.ui_element == changeMuteKeybindButton):
+                beginMuteKeybindChange()
 
         settings_UImanager.process_events(event)
     settings_UImanager.update(delta_time)
@@ -1480,7 +1541,7 @@ while running:
         display_fps("anim FPS: ", fpsClock, 50)
         draw_text_options([ClickableText(f"Ignoring Hotkeys: {'ON' if ignoreHotkey else 'OFF'}", (width-300, height-150), UniFont, WHITE, None)])
 
-        if(changingKeybind or changingHotKeybind):
+        if(changingAnyKeybind):
             # print("changing keybind")
             draw_text_options([ClickableText("Press a key to change keybind", (0, height-200), UniFont, WHITE, None)])
 
@@ -1507,6 +1568,10 @@ while running:
         # draw talk threshold arrow
         screen.blit(talkThresholdSprite, talkThreshPos)
         screen.blit(peakThresholdSprite, peakThreshPos)
+
+        # draw mic muted sprite over the mic fill sprite if the mic is muted
+        if(muted):
+            screen.blit(micMuteSprite, (0, height - micMuteSprite.get_height()))
 
         settings_UImanager.draw_ui(screen)
 

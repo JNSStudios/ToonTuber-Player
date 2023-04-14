@@ -279,7 +279,8 @@ For **Peak** animations, the player does the same thing as Talk, but compares th
     - NOT blocked by the current animation
     - the current animation is in the "requires" list of the animation
     - is NOT the current animation (to prevent duplicates)
-The player will then randomly select one of the animations from the filtered list, and **queue** that animation. (Or it will do nothing if the list is empty.)
+Before selecting the next animation, the player will then **give selection weights to the animations** in the filtered list that have the current animation listed as a requirement. This is to ensure that **animations with a met requirement will be more likely to be selected**. 
+The player will then randomly select one of the animations from the filtered list (using the selection weights), and **queue** that animation. (Or it will do nothing if the list is empty.)
 
 When **a new animation is queued**, the player will check if the current animation is locked. If it is, it will wait until the current animation is unlocked before playing the queued animation. (**NOTE: ALL Canned animations are automatically LOCKED.**)
 
