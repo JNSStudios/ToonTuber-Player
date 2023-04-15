@@ -238,6 +238,11 @@ except Exception as e:
     print("Error reading mutekey from preferences.ini. Setting to \"-\"...")
 muteKey = pygame.key.key_code(muteKeyName)
 
+# write everything back to the file to ensure no data is lost. also helps with updating older versions of preferences.ini
+prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastMic": lastAudioDevice}
+prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
+prefini["Settings"] = {"keybind": settingsKeybindName, "bgcolor": BGCOLOR, "antialiasing": antialiasing, "ignorehotkey": ignoreHotkeyBindName, "mutekey": muteKeyName}
+
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
 
