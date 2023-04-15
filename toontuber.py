@@ -6,6 +6,7 @@ import numpy as np
 import keyboard
 from StreamDeck.DeviceManager import DeviceManager
 import imageio
+from playsound import playsound
 
 # these should be built-in
 import threading
@@ -20,7 +21,7 @@ import configparser
 import datetime
 import traceback
 
-debugMode = False
+debugMode = True
 
 version = "v1.1.0"
 
@@ -50,7 +51,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
     # Play a sound when an exception occurs
     if(not debugMode and exc_type != KeyboardInterrupt):
-        winsound.PlaySound("assets\error.wav", winsound.SND_FILENAME)
+        playsound("assets\error.wav")
 
     # Call the default exception handler
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -241,7 +242,7 @@ muteKey = pygame.key.key_code(muteKeyName)
 # write everything back to the file to ensure no data is lost. also helps with updating older versions of preferences.ini
 prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastMic": lastAudioDevice}
 prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
-prefini["Settings"] = {"keybind": settingsKeybindName, "bgcolor": BGCOLOR, "antialiasing": antialiasing, "ignorehotkey": ignoreHotkeyBindName, "mutekey": muteKeyName}
+prefini["Settings"] = {"keybind": settingsKeybindName, "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": ignoreHotkeyBindName, "mutekey": muteKeyName}
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
@@ -347,6 +348,18 @@ def select_audio_device(id):
     stream.start_stream()
     print("Audio stream restarted.")
 
+def playSoundThread(path):
+    soundThread = threading.Thread(target=playSound, args=(path,))
+    soundThread.start()
+
+def playSound(path):
+    if(path == ""):
+        return
+    debugPrint(f"PATH: {path}")
+    playsound(path)
+    return
+         
+
 debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 
 def pushHotKey(key):
@@ -354,21 +367,26 @@ def pushHotKey(key):
     # ignore hotkeys if the user is changing a keybind, or if the user is ignoring hotkeys
     if(changingSettingsKeybind or ignoreHotkey or currentScreen == "loading"):
         return 
-   
+    
     # print(hotkeyDictionary)
     if(key in hotkeyDictionary):
         # a hotkey was pressed. check if it needs an existing animation
-
+        print(f"\nPushed {key}")
         possibleAnims = list(hotkeyDictionary[key])
-        debugPrint(f"After pressing {key}, the possible animations are {possibleAnims}\nRemoving the current animation if it's in there...")
+        debugPrint(f"After pressing {key}, the possible animations are {possibleAnims}\nRemoving the current and queued animations if they're in there...")
 
         # remove the current animation from the list of possible animations
         if(currentAnimationType == "expression" and currentExpression in possibleAnims):
             possibleAnims.remove(currentExpression)
         elif(currentAnimationType == "canned" and currentExpression in possibleAnims):
             possibleAnims.remove(currentExpression)
+
+        if(queuedAnimationType == "expression" and queuedExpression in possibleAnims):
+            possibleAnims.remove(queuedExpression)
+        elif(queuedAnimationType == "canned" and queuedExpression in possibleAnims):
+            possibleAnims.remove(queuedExpression)
         
-        debugPrint(f"After removing the current animation, the possible animations are {possibleAnims}\nRemoving any animations that are blocked by the current animation...")
+        debugPrint(f"After removing the current and queued animations, the possible animations are {possibleAnims}\nRemoving any animations that are blocked by the current animation...")
         
         # remove any animations that are blocked by the current animation
         i = 0
@@ -402,14 +420,14 @@ def pushHotKey(key):
             if(anim in expressionIndex):
                 if(not expressionList[expressionIndex[anim]].hasRequires()):
                     i += 1
-                elif currentExpression not in expressionList[expressionIndex[anim]].getRequires():
+                elif currentExpression not in expressionList[expressionIndex[anim]].getRequires() and queuedExpression not in expressionList[expressionIndex[anim]].getRequires():
                     possibleAnims.remove(anim)
                 else:
                     i += 1
             elif(anim in cannedAnimationIndex):
                 if(not cannedAnimationList[cannedAnimationIndex[anim]].hasRequires()):
                     i += 1
-                elif currentExpression not in cannedAnimationList[cannedAnimationIndex[anim]].getRequires():
+                elif currentExpression not in cannedAnimationList[cannedAnimationIndex[anim]].getRequires() and queuedExpression not in cannedAnimationList[cannedAnimationIndex[anim]].getRequires():
                     possibleAnims.remove(anim)
                 else:
                     i += 1
@@ -434,7 +452,7 @@ def pushHotKey(key):
             elif(anim in cannedAnimationIndex):
                 if(currentExpression in cannedAnimationList[cannedAnimationIndex[anim]].getRequires()):
                     requirementWeights[i] = 1
-
+                    
         # randomly select an animation from the remaining list
         debugPrint(f"Randomly selecting an animation from the remaining list of {possibleAnims} animations...")
         resultingAnim = random.choices(possibleAnims, requirementWeights)[0]
@@ -497,9 +515,9 @@ def keyboard_input_thread():
         elif event.event_type == "up":
             releaseHotKey(event.scan_code)     
             
-keyboard_input_thread = threading.Thread(target=keyboard_input_thread)
-keyboard_input_thread.daemon = True
-keyboard_input_thread.start()
+keyboard_thread = threading.Thread(target=keyboard_input_thread)
+keyboard_thread.daemon = True
+keyboard_thread.start()
 
 debugPrint("Input reader thread started.\nCreating animation classes...")
 
@@ -543,11 +561,14 @@ def load_animation_images(paths, fps):
         if(os.path.isfile(file_path)):
             extension = os.path.splitext(file_path)[1]
             if(extension == ".png"):
+                debugPrint(f"Loading image {file_path}")
                 image = pygame.image.load(file_path)
                 images.append(image)
             elif(extension == ".gif"):
+                debugPrint(f"Loading gif {file_path}")
                 gif = imageio.mimread(file_path)
                 for frame in gif:
+                    # debugPrint(f"Loading frame")
                     # convert the image to a Pygame surface
                     # count the number of bytes in frame.tobytes() and print it out
                     try:
@@ -754,12 +775,13 @@ class ExpressionSet:
             self.hotkey = None
 
 class CannedAnimation:
-    def __init__(self, name, animation, hotkey, requires, blockers, result):
+    def __init__(self, name, animation, hotkey, requires, blockers, sound, result):
         self.name = name                # string
         self.animation = animation      # Animation object
         self.hotkey = hotkey            # Hotkey object
         self.requires = requires        # list of ExpressionSets
         self.blockers = blockers        # list of ExpressionSets
+        self.sound = sound              # Sound object
         self.result = result            # ExpressionSet object
         if(self.requires[0] == None):
             self.requires = []
@@ -818,6 +840,11 @@ class CannedAnimation:
             self.blockers.remove(oldBlockers)
     def hasBlockers(self):
         return len(self.blockers) > 0
+    
+    def getSound(self):
+        return self.sound
+    def setSound(self, sound):
+        self.sound = sound
 
 def update_render_thread():
     global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, currentScreen
@@ -1049,7 +1076,7 @@ def loadExpression(expressionSet, animation):
     currentExpression = expressionSet.getName()
 
 def loadCanned(cannedAnimation):
-    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle, currentAnimationType
+    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle, currentAnimationType, queuedSound
     debugPrint(f"Loading CANNED animation \"{cannedAnimation.getName()}.\"")
     idling = False
     idle_timer_reset()
@@ -1066,6 +1093,7 @@ def loadCanned(cannedAnimation):
     locked = currentAnimation.locking
     fpsClock = pygame.time.Clock()
     currentExpression = cannedAnimation.getName()
+    queuedSound = playSoundThread(cannedAnimation.getSound())
 
 load_thread = None
 
@@ -1088,7 +1116,7 @@ progressText = "Loading JSON file..."
 
 def loadTuber(path):
     global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settingsText, screen, load_thread, totalLoadStages, currentLoadProgress, progressText, hotkeyDictionary
-
+    debugPrint("Loading tuber from JSON file...")
     if(path is None or path == ""):
         print("No file selected.")
         return
@@ -1129,12 +1157,13 @@ def loadTuber(path):
     # 1 means it will ALWAYS prevent repetition
     # decimals are allowed
     name1 = ""
-
+    debugPrint(f"Loading {expressionCount} expressions and {cannedCount} canned animations...")
     expDone = 0
     for expressionData in data["expressions"]:
         currentLoadProgress += 1
         expDone += 1
         progressText = f"Loading expression \"{expressionData['name']}\" ({expDone}/{expressionCount})..."
+        debugPrint(progressText)
         
         if name1 == "":
             name1 = expressionData["name"]
@@ -1143,6 +1172,7 @@ def loadTuber(path):
 
         # main animation        REQUIRED
         main = Animation(expressionData["anims"]["Main"]["frames"], expressionData["anims"]["Main"]["fps"], expressionData["anims"]["Main"]["locking"])
+        debugPrint("main animation loaded. loading idles...")
 
         # idle set
         idleList = []
@@ -1156,7 +1186,7 @@ def loadTuber(path):
                 idleList.append(Animation(idle["frames"], idle["fps"], idle["locking"]))
             idles = IdleSet(idleList, expressionData["anims"]["Idles"]["randomSecMin"], expressionData["anims"]["Idles"]["randomSecMax"])
         # print(f"all idles for {expressionData['name']}:\n {idleList}")
-
+        debugPrint("idles loaded. loading talking...")
 
         # talking
         if(not expressionData["anims"]["Talk"]):
@@ -1165,6 +1195,7 @@ def loadTuber(path):
         else:
             talking = Animation(expressionData["anims"]["Talk"]["frames"], expressionData["anims"]["Talk"]["fps"], expressionData["anims"]["Talk"]["locking"])
 
+        debugPrint("talking loaded. loading peak...")
         # peak
         if(not expressionData["anims"]["Peak"]):
             # print("No peak animation found.")
@@ -1172,15 +1203,22 @@ def loadTuber(path):
         else:
             peak = Animation(expressionData["anims"]["Peak"]["frames"], expressionData["anims"]["Peak"]["fps"], expressionData["anims"]["Peak"]["locking"])
 
+        debugPrint("peak loaded. loading transition in...")
+
         # transition in
         transitionIn = Animation(expressionData["anims"]["TransitionIN"]["frames"], expressionData["anims"]["TransitionIN"]["fps"], True)
+
+        debugPrint("transition in loaded. loading transition out...")
 
         # transition out
         transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"], True)
 
+        debugPrint("transition out loaded. creating expression set...")
         # create ExpressionSet
         expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["blockers"], expressionData["hotkeys"]))
         expressionIndex[expressionData["name"]] = len(expressionList) - 1
+
+        debugPrint("expression set created. adding to hotkey dictionary...")
 
         for key in expressionData["hotkeys"]:
             # add to hotkey dictionary
@@ -1192,16 +1230,18 @@ def loadTuber(path):
                 hotkeyDictionary[key].append(expressionData["name"])
 
         # print(expressionDictionary)
-
+    debugPrint("all expressions loaded. loading canned animations...")
     canDone = 0
     for cannedAnimationData in data["canned_anims"]:
         currentLoadProgress += 1
         canDone += 1
         progressText = f"Loading canned animation \"{cannedAnimationData['name']}\" ({canDone}/{cannedCount})..."
+        debugPrint(progressText)
 
         # name, animation, hotkey, requires, result
-        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkeys"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["result"]))
+        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkeys"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["sound"], cannedAnimationData["result"]))
         cannedAnimationIndex[cannedAnimationData["name"]] = len(cannedAnimationList) - 1
+        debugPrint("canned animation loaded. adding to hotkey dictionary...")
 
         for key in cannedAnimationData["hotkeys"]:
             if(key not in hotkeyDictionary):
@@ -1209,6 +1249,7 @@ def loadTuber(path):
             else:
                 hotkeyDictionary[key].append(cannedAnimationData["name"])
     
+    debugPrint("all canned animations loaded. loading expressions...")
     # print(hotkeyDictionary)
     loadExpression(expressionList[expressionIndex[name1]], "main")
     # print(f"Path = {path}")
@@ -1698,6 +1739,10 @@ while running:
 # Quit Pygame
 pygame.quit()
 
+# kill all threads
+
+
 stream.stop_stream()
 stream.close()
 pa.terminate()
+# end all threads

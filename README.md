@@ -52,6 +52,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
          - keyboard (pip install keyboard)
          - streamdeck (pip install streamdeck)
          - imageio (pip install imageio)
+         - playsound (pip install playsound)
       
    - if you are running this as a compiled EXE file, you should be all set!
 
@@ -189,6 +190,8 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *result*:            The name of the Expression Set or Canned Animation that will be played after this Canned Animation is finished. **THIS IS REQUIRED.** If you do not list a result, the Canned Animation will get stuck in an infinite loop.
 
+- *sound*:            A path to a sound file that will play once the animation is triggered. Can be null if you don't want one.
+
 - *animation*:        The Animation object that will be played when this Canned Animation is triggered.
 
 (Below are two examples of Canned animations, one of the character appearing and waving, and another of the character leaving)
@@ -225,7 +228,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *random_duplicate_reduction*:    A number between 0 and 1. This is the percentage of the time that the player will attempt to reduce the chance of playing the same animation twice in a row. (IE: If this number is 0, the player will NOT try to prevent the same animation from playing twice in a row. If this number is 1, the player will ALWAYS try to prevent the same animation from playing twice in a row.)
 
-- *expressions*:                   A list of Expression Set objects
+- *expressions*:                   A list of Expression Set objects. **Remember that transition animations in expressions do NOT need a "locking" parameter, as the program will AUTOMATICALLY lock all transition animations.**
 
 - *canned_anims*:                  A list of Canned Animation objects. **NOTE: It is not necessary to list a "locking" parameter for Animations put inside of Canned Animations, as the program will AUTOMATICALLY lock ALL Canned Animations.**
 
@@ -288,5 +291,7 @@ When the player is ready to play the queued animation, it will do one of two thi
     Then:
         - If the queued animation is an **EXPRESSION**, the player will load the "Transition In" animation from the queued expression set, and then load the "Main" animation from the queued expression set when the "Transition In" animation is finished.
         - If the queued animation is a **CANNED ANIMATION**, the player will load the Canned Animation and start playing it immediately. When the animation is finished, the player will then load the Expression Set or Canned Animation designated as the "result" of completed Canned Animation.
+
+If you press another hotkey while the player is transitioning into another animation, the player will **attempt to queue** any viable animation to play once the transition is complete. For example, if you have "Happy" and "Laughing" Expressions set to the same hotkey, with the "Laughing" animation requiring the "Happy" animation, and you press that hotkey twice in a row, the player will transition out of the current animation, skip "Happy," and transition straight into "Laughing."
     
 

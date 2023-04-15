@@ -335,6 +335,7 @@
         null
       ],
       "result": "Main",
+      "sound": null,
       "anim": 
       {
         "frames": [
@@ -356,6 +357,7 @@
         null
       ],
       "result": "HIDDEN",
+      "sound": "ToonTubers\\Jay ToonTuber\\sounds\\Jay-Disappear.wav",
       "anim": 
       {
         "frames": [
