@@ -140,7 +140,7 @@ width, height = 750, 750
 screen = pygame.display.set_mode((width, height))
 
 settings_UImanager = pygame_gui.UIManager((width, height))
-audio_UImanager = pygame_gui.UIManager((width, height))
+keybind_UImanager = pygame_gui.UIManager((width, height))
 
 # Set the window name (NOTE: changing the caption might screw up existing Window Captures in OBS. Best not to change this.)
 pygame.display.set_caption("ToonTuber Player")
@@ -237,7 +237,6 @@ try:
 except Exception as e:
     print("Error reading mutekey from preferences.ini. Setting to \"-\"...")
 muteKey = pygame.key.key_code(muteKeyName)
-print(f"muteKey: {muteKey}")
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
@@ -305,7 +304,6 @@ def audio_callback(in_data, frame_count, time_info, status):
     
     # return None and continue streaming
     return (None, pyaudio.paContinue)
-
 
 # Open the stream with the callback function
 stream = pa.open(format=pyaudio.paInt16,
@@ -961,6 +959,21 @@ changingSettingsKeybind = False
 changingHotKeybind = False
 changingMuteKeybind = False
 
+def openKeybindScreen():
+    global currentScreen
+    currentScreen = "keybind"
+    enableHotkeyButtons()
+    disableHotkeyButtons()
+
+def leaveHotkeyScreen():
+    global currentScreen, changingSettingsKeybind, changingHotKeybind, changingMuteKeybind
+    currentScreen = "settings"
+    changingSettingsKeybind = False
+    changingHotKeybind = False
+    changingMuteKeybind = False
+    disableHotkeyButtons()
+    enableSettingsButtons()
+
 def beginKeybindChange():
     global changingSettingsKeybind
     changingSettingsKeybind = True
@@ -981,9 +994,9 @@ def changeBGColor():
     changeBGColorButton.disable()
 
 def toggleAntiAliasing():
-    global antialiasing, smoothPixels, prefini
+    global antialiasing, smoothPixelsButton, prefini
     antialiasing = not antialiasing
-    smoothPixels.set_text(f"Smooth Pixels ({'Yes' if antialiasing else 'No'})")
+    smoothPixelsButton.set_text(f"Smooth Pixels ({'Yes' if antialiasing else 'No'})")
     prefini.set("Settings", "antialiasing", f"{'1' if antialiasing else '0'}")
     with open("preferences.ini", "w") as f:
         prefini.write(f)
@@ -1069,7 +1082,7 @@ currentLoadProgress = 0
 progressText = "Loading JSON file..."
 
 def loadTuber(path):
-    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settings_options, screen, load_thread, totalLoadStages, currentLoadProgress, progressText, hotkeyDictionary
+    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settingsText, screen, load_thread, totalLoadStages, currentLoadProgress, progressText, hotkeyDictionary
 
     if(path is None or path == ""):
         print("No file selected.")
@@ -1195,7 +1208,7 @@ def loadTuber(path):
     loadExpression(expressionList[expressionIndex[name1]], "main")
     # print(f"Path = {path}")
     prefini.set("LastUsed", "lastloaded", "\"" + str(path) + "\"")
-    settings_options[2].setText(f"Current Tuber: {tuberName} by {creator}")
+    settingsText[2].setText(f"Current Tuber: {tuberName} by {creator}")
     with open("preferences.ini", "w") as configfile:
         prefini.write(configfile)
 
@@ -1211,9 +1224,8 @@ def loadTuberThread(path=None):
     load_thread = threading.Thread(target=loadTuber, args=(path,))
     load_thread.start()
 
-
 # Define the clickable text options
-settings_options = [
+settingsText = [
     ClickableText(f"Talk Threshold: ", (100, height-50), UniFontSmaller, WHITE, None),
     ClickableText(f"Peak Threshold: ", (100, height-100), UniFontSmaller, WHITE, None),
     ClickableText(f"Current Tuber: {tuberName} by {creator}", (0, 0), UniFontBigger, WHITE, None),
@@ -1234,28 +1246,19 @@ loadToonTuberButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0,
                                              text='Load ToonTuber',
                                              manager=settings_UImanager)
 
-changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 175), (300, 50)),
-                                                text=f'Change Settings Keybind (\"{settingsKeybindName}\")',
-                                                manager=settings_UImanager)
-
-changeHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 225), (400, 50)),
-                                                text=f'Change HotkeyIgnore Keybind (\"{ignoreHotkeyBindName}\")',
-                                                manager=settings_UImanager)
-
-changeMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (300, 50)),
-                                                text=f'Change Mute Keybind (\"{muteKeyName}\")',
-                                                manager=settings_UImanager)
-
-changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (225, 50)),
+changeBGColorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 175), (225, 50)),
                                                 text='Change Background Color',
                                                 manager=settings_UImanager)
 
-smoothPixels = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 375), (200, 50)),
+smoothPixelsButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 225), (200, 50)),
                                                 text=f"Smooth Pixels ({'Yes' if antialiasing else 'No'})",
                                                 manager=settings_UImanager)
 
+changeKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (200, 50)),
+                                                   text='Change Keybinds',
+                                                   manager=settings_UImanager)
 
-dropdownPos = pygame.Rect((0, 425), (325, 50))
+dropdownPos = pygame.Rect((0, 325), (325, 50))
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                         starting_option=lastAudioDevice,
                                                         relative_rect=dropdownPos,
@@ -1265,6 +1268,60 @@ audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDevic
 #                                              text='Open Editor',
 #                                              manager=settings_UImanager)
 
+
+changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 175), (300, 50)),
+                                                text=f'Settings Keybind (\"{settingsKeybindName}\")',
+                                                manager=keybind_UImanager)
+
+changeHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 225), (400, 50)),
+                                                text=f'HotkeyIgnore Keybind (\"{ignoreHotkeyBindName}\")',
+                                                manager=keybind_UImanager)
+
+changeMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (300, 50)),
+                                                text=f'Mute Keybind (\"{muteKeyName}\")',
+                                                manager=keybind_UImanager)
+
+leaveHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, height-100), (200, 50)),
+                                                text='Back',
+                                                manager=keybind_UImanager)
+
+
+settingsButtonsEnabled = True
+hotkeyButtonsEnabled = True
+
+def enableSettingsButtons():
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled
+    loadToonTuberButton.enable()
+    changeBGColorButton.enable()
+    smoothPixelsButton.enable()
+    changeKeybindButton.enable()
+    audioDeviceDropdown.enable()
+    settingsButtonsEnabled = True
+
+def disableSettingsButtons():
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled
+    loadToonTuberButton.disable()
+    changeBGColorButton.disable()
+    smoothPixelsButton.disable()
+    changeKeybindButton.disable()
+    audioDeviceDropdown.disable()
+    settingsButtonsEnabled = False
+
+def enableHotkeyButtons():
+    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton
+    changeSettingsKeybindButton.enable()
+    changeHotkeyButton.enable()
+    changeMuteKeybindButton.enable()
+    leaveHotkeyButton.enable()
+    hotkeyButtonsEnabled = True
+
+def disableHotkeyButtons():
+    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton
+    changeSettingsKeybindButton.disable()
+    changeHotkeyButton.disable()
+    changeMuteKeybindButton.disable()
+    leaveHotkeyButton.disable()
+    hotkeyButtonsEnabled = False
 
 talk_textEntry = pygame_gui.elements.UITextEntryLine(
     pygame.Rect((250, height-55), (50, 25)),
@@ -1355,6 +1412,9 @@ debugPrint("Audio and render threads started.\nBeginning main Pygame loop...")
 
 newAudioDevice = ""
 
+disableHotkeyButtons()
+disableSettingsButtons()
+
 # Main Pygame loop
 running = True
 while running:
@@ -1372,7 +1432,6 @@ while running:
  
     changingAnyKeybind = changingSettingsKeybind or changingHotKeybind or changingMuteKeybind
 
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -1385,14 +1444,15 @@ while running:
             # print(f"hotkeyignore is now {'ON' if ignoreHotkey else 'OFF'}")
         elif event.type == pygame.KEYDOWN and event.key == muteKey:
             muted = not muted
-        elif event.type == pygame.KEYDOWN and currentScreen == "settings":
+        elif event.type == pygame.KEYDOWN and currentScreen == "keybind":
+            print("keybind pressed on keybind screen")
             if(changingSettingsKeybind):
                 # print(event.key)
                 settingsKeybind = event.key
                 settingsKeybindName = pygame.key.name(event.key)
                 # print("keybind changed to " + settingsKeybindName)
 
-                changeSettingsKeybindButton.text = f'Change Settings Keybind (\"{settingsKeybindName}\")'
+                changeSettingsKeybindButton.text = f'Settings Keybind (\"{settingsKeybindName}\")'
                 changeSettingsKeybindButton.rebuild()
 
                 prefini.set("Settings", "keybind", "\"" + str(settingsKeybindName) + "\"" )
@@ -1406,7 +1466,7 @@ while running:
                 ignoreHotkeyBindName = pygame.key.name(event.key)
                 # print("keybind changed to " + hotKeybindName)
 
-                changeHotkeyButton.text = f'Change HotkeyIgnore Keybind (\"{ignoreHotkeyBindName}\")'
+                changeHotkeyButton.text = f'HotkeyIgnore Keybind (\"{ignoreHotkeyBindName}\")'
                 changeHotkeyButton.rebuild()
 
                 prefini.set("Settings", "ignorehotkey", "\"" + str(ignoreHotkeyBindName) + "\"" )
@@ -1420,7 +1480,7 @@ while running:
                 muteKeyName = pygame.key.name(event.key)
                 # print("keybind changed to " + muteKeyName)
 
-                changeMuteKeybindButton.text = f'Change Mute Keybind (\"{muteKeyName}\")'
+                changeMuteKeybindButton.text = f'Mute Keybind (\"{muteKeyName}\")'
                 changeMuteKeybindButton.rebuild()
 
                 prefini.set("Settings", "mutekey", "\"" + str(muteKeyName) + "\"" )
@@ -1457,7 +1517,7 @@ while running:
                     if option.isClicked(mousePos):
                         option.doAction()
             if currentScreen == "settings":
-                for option in settings_options:
+                for option in settingsText:
                     if option.isClicked(mousePos):
                         option.doAction()
 
@@ -1486,15 +1546,21 @@ while running:
                 beginKeybindChange()
             elif(event.ui_element == changeBGColorButton):
                 changeBGColor()
-            elif(event.ui_element == smoothPixels):
+            elif(event.ui_element == smoothPixelsButton):
                 toggleAntiAliasing()
             elif(event.ui_element == changeHotkeyButton):
                 beginHotKeybindChange()
             elif(event.ui_element == changeMuteKeybindButton):
                 beginMuteKeybindChange()
+            elif(event.ui_element == changeKeybindButton):
+                openKeybindScreen()
+            elif(event.ui_element == leaveHotkeyButton):
+                leaveHotkeyScreen()
 
         settings_UImanager.process_events(event)
+        keybind_UImanager.process_events(event)
     settings_UImanager.update(delta_time)
+    keybind_UImanager.update(delta_time)
 
     if(audioDeviceDropdown.selected_option != lastAudioDevice):
         # get the ID of the selected option in the audio device list
@@ -1527,6 +1593,9 @@ while running:
 
     # if on the opening screen, prompt user if they want to open an existing tuber or make a new one
     if currentScreen == "opening":
+        if(settingsButtonsEnabled or hotkeyButtonsEnabled):
+            disableSettingsButtons()
+            disableHotkeyButtons()
         # print("opening screen")
         darken_screen()
         draw_text_options(opening_options)
@@ -1534,16 +1603,17 @@ while running:
         # if user clicks on "New ToonTuber", open the editor
 
     elif currentScreen == "settings":
+        if(not settingsButtonsEnabled):
+            enableSettingsButtons()
+        if(hotkeyButtonsEnabled):
+            disableHotkeyButtons()
         darken_screen()
-        draw_text_options(settings_options)
+        draw_text_options(settingsText)
+
         # Display the FPS counter in the bottom right corner
         display_fps("program FPS: ",clock, 0)
         display_fps("anim FPS: ", fpsClock, 50)
         draw_text_options([ClickableText(f"Ignoring Hotkeys: {'ON' if ignoreHotkey else 'OFF'}", (width-300, height-150), UniFont, WHITE, None)])
-
-        if(changingAnyKeybind):
-            # print("changing keybind")
-            draw_text_options([ClickableText("Press a key to change keybind", (0, height-200), UniFont, WHITE, None)])
 
 
         # these values assume that the top left corner of the sprite is 0,0
@@ -1575,10 +1645,11 @@ while running:
 
         settings_UImanager.draw_ui(screen)
 
-
-    if(currentScreen == "loading"):
+    elif currentScreen == "loading":
         darken_screen()
-
+        if(settingsButtonsEnabled or hotkeyButtonsEnabled):
+            disableSettingsButtons()
+            disableHotkeyButtons()
         # draw full dark progress bar
         baseBar = pygame.Rect(15, 155, width-22, 52)
 
@@ -1595,7 +1666,26 @@ while running:
         draw_text_options([ClickableText("Loading tuber, please wait...", (50, 50), UniFont, WHITE, None),
                            ClickableText(progressText, (50, 100), UniFont, WHITE, None)])
         
-        
+    elif currentScreen == "keybind":
+        darken_screen()
+        if(not hotkeyButtonsEnabled):
+            enableHotkeyButtons()
+        if(settingsButtonsEnabled):
+            disableSettingsButtons()
+        draw_text_options([ClickableText("Select a keybind", (50, 50), UniFont, WHITE, None)])
+
+        changingTxt = ""
+        if(changingSettingsKeybind):
+            changingTxt = "Press a key to change SETTINGS keybind"
+        elif(changingHotKeybind):
+            changingTxt = "Press a key to change HOTKEY keybind"
+        elif(changingMuteKeybind):
+            changingTxt = "Press a key to change MUTE keybind"
+
+        draw_text_options([ClickableText(changingTxt, (0, height-200), UniFont, WHITE, None)])
+
+        keybind_UImanager.draw_ui(screen)
+
 
     # Update the Pygame window
     pygame.display.flip()
