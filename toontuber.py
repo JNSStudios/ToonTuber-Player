@@ -21,7 +21,7 @@ import configparser
 import datetime
 import traceback
 
-debugMode = True
+debugMode = False
 
 version = "v1.2.0"
 

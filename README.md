@@ -60,7 +60,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 **(since the editor program doesn't exist yet)**
 
 ### Animation objects
-- *frames*:                path(s) to a single PNG, a sequence of PNGs, or a GIF.
+- *frames*:                ath(s) FROM the JSON file TO a single PNG, a sequence of PNGs, or a GIF.
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/pngsequenceEx.png)
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/gifEx.png)
 
@@ -71,10 +71,9 @@ When a tuber is loaded, all the images are imported and organized into Animation
     (**JSON**):
     ```
         "frames": [
-            "relative path to PNG/GIF used (use commas to separate PNG file names.)",
-            "(a relative path is the path from the "toontuber.py" file to the image.)",
-            "(usually, these should be inside of the ToonTuber's folder. If it is, use the below template:)",
-            "ToonTubers\\(name of the ToonTuber folder)\\(name of folder that contains your frames)\\(file name)",
+            type the path from the JSON file to the image(s) here,
+            you can copy the path from your file browser and paste it here. (single backslashes may need to be replaced with double backslashes),
+            ex: "frames\\Character-Basic-Main.gif"
         ],
         "fps": number,
         "locking": true or false (no need to type this in if it's a canned animation or transition animation)
@@ -190,7 +189,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *result*:            The name of the Expression Set or Canned Animation that will be played after this Canned Animation is finished. **THIS IS REQUIRED.** If you do not list a result, the Canned Animation will get stuck in an infinite loop.
 
-- *sound*:            A path to a sound file that will play once the animation is triggered. Can be null if you don't want one.
+- *sound*:            A relative path to a sound file that will play once the animation is triggered. Can be null if you don't want one.
 
 - *animation*:        The Animation object that will be played when this Canned Animation is triggered.
 
@@ -211,6 +210,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
         list all the names of the Expression sets that PREVENT this one from playing (or null)
       ],
       "result": type the name of the resulting Expression Set surrounded by quotation marks,
+      "sound": type the relative path to the sound file surrounded by quotation marks (or null) (similar to adding a frame of Animation),
       "anim": 
       {
         A SINGLE Animation JSON Object ("locking" parameter not necessary for Canned)
