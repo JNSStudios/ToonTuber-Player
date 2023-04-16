@@ -6,6 +6,7 @@ import numpy as np
 import keyboard
 from StreamDeck.DeviceManager import DeviceManager
 import imageio
+import logging
 
 # these should be built-in
 import threading
@@ -20,7 +21,7 @@ import configparser
 import datetime
 import traceback
 
-debugMode = False
+debugMode = True
 
 version = "v1.2.0"
 
@@ -47,6 +48,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
     # Print the exception information
     print("Unhandled exception:", exc_type, exc_value)
+    logging.exception(str)
 
     # Play a sound when an exception occurs
     if(not debugMode and exc_type != KeyboardInterrupt):
@@ -68,14 +70,22 @@ def handle_exception(exc_type, exc_value, exc_traceback):
             for line in traceback.format_tb(exc_traceback):
                 f.write(line)
             f.close()
-    
+    exit()
 
 # Set the exception handler
 sys.excepthook = handle_exception
 
+# set up logging for debug mode
+if(debugMode):
+    logging.basicConfig(filename='debug.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+
+
 # helper function, comment out the "print" line to disable this function
 def debugPrint(str):
     if(debugMode):
+        logging.debug(str)
         print(str)
     return
 
@@ -155,7 +165,7 @@ text = UniFont.render("Toon Tuber Player", True, (255, 255, 255))
 textRect = text.get_rect()
 textRect.center = (width // 2, height // 2)
 
-debugPrint("PyGame set up.\nReading from preferences.ini....")
+debugPrint("Window set up.\nReading from preferences.ini....")
 
 # read from preferences.ini file
 try:
@@ -254,7 +264,7 @@ prefini["Settings"] = {"keybind": settingsKeybindName, "bgcolor": BGCOLOR, "anti
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
 
-debugPrint("preferences.ini read.\Initializing audio data stuff...")
+debugPrint("preferences.ini read.\nInitializing audio data stuff...")
 
 # audio stuff
 rms = 0
@@ -290,6 +300,8 @@ def getAudioDevices(initial=False):
                 audioDeviceText = str(i)
             audioDeviceList[deviceName] = i
             audioDeviceNames.append(deviceName)
+    debugPrint(f"\n\n\n HERE IS THE LIST OF DETECTED DEVICES: {audioDeviceNames}\n\n\n")
+
 
 getAudioDevices(True)
 
@@ -366,7 +378,7 @@ def pushHotKey(key):
     # print(hotkeyDictionary)
     if(key in hotkeyDictionary):
         # a hotkey was pressed. check if it needs an existing animation
-        print(f"\nPushed {key}")
+        # print(f"\nPushed {key}")
         possibleAnims = list(hotkeyDictionary[key])
         debugPrint(f"After pressing {key}, the possible animations are {possibleAnims}\nRemoving the current and queued animations if they're in there...")
 
@@ -549,10 +561,14 @@ idleTimer_thread.daemon = True
 
 MISSING_IMAGE = pygame.image.load("assets\MissingImage.png")
 
+jsonPath = ""
+
 def load_animation_images(paths, fps):
     # create a list of Pygame images from the selected files
+    global jsonPath
     images = []
     for file_path in paths:
+        file_path = os.path.join(jsonPath, file_path)
         if(os.path.isfile(file_path)):
             extension = os.path.splitext(file_path)[1]
             if(extension == ".png"):
@@ -837,7 +853,7 @@ class CannedAnimation:
         return len(self.blockers) > 0
     
     def getSound(self):
-        return self.sound
+        return None if (self.sound == "" or self.sound == None) else os.path.join(jsonPath, self.sound)
     def setSound(self, sound):
         self.sound = sound
 
@@ -1096,6 +1112,7 @@ def loadCanned(cannedAnimation):
 load_thread = None
 
 def selectJSON():
+    global jsonPath
     root = tk.Tk()
     root.withdraw()
 
@@ -1106,6 +1123,8 @@ def selectJSON():
 
     root.destroy()  # close the root window
 
+    (jsonPath, filename) = os.path.split(file_path)
+
     return file_path
 
 totalLoadStages = 1
@@ -1113,15 +1132,16 @@ currentLoadProgress = 0
 progressText = "Loading JSON file..."
 
 def loadTuber(path):
-    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settingsText, screen, load_thread, totalLoadStages, currentLoadProgress, progressText, hotkeyDictionary, idleChoiceIndex, soundThread
-    debugPrint("Loading tuber from JSON file...")
+    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settingsText, screen, load_thread, totalLoadStages, currentLoadProgress, progressText, hotkeyDictionary, idleChoiceIndex, jsonPath
     if(path is None or path == ""):
         print("No file selected.")
         return
 
+    (jsonPath, filename) = os.path.split(path)
     currentScreen = "loading"
     with open(path) as json_file:
         data = json.load(json_file)
+    debugPrint(f"Loading {data['name']}...")
     # print(data)
     # print("Loading tuber: " + data["name"])
 
@@ -1303,6 +1323,8 @@ smoothPixelsButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 
 changeKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (200, 50)),
                                                    text='Change Keybinds',
                                                    manager=settings_UImanager)
+
+debugPrint(f"\n\n\n AUDIO DROPDOWN BEING CREATED NOW (using this {audioDeviceNames}).\n\n\n")
 
 dropdownPos = pygame.Rect((0, 325), (325, 50))
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
@@ -1584,6 +1606,7 @@ while running:
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
             # print("dropdown changed")
             getAudioDevices()
+            debugPrint(f"\n\n\n ABOUT TO UPDATE THE MENU (using this {audioDeviceNames}).\n\n\n")
             audioDeviceDropdown.options_list = audioDeviceNames
             audioDeviceDropdown.kill()
             audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
@@ -1624,6 +1647,7 @@ while running:
 
     if(audioDeviceDropdown.selected_option != lastAudioDevice):
         # get the ID of the selected option in the audio device list
+        debugPrint(f"\n\n\n UPDATING AUDIO DEVICE (using this {audioDeviceNames}).\n\n\n")
         newAudioDevice = audioDeviceDropdown.selected_option
         lastAudioDevice = newAudioDevice
         prefini.set("LastUsed", "lastmic", "\"" + str(lastAudioDevice) + "\"")
@@ -1752,8 +1776,6 @@ while running:
 
 # Quit Pygame
 pygame.quit()
-
-
 
 stream.stop_stream()
 stream.close()

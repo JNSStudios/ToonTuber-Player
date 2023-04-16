@@ -1,7 +1,12 @@
 ToonTubers/Jay ToonTuber/
+Jay ToonTuber/
 non-essential assets/
 output/
 past releases/
 preferences.ini
 Player Crash Report*.txt
 *.exe
+*.spec
+*.log
+dist/
+build/
