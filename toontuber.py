@@ -189,51 +189,58 @@ except Exception as e:
     print("preferences.ini created with default values.")
 
 # read from each element in preferences.ini and have failsafes for each
+# last loaded tuber
 try:
     lastTuberLoaded = prefini["LastUsed"]["lastLoaded"].strip("\"")
 except Exception as e:
     print("Error reading last loaded tuber from preferences.ini. Setting to NONE...")
     lastTuberLoaded = "NONE"
 
+# last used mic
 try:
     lastAudioDevice = prefini["LastUsed"]["lastMic"].strip("\"")
 except Exception as e:
-    print("Error reading last used mic from preferences.ini. Setting to NONE...")
-    lastAudioDevice = "NONE"
+    print("Error reading last used mic from preferences.ini. Will be reset later...")
+    lastAudioDevice = "RESET"
 
+# talk threshold
 try:
     talkThreshold = int(prefini["Thresholds"]["talkThresh"])
 except Exception as e:
     print("Error reading talk threshold from preferences.ini. Setting to 50...")
     talkThreshold = 50
 
+# peak threshold
 try:
     peakThreshold = int(prefini["Thresholds"]["peakThresh"])
 except Exception as e:
     print("Error reading peak threshold from preferences.ini. Setting to 90...")
     peakThreshold = 90
 
+# settings keybind
 try:
     settingsKeybindName = prefini["Settings"]["keybind"].strip("\"")
 except Exception as e:
     print("Error reading keybind from preferences.ini. Setting to \"p\"...")
     settingsKeybindName = pygame.key.key_code("p")
-    
 settingsKeybind = pygame.key.key_code(settingsKeybindName)
+
+# mute key
 try:
     BGCOLOR = eval(prefini["Settings"]["bgcolor"].strip("\""))
 except Exception as e:
     print("Error reading background color from preferences.ini. Setting to green...")
     BGCOLOR = GREEN
 
+# smooth pixels
 antialiasing = False
 try:
     antialiasing = bool(int(prefini["Settings"]["antialiasing"]))
 except Exception as e:
     print("Error reading antialiasing from preferences.ini. Setting to False...")
     
+# ignore hotkey
 ignoreHotkey = False
-
 try:
     ignoreHotkeyBindName = prefini["Settings"]["ignorehotkey"].strip("\"")
 except Exception as e:
@@ -242,6 +249,7 @@ except Exception as e:
 # print(ignoreHotkeyBindName)
 ignoreHotkeyBind = pygame.key.key_code(ignoreHotkeyBindName)
 
+# mute key
 muteKeyName = "-"
 muted = False
 try:
@@ -250,6 +258,7 @@ except Exception as e:
     print("Error reading mutekey from preferences.ini. Setting to \"-\"...")
 muteKey = pygame.key.key_code(muteKeyName)
 
+# animation sfx volume
 try:
     animationSFXVolume = float(prefini["Settings"]["volume"])
 except Exception as e:
@@ -257,7 +266,7 @@ except Exception as e:
     animationSFXVolume = 0.5
 
 # write everything back to the file to ensure no data is lost. also helps with updating older versions of preferences.ini
-prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastMic": lastAudioDevice}
+prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": lastAudioDevice}
 prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
 prefini["Settings"] = {"keybind": settingsKeybindName, "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": ignoreHotkeyBindName, "mutekey": muteKeyName, "volume": animationSFXVolume}
 
@@ -286,8 +295,10 @@ audioDeviceNames = []
 deviceList = None
 numdevices = 0
 
+
+
 def getAudioDevices(initial=False):
-    global deviceList, numdevices, audioDeviceList, audioDeviceNames, audio_device_id, audioDeviceText
+    global deviceList, numdevices, audioDeviceList, audioDeviceNames, audio_device_id, audioDeviceText, lastAudioDevice
     deviceList = pa.get_host_api_info_by_index(0)
     numdevices = deviceList.get('deviceCount')
     audioDeviceList.clear()
@@ -300,7 +311,11 @@ def getAudioDevices(initial=False):
                 audioDeviceText = str(i)
             audioDeviceList[deviceName] = i
             audioDeviceNames.append(deviceName)
-    debugPrint(f"\n\n\n HERE IS THE LIST OF DETECTED DEVICES: {audioDeviceNames}\n\n\n")
+    if(lastAudioDevice not in audioDeviceNames):
+        lastAudioDevice = audioDeviceNames[0]
+    # debugPrint(f"\n\n\n HERE IS THE LIST OF DETECTED DEVICES: {audioDeviceNames}\n\n\n")
+
+prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": lastAudioDevice}
 
 
 getAudioDevices(True)
@@ -1298,7 +1313,7 @@ settingsText = [
     ClickableText("program by JNS", (0, 60), UniFontSmaller, WHITE, None),
     ClickableText("original idea by ScottFalco", (0, 80), UniFontSmaller, WHITE, None),
     ClickableText(f"Animation SFX Vol: {round(animationSFXVolume*100)}", (0, height-175), UniFontSmaller, WHITE, None),
-    
+    ClickableText(f"{'DEBUG MODE ENABLED' if debugMode else ''}", (0, 100), UniFontSmaller, WHITE, None),
 ]
 
 opening_options = [
@@ -1324,7 +1339,7 @@ changeKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0,
                                                    text='Change Keybinds',
                                                    manager=settings_UImanager)
 
-debugPrint(f"\n\n\n AUDIO DROPDOWN BEING CREATED NOW (using this {audioDeviceNames}).\n\n\n")
+# debugPrint(f"\n\n\n AUDIO DROPDOWN BEING CREATED NOW (using this {audioDeviceNames}\n also this as the last device {lastAudioDevice}).\n\n\n")
 
 dropdownPos = pygame.Rect((0, 325), (325, 50))
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
@@ -1606,7 +1621,7 @@ while running:
         elif event.type == pygame_gui.UI_DROP_DOWN_MENU_CHANGED:
             # print("dropdown changed")
             getAudioDevices()
-            debugPrint(f"\n\n\n ABOUT TO UPDATE THE MENU (using this {audioDeviceNames}).\n\n\n")
+            # debugPrint(f"\n\n\n ABOUT TO UPDATE THE MENU (using this {audioDeviceNames}).\n\n\n")
             audioDeviceDropdown.options_list = audioDeviceNames
             audioDeviceDropdown.kill()
             audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
@@ -1647,7 +1662,7 @@ while running:
 
     if(audioDeviceDropdown.selected_option != lastAudioDevice):
         # get the ID of the selected option in the audio device list
-        debugPrint(f"\n\n\n UPDATING AUDIO DEVICE (using this {audioDeviceNames}).\n\n\n")
+        # debugPrint(f"\n\n\n UPDATING AUDIO DEVICE (using this {audioDeviceNames}).\n\n\n")
         newAudioDevice = audioDeviceDropdown.selected_option
         lastAudioDevice = newAudioDevice
         prefini.set("LastUsed", "lastmic", "\"" + str(lastAudioDevice) + "\"")
