@@ -23,7 +23,7 @@ import traceback
 
 debugMode = False
 
-version = "v1.2.0"
+version = "v1.2.1"
 
 peakThreshold = 90
 talkThreshold = 50
