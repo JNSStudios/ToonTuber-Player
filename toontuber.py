@@ -161,7 +161,7 @@ pygame.display.set_caption("ToonTuber Player")
 UniFont = pygame.font.Font('freesansbold.ttf', 24)
 UniFontSmaller = pygame.font.Font('freesansbold.ttf', 18)
 UniFontBigger = pygame.font.Font('freesansbold.ttf', 36)
-text = UniFont.render("Toon Tuber Player", True, (255, 255, 255))
+text = UniFont.render("ToonTuber Player", True, (255, 255, 255))
 textRect = text.get_rect()
 textRect.center = (width // 2, height // 2)
 
@@ -225,7 +225,7 @@ except Exception as e:
     print("Error reading keybind from preferences.ini. Setting to \"p\"...")
 settingsKeybind = pygame.key.key_code(settingsKeybindName)
 
-# mute key
+# background color
 try:
     BGCOLOR = eval(prefini["Settings"]["bgcolor"].strip("\""))
 except Exception as e:
@@ -241,13 +241,12 @@ except Exception as e:
     
 # ignore hotkey
 ignoreHotkey = False
+ignoreHotkeyBindName = "right ctrl"
 try:
     ignoreHotkeyBindName = prefini["Settings"]["ignorehotkey"].strip("\"")
 except Exception as e:
     print("Error reading ignorehotkey from preferences.ini. Setting to \"right ctrl\"...")
-    ignoreHotkeyBindName = "right ctrl"
 # print(ignoreHotkeyBindName)
-ignoreHotkeyBind = pygame.key.key_code(ignoreHotkeyBindName)
 
 # mute key
 muteKeyName = "-"
@@ -256,7 +255,6 @@ try:
     muteKeyName = prefini["Settings"]["mutekey"].strip("\"")
 except Exception as e:
     print("Error reading mutekey from preferences.ini. Setting to \"-\"...")
-muteKey = pygame.key.key_code(muteKeyName)
 
 # animation sfx volume
 try:
@@ -1547,7 +1545,6 @@ while running:
 
             elif(changingHotKeybind):
                 # print(event.key)
-                ignoreHotkeyBind = event.key
                 ignoreHotkeyBindName = pygame.key.name(event.key)
                 # print("keybind changed to " + hotKeybindName)
 
@@ -1561,7 +1558,6 @@ while running:
             # print("key pressed and settings is active")        
             elif(changingMuteKeybind):
                 # print(event.key)
-                muteKey = event.key
                 muteKeyName = pygame.key.name(event.key)
                 # print("keybind changed to " + muteKeyName)
 
