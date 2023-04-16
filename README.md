@@ -37,9 +37,12 @@ When a tuber is loaded, all the images are imported and organized into Animation
      - A slider to change the animation sound effect volume
  - Press hotkeys assigned by the Tuber JSON to play the related animation (even if the window is out of focus!)
    (**NOTE:** While the Player window will continue to run when minimized, OBS cannot capture it while it's minimized. This is unfortunately an issue that I have no control over.)
+ - Press "right ctrl" key (or other assigned key) to toggle ignoring hotkeys (useful for when you want to type in chat without triggering animations)
+ - Press "right shift" key (or other assigned key) to toggle muting the microphone (useful for when you want to mute your mic within the program)
  - If the program crashes, an error report is saved in the same folder. A loud error sound will also play so the user will know that the program crashed even if they cannot see it.
- - This program supports pressing keyboard hotkeys, and I want it to support StreamDecks in the future (I have some code ready for it, but I cannot test if it works as I do not own a StreamDeck. If one of you does and would like to contribute, fork this repository and program in StreamDeck functionality into this program.)
  - Canned Animations can have sound effects attached to them. WAV, MP3, and OGG files are supported.
+ - This program supports pressing keyboard hotkeys, and I want it to support StreamDecks in the future (I have some code ready for it, but I cannot test if it works as I do not own a StreamDeck. If one of you does and would like to contribute, fork this repository and program in StreamDeck functionality into this program.)
+
 
 ## What you will need:
    - for running as Python code:
