@@ -6,7 +6,6 @@ import numpy as np
 import keyboard
 from StreamDeck.DeviceManager import DeviceManager
 import imageio
-from playsound import playsound
 
 # these should be built-in
 import threading
@@ -21,9 +20,9 @@ import configparser
 import datetime
 import traceback
 
-debugMode = True
+debugMode = False
 
-version = "v1.1.0"
+version = "v1.2.0"
 
 peakThreshold = 90
 talkThreshold = 50
@@ -51,7 +50,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
     # Play a sound when an exception occurs
     if(not debugMode and exc_type != KeyboardInterrupt):
-        playsound("assets\error.wav")
+        winsound.PlaySound("assets\error.wav", winsound.SND_FILENAME)
 
     # Call the default exception handler
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -125,6 +124,8 @@ selectedBox = ""
 audioDeviceText = "1"
 audio_device_id = 1
 
+animationSFXVolume = 1
+
 # Define some colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -172,7 +173,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "-"}
+    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "-", "volume": 0.5}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -239,10 +240,16 @@ except Exception as e:
     print("Error reading mutekey from preferences.ini. Setting to \"-\"...")
 muteKey = pygame.key.key_code(muteKeyName)
 
+try:
+    animationSFXVolume = float(prefini["Settings"]["volume"])
+except Exception as e:
+    print("Error reading animationSFXVolume from preferences.ini. Setting to 0.5...")
+    animationSFXVolume = 0.5
+
 # write everything back to the file to ensure no data is lost. also helps with updating older versions of preferences.ini
 prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastMic": lastAudioDevice}
 prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
-prefini["Settings"] = {"keybind": settingsKeybindName, "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": ignoreHotkeyBindName, "mutekey": muteKeyName}
+prefini["Settings"] = {"keybind": settingsKeybindName, "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": ignoreHotkeyBindName, "mutekey": muteKeyName, "volume": animationSFXVolume}
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
@@ -347,18 +354,6 @@ def select_audio_device(id):
     print("Starting audio stream...")
     stream.start_stream()
     print("Audio stream restarted.")
-
-def playSoundThread(path):
-    soundThread = threading.Thread(target=playSound, args=(path,))
-    soundThread.start()
-
-def playSound(path):
-    if(path == ""):
-        return
-    debugPrint(f"PATH: {path}")
-    playsound(path)
-    return
-         
 
 debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 
@@ -1076,7 +1071,7 @@ def loadExpression(expressionSet, animation):
     currentExpression = expressionSet.getName()
 
 def loadCanned(cannedAnimation):
-    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle, currentAnimationType, queuedSound
+    global currentAnimation, tuberFrames, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, currentFrame, currentExpression, idling, randIdleMin, randIdleMax, timeUntilNextIdle, currentAnimationType, newSoundPath
     debugPrint(f"Loading CANNED animation \"{cannedAnimation.getName()}.\"")
     idling = False
     idle_timer_reset()
@@ -1093,8 +1088,11 @@ def loadCanned(cannedAnimation):
     locked = currentAnimation.locking
     fpsClock = pygame.time.Clock()
     currentExpression = cannedAnimation.getName()
-    queuedSound = playSoundThread(cannedAnimation.getSound())
-
+    if(cannedAnimation.getSound() != None and cannedAnimation.getSound() != ""):
+        sound = pygame.mixer.Sound(cannedAnimation.getSound())
+        sound.set_volume(animationSFXVolume)
+        sound.play(loops=0)
+    
 load_thread = None
 
 def selectJSON():
@@ -1115,7 +1113,7 @@ currentLoadProgress = 0
 progressText = "Loading JSON file..."
 
 def loadTuber(path):
-    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settingsText, screen, load_thread, totalLoadStages, currentLoadProgress, progressText, hotkeyDictionary
+    global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settingsText, screen, load_thread, totalLoadStages, currentLoadProgress, progressText, hotkeyDictionary, idleChoiceIndex, soundThread
     debugPrint("Loading tuber from JSON file...")
     if(path is None or path == ""):
         print("No file selected.")
@@ -1138,6 +1136,7 @@ def loadTuber(path):
     hotkeyDictionary = {}
     expressionIndex = {}
     cannedAnimationIndex = {}
+    idleChoiceIndex = -1
 
     # loading screen info colelction
     expressionCount = len(data["expressions"])
@@ -1239,7 +1238,7 @@ def loadTuber(path):
         debugPrint(progressText)
 
         # name, animation, hotkey, requires, result
-        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkeys"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["sound"], cannedAnimationData["result"]))
+        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkeys"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["sound"].replace('\\', '/') if cannedAnimationData["sound"] != None else None, cannedAnimationData["result"]))
         cannedAnimationIndex[cannedAnimationData["name"]] = len(cannedAnimationList) - 1
         debugPrint("canned animation loaded. adding to hotkey dictionary...")
 
@@ -1258,7 +1257,6 @@ def loadTuber(path):
     with open("preferences.ini", "w") as configfile:
         prefini.write(configfile)
 
-
     currentScreen = "tuber"
     print("Loaded Tuber: " + tuberName)
     return
@@ -1268,6 +1266,7 @@ def loadTuberThread(path=None):
     if(path is None):
         path = selectJSON()
     load_thread = threading.Thread(target=loadTuber, args=(path,))
+    load_thread.daemon = True
     load_thread.start()
 
 # Define the clickable text options
@@ -1277,7 +1276,8 @@ settingsText = [
     ClickableText(f"Current Tuber: {tuberName} by {creator}", (0, 0), UniFontBigger, WHITE, None),
     ClickableText(f"ToonTuber Player {version}", (0, 40), UniFontSmaller, WHITE, None),
     ClickableText("program by JNS", (0, 60), UniFontSmaller, WHITE, None),
-    ClickableText("original idea by ScottFalco", (0, 80), UniFontSmaller, WHITE, None)
+    ClickableText("original idea by ScottFalco", (0, 80), UniFontSmaller, WHITE, None),
+    ClickableText(f"Animation SFX Vol: {round(animationSFXVolume*100)}", (0, height-175), UniFontSmaller, WHITE, None),
     
 ]
 
@@ -1310,6 +1310,11 @@ audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDevic
                                                         relative_rect=dropdownPos,
                                                         manager=settings_UImanager)
 
+volumeSlider = pygame_gui.elements.ui_horizontal_slider.UIHorizontalSlider(relative_rect=pygame.Rect((0, height - 150), (150, 25)),
+                                                                          start_value=animationSFXVolume,
+                                                                          value_range=(0, 1),
+                                                                          manager=settings_UImanager)
+
 # openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 425), (200, 50)),
 #                                              text='Open Editor',
 #                                              manager=settings_UImanager)
@@ -1336,21 +1341,23 @@ settingsButtonsEnabled = True
 hotkeyButtonsEnabled = True
 
 def enableSettingsButtons():
-    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider
     loadToonTuberButton.enable()
     changeBGColorButton.enable()
     smoothPixelsButton.enable()
     changeKeybindButton.enable()
     audioDeviceDropdown.enable()
+    volumeSlider.enable()
     settingsButtonsEnabled = True
 
 def disableSettingsButtons():
-    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider
     loadToonTuberButton.disable()
     changeBGColorButton.disable()
     smoothPixelsButton.disable()
     changeKeybindButton.disable()
     audioDeviceDropdown.disable()
+    volumeSlider.disable()
     settingsButtonsEnabled = False
 
 def enableHotkeyButtons():
@@ -1583,6 +1590,13 @@ while running:
                                                                     starting_option=lastAudioDevice,
                                                                     relative_rect=dropdownPos,
                                                                     manager=settings_UImanager)
+        elif event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
+            animationSFXVolume = volumeSlider.get_current_value()
+            settingsText[6].text = f"Animation SFX Vol: {round(animationSFXVolume*100)}"
+            prefini.set("Settings", "volume", str(animationSFXVolume))
+            with open("preferences.ini", "w") as ini:
+                prefini.write(ini)
+
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == loadToonTuberButton:
                 loadTuberThread(None)
@@ -1739,7 +1753,6 @@ while running:
 # Quit Pygame
 pygame.quit()
 
-# kill all threads
 
 
 stream.stop_stream()

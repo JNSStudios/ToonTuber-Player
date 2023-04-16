@@ -29,16 +29,17 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 ## Program features
  - Press "p" key (or other assigned key) to open the Settings screen
-    - "Load Tuber" button to load in new JSON data
-     - Change the key used to open the Settings screen
+     - "Load Tuber" button to load in new JSON data
      - Change background color
      - Toggle pixel smoothing (antialiasing)
+     - Change the keys used to open the Settings screen, toggle hotkey ignoring, and toggle mic muting
      - A dropdown menu to change audio input device used for the program
-     - "Open ToonTuber Editor" (not working yet, as editor doesn't exist yet)
+     - A slider to change the animation sound effect volume
  - Press hotkeys assigned by the Tuber JSON to play the related animation (even if the window is out of focus!)
    (**NOTE:** While the Player window will continue to run when minimized, OBS cannot capture it while it's minimized. This is unfortunately an issue that I have no control over.)
  - If the program crashes, an error report is saved in the same folder. A loud error sound will also play so the user will know that the program crashed even if they cannot see it.
  - This program supports pressing keyboard hotkeys, and I want it to support StreamDecks in the future (I have some code ready for it, but I cannot test if it works as I do not own a StreamDeck. If one of you does and would like to contribute, fork this repository and program in StreamDeck functionality into this program.)
+ - Canned Animations can have sound effects attached to them. WAV, MP3, and OGG files are supported.
 
 ## What you will need:
    - for running as Python code:
@@ -52,7 +53,6 @@ When a tuber is loaded, all the images are imported and organized into Animation
          - keyboard (pip install keyboard)
          - streamdeck (pip install streamdeck)
          - imageio (pip install imageio)
-         - playsound (pip install playsound)
       
    - if you are running this as a compiled EXE file, you should be all set!
 
@@ -294,4 +294,4 @@ When the player is ready to play the queued animation, it will do one of two thi
 
 If you press another hotkey while the player is transitioning into another animation, the player will **attempt to queue** any viable animation to play once the transition is complete. For example, if you have "Happy" and "Laughing" Expressions set to the same hotkey, with the "Laughing" animation requiring the "Happy" animation, and you press that hotkey twice in a row, the player will transition out of the current animation, skip "Happy," and transition straight into "Laughing."
     
-
+If a Canned Animation has a **sound** attached to it, the sound will immediately begin playing after the Canned Animation is loaded. It will play until it is finished. I recommend using a sound editor to exactly time with your animation. (I use Audacity.)
