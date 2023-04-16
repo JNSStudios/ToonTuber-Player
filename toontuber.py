@@ -183,7 +183,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"keybind": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "-", "volume": 0.5}
+    prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -218,11 +218,11 @@ except Exception as e:
     peakThreshold = 90
 
 # settings keybind
+settingsKeybindName = "p"
 try:
-    settingsKeybindName = prefini["Settings"]["keybind"].strip("\"")
+    settingsKeybindName = prefini["Settings"]["settingskey"].strip("\"")
 except Exception as e:
     print("Error reading keybind from preferences.ini. Setting to \"p\"...")
-    settingsKeybindName = pygame.key.key_code("p")
 settingsKeybind = pygame.key.key_code(settingsKeybindName)
 
 # mute key
@@ -266,9 +266,9 @@ except Exception as e:
     animationSFXVolume = 0.5
 
 # write everything back to the file to ensure no data is lost. also helps with updating older versions of preferences.ini
-prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": lastAudioDevice}
+prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\""}
 prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
-prefini["Settings"] = {"keybind": settingsKeybindName, "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": ignoreHotkeyBindName, "mutekey": muteKeyName, "volume": animationSFXVolume}
+prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume}
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
@@ -295,8 +295,6 @@ audioDeviceNames = []
 deviceList = None
 numdevices = 0
 
-
-
 def getAudioDevices(initial=False):
     global deviceList, numdevices, audioDeviceList, audioDeviceNames, audio_device_id, audioDeviceText, lastAudioDevice
     deviceList = pa.get_host_api_info_by_index(0)
@@ -315,8 +313,7 @@ def getAudioDevices(initial=False):
         lastAudioDevice = audioDeviceNames[0]
     # debugPrint(f"\n\n\n HERE IS THE LIST OF DETECTED DEVICES: {audioDeviceNames}\n\n\n")
 
-prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": lastAudioDevice}
-
+prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\""}
 
 getAudioDevices(True)
 
@@ -530,10 +527,16 @@ except Exception as e:
 
 # keyboard reading thread
 def keyboard_input_thread():
+    global currentScreen, muteKeyName, settingsKeybindName, ignoreHotkeyBindName, changingAnyKeybind, ignoreHotkey, muted
     while True:
         event = keyboard.read_event()
         if event.event_type == "down":
-            pushHotKey(event.scan_code)
+            if(event.name == ignoreHotkeyBindName):
+                ignoreHotkey = not ignoreHotkey
+            elif(event.name == muteKeyName):
+                muted = not muted
+            else:
+                pushHotKey(event.scan_code)
         elif event.event_type == "up":
             releaseHotKey(event.scan_code)     
             
@@ -1019,7 +1022,7 @@ changingMuteKeybind = False
 
 def openKeybindScreen():
     global currentScreen
-    currentScreen = "keybind"
+    currentScreen = "settings"
     enableHotkeyButtons()
     disableHotkeyButtons()
 
@@ -1287,7 +1290,7 @@ def loadTuber(path):
     # print(hotkeyDictionary)
     loadExpression(expressionList[expressionIndex[name1]], "main")
     # print(f"Path = {path}")
-    prefini.set("LastUsed", "lastloaded", "\"" + str(path) + "\"")
+    prefini.set("LastUsed", "lastloaded", f"\"{path}\"")
     settingsText[2].setText(f"Current Tuber: {tuberName} by {creator}")
     with open("preferences.ini", "w") as configfile:
         prefini.write(configfile)
@@ -1417,14 +1420,13 @@ talk_textEntry = pygame_gui.elements.UITextEntryLine(
     pygame.Rect((250, height-55), (50, 25)),
     manager=settings_UImanager
 )
-
-talk_textEntry.set_allowed_characters('numbers')
-talk_textEntry.set_text(str(talkThreshold))
-
 peak_textEntry = pygame_gui.elements.UITextEntryLine(
     pygame.Rect((250, height-105), (50, 25)),
     manager=settings_UImanager
 )
+
+talk_textEntry.set_allowed_characters('numbers')
+talk_textEntry.set_text(str(talkThreshold))
 
 peak_textEntry.set_allowed_characters('numbers')
 peak_textEntry.set_text(str(peakThreshold))
@@ -1510,7 +1512,6 @@ running = True
 while running:
     if(currentScreen == "opening" and os.path.exists(lastTuberLoaded)):
         loadTuberThread(lastTuberLoaded)
-    
     if(not updateFrameRunning and (currentScreen != "opening" and currentScreen != "loading")):
         updateFrameRunning = True
         render_thread.start()
@@ -1528,12 +1529,6 @@ while running:
         elif event.type == pygame.KEYDOWN and (event.key == settingsKeybind and not changingAnyKeybind) and (currentScreen == "tuber" or currentScreen == "settings"):
             # print("toggling settings")
             currentScreen = "tuber" if currentScreen == "settings" else "settings"
-        # key pressed during settings        
-        elif event.type == pygame.KEYDOWN and event.key == ignoreHotkeyBind:
-            ignoreHotkey = not ignoreHotkey
-            # print(f"hotkeyignore is now {'ON' if ignoreHotkey else 'OFF'}")
-        elif event.type == pygame.KEYDOWN and event.key == muteKey:
-            muted = not muted
         elif event.type == pygame.KEYDOWN and currentScreen == "keybind":
             print("keybind pressed on keybind screen")
             if(changingSettingsKeybind):
@@ -1545,7 +1540,7 @@ while running:
                 changeSettingsKeybindButton.text = f'Settings Keybind (\"{settingsKeybindName}\")'
                 changeSettingsKeybindButton.rebuild()
 
-                prefini.set("Settings", "keybind", "\"" + str(settingsKeybindName) + "\"" )
+                prefini.set("Settings", "settingskey", f"\"{settingsKeybindName}\"" )
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
                 changingSettingsKeybind = False
@@ -1559,7 +1554,7 @@ while running:
                 changeHotkeyButton.text = f'HotkeyIgnore Keybind (\"{ignoreHotkeyBindName}\")'
                 changeHotkeyButton.rebuild()
 
-                prefini.set("Settings", "ignorehotkey", "\"" + str(ignoreHotkeyBindName) + "\"" )
+                prefini.set("Settings", "ignorehotkey", f"\"{ignoreHotkeyBindName}\"" )
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
                 changingHotKeybind = False
@@ -1573,7 +1568,7 @@ while running:
                 changeMuteKeybindButton.text = f'Mute Keybind (\"{muteKeyName}\")'
                 changeMuteKeybindButton.rebuild()
 
-                prefini.set("Settings", "mutekey", "\"" + str(muteKeyName) + "\"" )
+                prefini.set("Settings", "mutekey", f"\"{muteKeyName}\"" )
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
                 changingMuteKeybind = False
@@ -1665,7 +1660,7 @@ while running:
         # debugPrint(f"\n\n\n UPDATING AUDIO DEVICE (using this {audioDeviceNames}).\n\n\n")
         newAudioDevice = audioDeviceDropdown.selected_option
         lastAudioDevice = newAudioDevice
-        prefini.set("LastUsed", "lastmic", "\"" + str(lastAudioDevice) + "\"")
+        prefini.set("LastUsed", "lastmic", f"\"{lastAudioDevice}\"")
         with open("preferences.ini", "w") as ini:
             prefini.write(ini)
         audio_device_id = audioDeviceList[newAudioDevice]
@@ -1765,7 +1760,7 @@ while running:
         draw_text_options([ClickableText("Loading tuber, please wait...", (50, 50), UniFont, WHITE, None),
                            ClickableText(progressText, (50, 100), UniFont, WHITE, None)])
         
-    elif currentScreen == "keybind":
+    elif currentScreen == "settings":
         darken_screen()
         if(not hotkeyButtonsEnabled):
             enableHotkeyButtons()
