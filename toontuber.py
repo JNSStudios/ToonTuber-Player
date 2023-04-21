@@ -380,9 +380,9 @@ def select_audio_device(id):
 debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 
 def pushHotKey(key):
-    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingSettingsKeybind, ignoreHotkey, currentScreen, nonrequiredWeight
+    global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingSettingsKeybind, ignoreHotkey, currentScreen, nonrequiredWeight, typingInTextEntry
     # ignore hotkeys if the user is changing a keybind, or if the user is ignoring hotkeys
-    if(changingSettingsKeybind or ignoreHotkey or currentScreen == "loading"):
+    if(changingSettingsKeybind or ignoreHotkey or currentScreen == "loading" or typingInTextEntry):
         return 
     
     # print(hotkeyDictionary)
@@ -1434,6 +1434,9 @@ talk_textEntry.set_text(str(talkThreshold))
 peak_textEntry.set_allowed_characters('numbers')
 peak_textEntry.set_text(str(peakThreshold))
 
+# make variable to check if the user is typing in the text entry
+typingInTextEntry = False
+
 # text_settings = UniFont.render("SETTINGS", True, BLACK)
 
 # Define a function to draw the text options on the screen
@@ -1523,6 +1526,8 @@ while running:
     delta_time = clock.tick(60) / 1000.0
     talkNotBlank = talk_textEntry.get_text() != "" 
     peakNotBlank = peak_textEntry.get_text() != ""
+
+    typingInTextEntry = talk_textEntry.is_focused or peak_textEntry.is_focused
  
     changingAnyKeybind = changingSettingsKeybind or changingHotKeybind or changingMuteKeybind
 
