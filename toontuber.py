@@ -21,7 +21,7 @@ import configparser
 import datetime
 import traceback
 
-debugMode = False
+debugMode = True
 
 version = "v1.2.1"
 
@@ -1129,6 +1129,7 @@ load_thread = None
 
 def selectJSON():
     global jsonPath
+    debugPrint("Prompting for new JSON file...")
     root = tk.Tk()
     root.withdraw()
 
@@ -1138,6 +1139,10 @@ def selectJSON():
     )
 
     root.destroy()  # close the root window
+
+    if(file_path is None or file_path == ""):
+        print("No file selected.")
+        return
 
     (jsonPath, filename) = os.path.split(file_path)
 
