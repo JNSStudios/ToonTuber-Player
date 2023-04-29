@@ -298,15 +298,15 @@ When **a new animation is queued**, the player will check if the current animati
 
 When the player is ready to play the queued animation, it will do one of two things:
 
-    - If the current animation is an **EXPRESSION**, it will load the "Transition Out" animation from that expression set, if it exists and the next animation doesn't utilize an instant transition, and wait until that is finished. If there is no Out transition or the next expression requires instant transition, the player will immediately load the next animation.
+- If the current animation is an **EXPRESSION**, it will load the "Transition Out" animation from that expression set, if it exists and the next animation doesn't utilize an instant transition, and wait until that is finished. If there is no Out transition or the next expression requires instant transition, the player will immediately load the next animation.
 
-    - If the current animation is a **CANNED ANIMATION**, it will wait until that animation is finished.
+- If the current animation is a **CANNED ANIMATION**, it will wait until that animation is finished.
 
-    Then:
+Then:
 
-    - If the queued animation is an **EXPRESSION**, the player will load and play the "Transition In" animation from the queued expression set (if it exists, *even if the Expression has an "Instant Transition" attribute to it*). If there is no In transition, or if the previous animation was a Canned animation, the player will immediately load the Main animation from the queued expression set. 
-    
-    - If the queued animation is a **CANNED ANIMATION**, the player will load the Canned Animation and start playing it immediately. When the animation is finished, the player will then load the Expression Set or Canned Animation designated as the "result" of completed Canned Animation. If no result is designated, the player will loop the Canned Animation until a new animation is queued.
+- If the queued animation is an **EXPRESSION**, the player will load and play the "Transition In" animation from the queued expression set (if it exists, *even if the Expression has an "Instant Transition" attribute to it*). If there is no In transition, or if the previous animation was a Canned animation, the player will immediately load the Main animation from the queued expression set. 
+
+- If the queued animation is a **CANNED ANIMATION**, the player will load the Canned Animation and start playing it immediately. When the animation is finished, the player will then load the Expression Set or Canned Animation designated as the "result" of completed Canned Animation. If no result is designated, the player will loop the Canned Animation until a new animation is queued.
 
 If you press another hotkey while the player is transitioning into another animation, the player will **attempt to queue** any viable animation to play once the transition is complete. For example, if you have "Happy" and "Laughing" Expressions set to the same hotkey, with the "Laughing" animation requiring the "Happy" animation, and you press that hotkey twice in a row, the player will transition out of the current animation, skip "Happy," and transition straight into "Laughing."
     
