@@ -40,12 +40,12 @@ When a tuber is loaded, all the images are imported and organized into Animation
  - Press "right ctrl" key (or other assigned key) to toggle ignoring hotkeys (useful for when you want to type in chat without triggering animations)
  - Press "right shift" key (or other assigned key) to toggle muting the microphone (useful for when you want to mute your mic within the program)
  - If the program crashes, an error report is saved in the same folder. A loud error sound will also play so the user will know that the program crashed even if they cannot see it.
- - Canned Animations can have sound effects attached to them. WAV, MP3, and OGG files are supported.
+ - Animations can have sound effects attached to them. WAV, MP3, and OGG files are supported. (note: if you are streaming or recording while using this program, you will likely have to add an Application Audio Capture source in OBS to capture the sound effects, as they are played within the window.)
  - This program supports pressing keyboard hotkeys, and I want it to support StreamDecks in the future (I have some code ready for it, but I cannot test if it works as I do not own a StreamDeck. If one of you does and would like to contribute, fork this repository and program in StreamDeck functionality into this program.)
 
 
 ## What you will need:
-   - for running as Python code:
+   - for running the source Python code:
       - Python 3.10
       - an IDE to run the code (I use VSCode with Python extensions)
       - import the following libraries using "pip":
@@ -115,7 +115,11 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *blockers*:        A list of Expression Set names. This functions similar to the "requires" list, but it will prevent this Expression from playing if the Expression that is currently playing is within this list. (IE: If you have a "Happy," and "Sad" Expression, you can prevent the "Sad" Expression from triggering when "Happy" is playing.) Typing the word "null" (without the quotation marks) will mean no Expressions will block this one.
 
-- *animations*:        A **specific list of 6 Animation objects**:
+- *instant*:         If this value is true, this expression will instantly jump to the main animation, skipping over the transitions from the previous animations. If it's false, the transitions will play.
+
+- *sound*:           A relative file path from the json file to a sound file (either .wav or .mp3). This sound will play when the expression begins (either during the transition in, or when the main animation first appears if either no transition exists or the "instant" value is true.) Type the word "null" (without quotation marks) if you do not want a sound to play. 
+
+- *animations*:      A **specific list of 6 Animation objects**:
     
     -- the "Main" Animation.            Plays when your character is doing nothing. (**REQUIRED**)
     
@@ -133,15 +137,14 @@ When a tuber is loaded, all the images are imported and organized into Animation
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/peakEx.gif)
     
-    -- the "TransitionIN" Animation     Plays when your character is ENTERING this Expression (**REQUIRED**)
+    -- the "TransitionIN" Animation     Plays when your character is ENTERING this Expression. Can be NULL.
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trInEx.gif)
     
-    -- the "TransitionOut" Animation    Plays when your character is LEAVING this Expression (**REQUIRED**)
+    -- the "TransitionOut" Animation    Plays when your character is LEAVING this Expression. Can be NULL.
     
     ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/trOutEx.gif)
 
-    (Please note that **just because some animations are required, that doesn't mean they can't be "removed."** For example, I have a "HIDDEN" Expression Set that is supposed to be used when my character is offscreen, and all I did for the Main, Transition In, and Transition Out animations was a single blank frame. In essence, I made it so there was no visual animation occurring, and it could be overwritten at a moments notice because it was only one frame.)
 
     (**JSON**):
     ```
@@ -150,11 +153,13 @@ When a tuber is loaded, all the images are imported and organized into Animation
             for each hotkey desired, type the numbers shown by the "hotkey IDs" program, surrounded by quotation marks. Separate them with commas. If you don't want a hotkey, type null.
         ],
         "requires": [
-            list all the names of the Expression Sets that ALLOW this one to play
+            list all the names of the Expression Sets that ALLOW this one to play (or null)
         ],
         "blockers": [
-            list all the names of the Expression sets that PREVENT this one from playing
+            list all the names of the Expression sets that PREVENT this one from playing (or null)
         ],
+        "instant": true or false (if true, the animation will play instantly, without a transition animation)
+        "sound": either type the relative path to the sound file, or type null if you don't want a sound to play,
         "anims": {
             "Main": {
                 Animation JSON Object (**REQUIRED**)
@@ -172,11 +177,11 @@ When a tuber is loaded, all the images are imported and organized into Animation
             },
             "TransitionIN":
             {
-                Animation JSON Object (**REQUIRED**)
+                Animation JSON Object (or null)
             }, 
             "TransitionOUT": 
             {
-                Animation JSON Object (**REQUIRED**)
+                Animation JSON Object (or null)
             } 
         }
     ```
@@ -190,7 +195,9 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *blockers*:        Same as the Expression Set "blockers" list. List as many as you want, or type "null."
 
-- *result*:            The name of the Expression Set or Canned Animation that will be played after this Canned Animation is finished. **THIS IS REQUIRED.** If you do not list a result, the Canned Animation will get stuck in an infinite loop.
+- *result*:            The name of the Expression Set or Canned Animation that will be played after this Canned Animation is finished. **THIS IS HIGHLY RECOMMENDED.** If you type the word "null" to not assign a resulting animation, the Canned Animation will loop until a hotkey is pressed to trigger a new animation.
+
+- *instant*:         If this value is true, the current animation's transition will be skipped and the canned animation will begin immediately. If it's false, the current animation will transition out before playing the canned animation.
 
 - *sound*:            A relative path to a sound file that will play once the animation is triggered. Can be null if you don't want one.
 
@@ -213,6 +220,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
         list all the names of the Expression sets that PREVENT this one from playing (or null)
       ],
       "result": type the name of the resulting Expression Set surrounded by quotation marks,
+      "instant: true or false (if true, the animation will play instantly, without a transition animation),
       "sound": type the relative path to the sound file surrounded by quotation marks (or null) (similar to adding a frame of Animation),
       "anim": 
       {
@@ -229,7 +237,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *last_modified*:                 The date the ToonTuber was last modified (this will be added automatically by the editor program)
 
-- *random_duplicate_reduction*:    A number between 0 and 1. This is the percentage of the time that the player will attempt to reduce the chance of playing the same animation twice in a row. (IE: If this number is 0, the player will NOT try to prevent the same animation from playing twice in a row. If this number is 1, the player will ALWAYS try to prevent the same animation from playing twice in a row.)
+- *random_duplicate_reduction*:    A number between 0 and 1. This is the percentage of the time that the player will attempt to reduce the chance of playing the same idle animation multiple times in a row. (IE: If this number is 0, the player will NOT try to prevent the same idle from playing twice in a row. If this number is 1, the player will ALWAYS try to prevent the same idle from playing twice in a row. This does not affect Expressions with one or no idles.)
 
 - *expressions*:                   A list of Expression Set objects. **Remember that transition animations in expressions do NOT need a "locking" parameter, as the program will AUTOMATICALLY lock all transition animations.**
 
@@ -289,12 +297,19 @@ The player will then randomly select one of the animations from the filtered lis
 When **a new animation is queued**, the player will check if the current animation is locked. If it is, it will wait until the current animation is unlocked before playing the queued animation. (**NOTE: ALL Canned animations are automatically LOCKED.**)
 
 When the player is ready to play the queued animation, it will do one of two things:
-    - If the current animation is an **EXPRESSION**, it will load the "Transition Out" animation from that expression set and wait until that is finished. 
-    If the current animation is a **CANNED ANIMATION**, it will wait until that animation is finished.
+
+    - If the current animation is an **EXPRESSION**, it will load the "Transition Out" animation from that expression set, if it exists and the next animation doesn't utilize an instant transition, and wait until that is finished. If there is no Out transition or the next expression requires instant transition, the player will immediately load the next animation.
+
+    - If the current animation is a **CANNED ANIMATION**, it will wait until that animation is finished.
+
     Then:
-        - If the queued animation is an **EXPRESSION**, the player will load the "Transition In" animation from the queued expression set, and then load the "Main" animation from the queued expression set when the "Transition In" animation is finished.
-        - If the queued animation is a **CANNED ANIMATION**, the player will load the Canned Animation and start playing it immediately. When the animation is finished, the player will then load the Expression Set or Canned Animation designated as the "result" of completed Canned Animation.
+
+    - If the queued animation is an **EXPRESSION**, the player will load and play the "Transition In" animation from the queued expression set (if it exists, *even if the Expression has an "Instant Transition" attribute to it*). If there is no In transition, or if the previous animation was a Canned animation, the player will immediately load the Main animation from the queued expression set. 
+    
+    - If the queued animation is a **CANNED ANIMATION**, the player will load the Canned Animation and start playing it immediately. When the animation is finished, the player will then load the Expression Set or Canned Animation designated as the "result" of completed Canned Animation. If no result is designated, the player will loop the Canned Animation until a new animation is queued.
 
 If you press another hotkey while the player is transitioning into another animation, the player will **attempt to queue** any viable animation to play once the transition is complete. For example, if you have "Happy" and "Laughing" Expressions set to the same hotkey, with the "Laughing" animation requiring the "Happy" animation, and you press that hotkey twice in a row, the player will transition out of the current animation, skip "Happy," and transition straight into "Laughing."
     
-If a Canned Animation has a **sound** attached to it, the sound will immediately begin playing after the Canned Animation is loaded. It will play until it is finished. I recommend using a sound editor to exactly time with your animation. (I use Audacity.)
+If an Expression or Canned Animation has a **sound** attached to it, the sound will immediately begin playing after the animation is loaded. It will play until it is finished. For Canned Animations, the sound will begin playing with the start of the Canned Animation. For Expressions, the sound will trigger when the animation is transitioned into (this works even if the animation has an "Instant Transition" attribute.)
+
+I recommend using a sound editor to exactly time the sound effect with your animation. (I use Audacity.)

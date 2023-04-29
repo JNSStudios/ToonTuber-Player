@@ -459,7 +459,7 @@ def pushHotKey(key):
          # ones where the current animation is a requirement get a weight of 1, others get a weight of "vars".
          # this way, animations with requirements are more likely to be chosen
 
-        # if you're looking to change the nonrequiredWeight value, it's at the top of the file.
+        # if you're looking to change the nonrequiredWeight value, it's at the top of the file. has to range from 0 to 1
         requirementWeights = [nonrequiredWeight] * len(possibleAnims)
         for i in range(len(possibleAnims)):
             anim = possibleAnims[i]
@@ -581,18 +581,21 @@ jsonPath = ""
 
 def load_animation_images(paths, fps):
     # create a list of Pygame images from the selected files
-    global jsonPath
+    global jsonPath, currentlyLoadingFile
     images = []
     for file_path in paths:
+        singlePath = file_path
         file_path = os.path.join(jsonPath, file_path)
         if(os.path.isfile(file_path)):
             extension = os.path.splitext(file_path)[1]
             if(extension == ".png"):
-                debugPrint(f"Loading image {file_path}")
+                debugPrint(f"Loading image {singlePath}")
+                currentlyLoadingFile = f"Loading image {singlePath}"
                 image = pygame.image.load(file_path)
                 images.append(image)
             elif(extension == ".gif"):
-                debugPrint(f"Loading gif {file_path}")
+                debugPrint(f"Loading gif {singlePath}")
+                currentlyLoadingFile = f"Loading gif {singlePath}"
                 gif = imageio.mimread(file_path)
                 for frame in gif:
                     # debugPrint(f"Loading frame")
@@ -612,6 +615,12 @@ def load_animation_images(paths, fps):
         else:
             images.append(MISSING_IMAGE)
     return (images, fps)
+
+def playAnimationSound(soundPath):
+    global animationSFXVolume
+    sound = pygame.mixer.Sound(soundPath)
+    sound.set_volume(animationSFXVolume)
+    sound.play(loops=0)
 
 class Animation:
     def __init__(self, frames, fps, locking):
@@ -710,7 +719,7 @@ class IdleSet:
         return randAnim
 
 class ExpressionSet:
-    def __init__(self, name, main, idleSet, talk, peak, trIn, trOut, requires, blockers, hotkey):
+    def __init__(self, name, main, idleSet, talk, peak, trIn, trOut, requires, blockers, sound, instant, hotkey):
         self.name = name                # string
         self.main = main                # Animation object
         self.idleSet = idleSet          # IdleSet object
@@ -721,13 +730,15 @@ class ExpressionSet:
         self.requires = requires        # list of ExpressionSets
         self.blockers = blockers        # list of ExpressionSets
         self.hotkey = hotkey            # Hotkey object
+        self.sound = sound              # Sound object
+        self.instant = instant          # bool
         if(self.requires[0] == None):
             self.requires = []
         if(self.blockers[0] == None):
             self.blockers = []
 
     def __str__(self):
-        return f"ExpressionSet {self.name}:\nMain: {self.main}\n{self.idleSet}\nTalk: {self.talk}\nPeak: {self.peak}\nTransition In: {self.trIn}\nTransition Out: {self.trOut}\nRequires: {self.requires}\nHotkey: {self.hotkey}"
+        return f"ExpressionSet {self.name}:\nMain: {self.main}\n{self.idleSet}\nTalk: {self.talk}\nPeak: {self.peak}\nTransition In: {self.trIn}\nTransition Out: {self.trOut}\nRequires: {self.requires}\nHotkey: {self.hotkey}\nSound: {self.sound}\nInstant transition?: {self.instant}"
 
     def getName(self):
         return self.name
@@ -801,8 +812,18 @@ class ExpressionSet:
         else:
             self.hotkey = None
 
+    def getSound(self):
+        return None if (self.sound == "" or self.sound == None) else os.path.join(jsonPath, self.sound)
+    def setSound(self, sound):
+        self.sound = sound
+
+    def isInstant(self):
+        return self.instant
+    def setInstant(self, instant):
+        self.instant = instant
+
 class CannedAnimation:
-    def __init__(self, name, animation, hotkey, requires, blockers, sound, result):
+    def __init__(self, name, animation, hotkey, requires, blockers, sound, instant, result):
         self.name = name                # string
         self.animation = animation      # Animation object
         self.hotkey = hotkey            # Hotkey object
@@ -810,6 +831,7 @@ class CannedAnimation:
         self.blockers = blockers        # list of ExpressionSets
         self.sound = sound              # Sound object
         self.result = result            # ExpressionSet object
+        self.instant = instant          # boolean (if true, no transition is applied)
         if(self.requires[0] == None):
             self.requires = []
         if(self.blockers[0] == None):
@@ -868,11 +890,18 @@ class CannedAnimation:
     def hasBlockers(self):
         return len(self.blockers) > 0
     
+    def isInstant(self):
+        return self.instant
+    def setInstant(self, instant):
+        self.instant = instant
+    
+    
     def getSound(self):
         return None if (self.sound == "" or self.sound == None) else os.path.join(jsonPath, self.sound)
     def setSound(self, sound):
         self.sound = sound
 
+# METHOD TO PLAY AND SWITCH ANIMATIONS
 def update_render_thread():
     global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, currentScreen
     while True:
@@ -898,55 +927,109 @@ def update_render_thread():
             # otherwise, check if we aren't locked in the current animation and if it has finished
             elif(not locked or animationFinished):
                 # can change animation. check what kind of animation we need to switch to, if we need to
-        
-                # queued expression and transitions
-                if((queuedExpression != currentExpression and queuedExpression != "") and transition == "" and currentAnimationType != "canned"):
-                    # animation queued, no transition happening, not in canned animation
-                    transition = "out"
-                    loadExpression(expressionList[expressionIndex[currentExpression]], "out")
-                elif(transition == "out" and animationFinished):
-                    # transition out finished, load queued animation
-                    currentExpression = queuedExpression
-                    currentAnimationType = queuedAnimationType
-                    queuedExpression = ""
-                    queuedAnimationType = ""
+                if((queuedExpression != currentExpression and queuedExpression != "") or transition != "" or (currentAnimationType == "canned")):
+                    debugPrint("animation is finished and new animation is queued.")
+                    # animation queued, check to see if its an expression or canned animation
                     if(currentAnimationType == "expression"):
-                        # if the queued animation is an expression
-                        transition = "in"
-                        currentAnimationType = "expression"
-                        loadExpression(expressionList[expressionIndex[currentExpression]], "in")                        
+                        # if the queued animation is an expression, load the current one's out transition
+                        if(transition == ""):
+                            # no transition happening, load out transition
+                            if((queuedAnimationType == "expression" and expressionList[expressionIndex[queuedExpression]].isInstant()) or (queuedAnimationType == "canned" and cannedAnimationList[cannedAnimationIndex[queuedExpression]].isInstant())):
+                                # if the queued animation is a canned animation and it's not instant, load the canned animation's out transition
+                                currentExpression = queuedExpression
+                                currentAnimationType = queuedAnimationType
+                                queuedExpression = ""
+                                queuedAnimationType = ""
+                                if(currentAnimationType == "canned"):
+                                    loadCanned(cannedAnimationList[cannedAnimationIndex[currentExpression]])
+                                elif(currentAnimationType == "expression"):
+                                    if(expressionList[expressionIndex[currentExpression]].getTransitionIn().exists()):
+                                        transition = "in"
+                                        loadExpression(expressionList[expressionIndex[currentExpression]], "in")
+                                        if(expressionList[expressionIndex[currentExpression]].getSound() != None):
+                                            debugPrint("PLAYING SOUND!")
+                                            playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
+                                    else:
+                                        transition = ""
+                                        loadExpression(expressionList[expressionIndex[currentExpression]], "main")
+                                        if(expressionList[expressionIndex[currentExpression]].getSound() != None):
+                                            debugPrint("PLAYING SOUND!")
+                                            playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
+                            else:
+                                transition = "out"
+                                loadExpression(expressionList[expressionIndex[currentExpression]], "out")
+                        elif(transition == "out"):
+                            # transition out finished, load queued animation
+                            currentExpression = queuedExpression
+                            currentAnimationType = queuedAnimationType
+                            queuedExpression = ""
+                            queuedAnimationType = ""
+                            if(currentAnimationType == "expression"):
+                                # if the queued animation is an expression
+                                if(expressionList[expressionIndex[currentExpression]].getTransitionIn().exists()):
+                                    transition = "in"
+                                    loadExpression(expressionList[expressionIndex[currentExpression]], "in")
+                                    debugPrint(expressionList[expressionIndex[currentExpression]].getSound())
+                                    if(expressionList[expressionIndex[currentExpression]].getSound() != None):
+                                        debugPrint("PLAYING SOUND!")
+                                        playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
+                                else:
+                                    transition = ""
+                                    loadExpression(expressionList[expressionIndex[currentExpression]], "main")
+                                    debugPrint(expressionList[expressionIndex[currentExpression]].getSound())
+                                    if(expressionList[expressionIndex[currentExpression]].getSound() != None):
+                                        debugPrint("PLAYING SOUND!")
+                                        playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
+                            elif(currentAnimationType == "canned"):
+                                # if the queued animation is a canned animation
+                                transition = ""
+                                loadCanned(cannedAnimationList[cannedAnimationIndex[currentExpression]])
+                        elif(transition == "in"):
+                            # transition in finished, load main
+                            transition = ""
+                            loadExpression(expressionList[expressionIndex[currentExpression]], "main")
+                    # queued expression and transitions
                     elif(currentAnimationType == "canned"):
-                        # if the queued animation is a canned animation
-                        transition = ""
-                        currentAnimationType = "canned"
-                        loadCanned(cannedAnimationList[cannedAnimationIndex[currentExpression]])
-                elif(transition == "in" and animationFinished):
-                    # transition in finished, load main animation
-                    transition = ""
-                    loadExpression(expressionList[expressionIndex[currentExpression]], "main")
-                elif(currentAnimationType == "canned" and animationFinished):
-                    # if we're in a canned animation, and it's finished
-                    resultingExpression = cannedAnimationList[cannedAnimationIndex[currentExpression]].getResult()
-                    if(resultingExpression in expressionIndex):
-                        loadExpression(expressionList[expressionIndex[resultingExpression]], "main")
-                    elif(resultingExpression in cannedAnimationIndex):
-                        loadCanned(cannedAnimationList[cannedAnimationIndex[resultingExpression]])
-                # peak and talk
-                elif(avgVol >= peakThreshold 
-                     and expressionList[expressionIndex[currentExpression]].getPeak().exists() 
-                     and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
-                    # peak animation is set, and we're not locked
-                    loadExpression(expressionList[expressionIndex[currentExpression]], "peak")
-                elif(avgVol >= talkThreshold 
-                     and expressionList[expressionIndex[currentExpression]].getTalk().exists() 
-                     and currentAnimation is not expressionList[expressionIndex[currentExpression]].getTalk() 
-                     and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
-                    # talk animation is set, and we're not locked
-                    loadExpression(expressionList[expressionIndex[currentExpression]], "talk")
-                elif( avgVol < talkThreshold 
-                     and (currentAnimation is expressionList[expressionIndex[currentExpression]].getTalk() 
-                          or currentAnimation is expressionList[expressionIndex[currentExpression]].getPeak())):
-                    loadExpression(expressionList[expressionIndex[currentExpression]], "main")
+                        debugPrint("Canned animation completed. Loading resulting expression...")
+                        # if we're in a canned animation, and it's finished
+                        resultingExpression = cannedAnimationList[cannedAnimationIndex[currentExpression]].getResult()
+
+                        if(resultingExpression in expressionIndex):
+                            loadExpression(expressionList[expressionIndex[resultingExpression]], "main")
+                        elif(resultingExpression in cannedAnimationIndex):
+                            loadCanned(cannedAnimationList[cannedAnimationIndex[resultingExpression]])
+                        else:
+                            # no expression or canned animation found, try to load the queued animation
+                            if(queuedAnimationType == "expression"):
+                                currentExpression = queuedExpression
+                                currentAnimationType = queuedAnimationType
+                                queuedExpression = ""
+                                queuedAnimationType = ""
+                                transition = "in"
+                                loadExpression(expressionList[expressionIndex[currentExpression]], "in")
+                            elif(queuedAnimationType == "canned"):
+                                currentExpression = queuedExpression
+                                currentAnimationType = queuedAnimationType
+                                queuedExpression = ""
+                                queuedAnimationType = ""
+                                loadCanned(cannedAnimationList[cannedAnimationIndex[currentExpression]])
+                # peak and talk\
+                elif(currentAnimationType == "expression"):
+                    if(avgVol >= peakThreshold 
+                        and expressionList[expressionIndex[currentExpression]].getPeak().exists() 
+                        and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
+                        # peak animation is set, and we're not locked
+                        loadExpression(expressionList[expressionIndex[currentExpression]], "peak")
+                    elif(avgVol >= talkThreshold 
+                        and expressionList[expressionIndex[currentExpression]].getTalk().exists() 
+                        and currentAnimation is not expressionList[expressionIndex[currentExpression]].getTalk() 
+                        and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
+                        # talk animation is set, and we're not locked
+                        loadExpression(expressionList[expressionIndex[currentExpression]], "talk")
+                    elif( avgVol < talkThreshold 
+                        and (currentAnimation is expressionList[expressionIndex[currentExpression]].getTalk() 
+                            or currentAnimation is expressionList[expressionIndex[currentExpression]].getPeak())):
+                        loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                 else:
                     # no transition, just update the animation
                     currentFrame = (currentFrame) % len(tuberFrames)   
@@ -1117,13 +1200,11 @@ def loadCanned(cannedAnimation):
     framerate = currentAnimation.fps
     currentTotalFrames = len(tuberFrames)
     currentFrame = 0
-    locked = currentAnimation.locking
+    locked = True
     fpsClock = pygame.time.Clock()
     currentExpression = cannedAnimation.getName()
-    if(cannedAnimation.getSound() != None and cannedAnimation.getSound() != ""):
-        sound = pygame.mixer.Sound(cannedAnimation.getSound())
-        sound.set_volume(animationSFXVolume)
-        sound.play(loops=0)
+    if(cannedAnimation.getSound() != None):
+        playAnimationSound(cannedAnimation.getSound())
     
 load_thread = None
 
@@ -1151,6 +1232,7 @@ def selectJSON():
 totalLoadStages = 1
 currentLoadProgress = 0
 progressText = "Loading JSON file..."
+currentlyLoadingFile = "Reading "
 
 def loadTuber(path):
     global currentScreen, tuberName, creator, created, modified, randomDuplicateReduction, expressionList, cannedAnimationList, tuberFrames, expressionIndex, cannedAnimationIndex, currentAnimation, currentFrame, framerate, fpsClock, idleClockCounter, currentTotalFrames, locked, randIdleMax, randIdleMin, settingsText, screen, load_thread, totalLoadStages, currentLoadProgress, progressText, hotkeyDictionary, idleChoiceIndex, jsonPath
@@ -1246,16 +1328,24 @@ def loadTuber(path):
         debugPrint("peak loaded. loading transition in...")
 
         # transition in
-        transitionIn = Animation(expressionData["anims"]["TransitionIN"]["frames"], expressionData["anims"]["TransitionIN"]["fps"], True)
+        if(not expressionData["anims"]["TransitionIN"]):
+            # print("No transition in animation found.")
+            transitionIn = Animation(None, None, None)
+        else:
+            transitionIn = Animation(expressionData["anims"]["TransitionIN"]["frames"], expressionData["anims"]["TransitionIN"]["fps"], True)
 
         debugPrint("transition in loaded. loading transition out...")
 
         # transition out
-        transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"], True)
+        if(not expressionData["anims"]["TransitionOUT"]):
+            # print("No transition out animation found.")
+            transitionOut = Animation(None, None, None)
+        else:
+            transitionOut = Animation(expressionData["anims"]["TransitionOUT"]["frames"], expressionData["anims"]["TransitionOUT"]["fps"], True)
 
         debugPrint("transition out loaded. creating expression set...")
         # create ExpressionSet
-        expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["blockers"], expressionData["hotkeys"]))
+        expressionList.append(ExpressionSet(expressionData["name"], main, idles, talking, peak, transitionIn, transitionOut, expressionData["requires"], expressionData["blockers"], expressionData['sound'], expressionData['instant'], expressionData["hotkeys"]))
         expressionIndex[expressionData["name"]] = len(expressionList) - 1
 
         debugPrint("expression set created. adding to hotkey dictionary...")
@@ -1279,7 +1369,7 @@ def loadTuber(path):
         debugPrint(progressText)
 
         # name, animation, hotkey, requires, result
-        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkeys"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["sound"].replace('\\', '/') if cannedAnimationData["sound"] != None else None, cannedAnimationData["result"]))
+        cannedAnimationList.append(CannedAnimation(cannedAnimationData["name"], Animation(cannedAnimationData["anim"]["frames"], cannedAnimationData["anim"]["fps"], True), cannedAnimationData["hotkeys"], cannedAnimationData["requires"], cannedAnimationData["blockers"], cannedAnimationData["sound"].replace('\\', '/') if cannedAnimationData["sound"] != None else None, cannedAnimationData["instant"], cannedAnimationData["result"]))
         cannedAnimationIndex[cannedAnimationData["name"]] = len(cannedAnimationList) - 1
         debugPrint("canned animation loaded. adding to hotkey dictionary...")
 
@@ -1506,7 +1596,6 @@ render_thread.daemon = True
 debugPrint("Audio and render threads started.\nBeginning main Pygame loop...")
 
 # load the tuber from the preferences file if it exists
-
 
 newAudioDevice = ""
 
@@ -1764,7 +1853,8 @@ while running:
 
         # draw text in center
         draw_text_options([ClickableText("Loading tuber, please wait...", (50, 50), UniFont, WHITE, None),
-                           ClickableText(progressText, (50, 100), UniFont, WHITE, None)])
+                           ClickableText(progressText, (50, 100), UniFont, WHITE, None),
+                           ClickableText(currentlyLoadingFile, (50, 250), UniFont, WHITE, None)])
         
     elif currentScreen == "settings":
         darken_screen()
