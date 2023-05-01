@@ -21,9 +21,9 @@ import configparser
 import datetime
 import traceback
 
-debugMode = True
+debugMode = False
 
-version = "v1.2.1"
+version = "v1.3.0"
 
 peakThreshold = 90
 talkThreshold = 50
@@ -75,11 +75,9 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 # Set the exception handler
 sys.excepthook = handle_exception
 
-# set up logging for debug mode
-if(debugMode):
-    logging.basicConfig(filename='debug.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+logging.basicConfig(filename='debug.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 
 # helper function, comment out the "print" line to disable this function
@@ -135,6 +133,7 @@ audioDeviceText = "1"
 audio_device_id = 1
 
 animationSFXVolume = 1
+animationSFXMuted = False
 
 # Define some colors
 WHITE = (255, 255, 255)
@@ -167,6 +166,8 @@ textRect.center = (width // 2, height // 2)
 
 debugPrint("Window set up.\nReading from preferences.ini....")
 
+preferenceErrors = []
+
 # read from preferences.ini file
 try:
     if(not os.path.isfile("preferences.ini")):
@@ -175,6 +176,7 @@ try:
     prefini.read("preferences.ini")
 except Exception as e:
     print(f"Error reading preferences.ini: {e}")
+    preferenceErrors.append(f"preferences.ini not found (Might be moved or deleted.)\nA new one was created with default values.\n(Ignore this if you just installed the player.)")
     print("Creating new preferences.ini file...")
     # create new blank file
     with open("preferences.ini", 'w') as f:
@@ -194,6 +196,7 @@ try:
     lastTuberLoaded = prefini["LastUsed"]["lastLoaded"].strip("\"")
 except Exception as e:
     print("Error reading last loaded tuber from preferences.ini. Setting to NONE...")
+    preferenceErrors.append("Last loaded Tuber. You'll be prompted to select a new one.")
     lastTuberLoaded = "NONE"
 
 # last used mic
@@ -201,6 +204,7 @@ try:
     lastAudioDevice = prefini["LastUsed"]["lastMic"].strip("\"")
 except Exception as e:
     print("Error reading last used mic from preferences.ini. Will be reset later...")
+    preferenceErrors.append("Last used Microphone. (Will be automatically reset later.)")
     lastAudioDevice = "RESET"
 
 # talk threshold
@@ -208,6 +212,7 @@ try:
     talkThreshold = int(prefini["Thresholds"]["talkThresh"])
 except Exception as e:
     print("Error reading talk threshold from preferences.ini. Setting to 50...")
+    preferenceErrors.append("Talk threshold (Reset to 50)")
     talkThreshold = 50
 
 # peak threshold
@@ -215,21 +220,15 @@ try:
     peakThreshold = int(prefini["Thresholds"]["peakThresh"])
 except Exception as e:
     print("Error reading peak threshold from preferences.ini. Setting to 90...")
+    preferenceErrors.append("Peak threshold (Reset to 90)")
     peakThreshold = 90
-
-# settings keybind
-settingsKeybindName = "p"
-try:
-    settingsKeybindName = prefini["Settings"]["settingskey"].strip("\"")
-except Exception as e:
-    print("Error reading keybind from preferences.ini. Setting to \"p\"...")
-settingsKeybind = pygame.key.key_code(settingsKeybindName)
 
 # background color
 try:
     BGCOLOR = eval(prefini["Settings"]["bgcolor"].strip("\""))
 except Exception as e:
     print("Error reading background color from preferences.ini. Setting to green...")
+    preferenceErrors.append("Background color (Reset to green)")
     BGCOLOR = GREEN
 
 # smooth pixels
@@ -238,6 +237,16 @@ try:
     antialiasing = bool(int(prefini["Settings"]["antialiasing"]))
 except Exception as e:
     print("Error reading antialiasing from preferences.ini. Setting to False...")
+    preferenceErrors.append("Smooth pixels (Reset to No)")
+
+# settings keybind
+settingsKeybindName = "p"
+try:
+    settingsKeybindName = prefini["Settings"]["settingskey"].strip("\"")
+except Exception as e:
+    print("Error reading keybind from preferences.ini. Setting to \"p\"...")
+    preferenceErrors.append("Settings keybind (Reset to \"p\")")
+settingsKeybind = pygame.key.key_code(settingsKeybindName)
     
 # ignore hotkey
 ignoreHotkey = False
@@ -246,6 +255,7 @@ try:
     ignoreHotkeyBindName = prefini["Settings"]["ignorehotkey"].strip("\"")
 except Exception as e:
     print("Error reading ignorehotkey from preferences.ini. Setting to \"right ctrl\"...")
+    preferenceErrors.append("\"Ignore\" hotkey (Reset to \"right ctrl\")")
 # print(ignoreHotkeyBindName)
 
 # mute key
@@ -255,18 +265,32 @@ try:
     muteKeyName = prefini["Settings"]["mutekey"].strip("\"")
 except Exception as e:
     print("Error reading mutekey from preferences.ini. Setting to \"-\"...")
+    preferenceErrors.append("Mute key (Reset to \"-\")")
+
+# sfx mute key
+sfxMuteKeyName = "right alt"
+try: 
+    sfxMuteKeyName = prefini["Settings"]["sfxmutekey"].strip("\"")
+except Exception as e:
+    print("Error reading sfxmutekey from preferences.ini. Setting to \"right alt\"...")
+    preferenceErrors.append("SFX mute key (Reset to \"right alt\")")
+sfxMuteKey = pygame.key.key_code(sfxMuteKeyName)
 
 # animation sfx volume
 try:
     animationSFXVolume = float(prefini["Settings"]["volume"])
 except Exception as e:
     print("Error reading animationSFXVolume from preferences.ini. Setting to 0.5...")
+    preferenceErrors.append("Animation SFX volume (Reset to 0.5)")
     animationSFXVolume = 0.5
 
 # write everything back to the file to ensure no data is lost. also helps with updating older versions of preferences.ini
 prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\""}
 prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
-prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume}
+prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume, "sfxmutekey": f"\"{sfxMuteKeyName}\""}
+
+with open("preferences.ini", "w") as configfile:
+    prefini.write(configfile)
 
 talkThreshText = f"{talkThreshold}"
 peakThreshText = f"{peakThreshold}"
@@ -312,6 +336,8 @@ def getAudioDevices(initial=False):
     # debugPrint(f"\n\n\n HERE IS THE LIST OF DETECTED DEVICES: {audioDeviceNames}\n\n\n")
 
 prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\""}
+with open("preferences.ini", "w") as configfile:
+    prefini.write(configfile)
 
 getAudioDevices(True)
 
@@ -525,7 +551,7 @@ except Exception as e:
 
 # keyboard reading thread
 def keyboard_input_thread():
-    global currentScreen, muteKeyName, settingsKeybindName, ignoreHotkeyBindName, changingAnyKeybind, ignoreHotkey, muted
+    global currentScreen, muteKeyName, settingsKeybindName, ignoreHotkeyBindName, changingAnyKeybind, ignoreHotkey, muted, animationSFXMuted, settingsText
     while True:
         event = keyboard.read_event()
         if event.event_type == "down":
@@ -533,6 +559,9 @@ def keyboard_input_thread():
                 ignoreHotkey = not ignoreHotkey
             elif(event.name == muteKeyName):
                 muted = not muted
+            elif(event.name == sfxMuteKeyName):
+                animationSFXMuted = not animationSFXMuted
+                settingsText[6].text = f"Animation SFX Vol: {round(animationSFXVolume*100) if not animationSFXMuted else '(MUTED)'}"
             else:
                 pushHotKey(event.scan_code)
         elif event.event_type == "up":
@@ -595,18 +624,21 @@ def load_animation_images(paths, fps):
                 images.append(image)
             elif(extension == ".gif"):
                 debugPrint(f"Loading gif {singlePath}")
-                currentlyLoadingFile = f"Loading gif {singlePath}"
+                # currentlyLoadingFile = f"Loading gif {singlePath}"
                 gif = imageio.mimread(file_path)
+                fcount = 0
                 for frame in gif:
                     # debugPrint(f"Loading frame")
                     # convert the image to a Pygame surface
                     # count the number of bytes in frame.tobytes() and print it out
+                    currentlyLoadingFile = f"Loading gif {singlePath} frames ({fcount}/{len(gif)})"
                     try:
                         pygameFrame = pygame.image.frombuffer(frame.tobytes(), frame.shape[1::-1], "RGBA")
                     except Exception as e:
                         print(e)
                         exit()
                     images.append(pygameFrame)
+                    fcount += 1
                 if('fps' in gif[0].meta):
                     fps = gif[0].meta['fps']
                 elif('duration' in gif[0].meta):
@@ -617,9 +649,9 @@ def load_animation_images(paths, fps):
     return (images, fps)
 
 def playAnimationSound(soundPath):
-    global animationSFXVolume
+    global animationSFXVolume, animationSFXMuted
     sound = pygame.mixer.Sound(soundPath)
-    sound.set_volume(animationSFXVolume)
+    sound.set_volume(animationSFXVolume if not animationSFXMuted else 0)
     sound.play(loops=0)
 
 class Animation:
@@ -956,8 +988,30 @@ def update_render_thread():
                                             debugPrint("PLAYING SOUND!")
                                             playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                             else:
-                                transition = "out"
-                                loadExpression(expressionList[expressionIndex[currentExpression]], "out")
+                                if(expressionList[expressionIndex[currentExpression]].getTransitionOut().exists()):
+                                    transition = "out"
+                                    loadExpression(expressionList[expressionIndex[currentExpression]], "out")
+                                else:
+                                    currentExpression = queuedExpression
+                                    currentAnimationType = queuedAnimationType
+                                    queuedExpression = ""
+                                    queuedAnimationType = ""
+                                    if(currentAnimationType == "canned"):
+                                        loadCanned(cannedAnimationList[cannedAnimationIndex[currentExpression]])
+                                    elif(currentAnimationType == "expression"):
+                                        if(expressionList[expressionIndex[currentExpression]].getTransitionIn().exists()):
+                                            transition = "in"
+                                            loadExpression(expressionList[expressionIndex[currentExpression]], "in")
+                                            if(expressionList[expressionIndex[currentExpression]].getSound() != None):
+                                                debugPrint("PLAYING SOUND!")
+                                                playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
+                                        else:
+                                            transition = ""
+                                            loadExpression(expressionList[expressionIndex[currentExpression]], "main")
+                                            if(expressionList[expressionIndex[currentExpression]].getSound() != None):
+                                                debugPrint("PLAYING SOUND!")
+                                                playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
+
                         elif(transition == "out"):
                             # transition out finished, load queued animation
                             currentExpression = queuedExpression
@@ -1167,7 +1221,7 @@ def loadExpression(expressionSet, animation):
     elif(animation == "peak" and expressionSet.getPeak().exists()):
         currentAnimation = expressionSet.getPeak()
     else:
-        print("Animation does not exist.")
+        print(f"ExpressionSet \"{expressionSet.getName()}\" does not have \"{animation}\" animation.")
         return
     currentAnimationType = "expression"
     debugPrint(f"Loading animation \"{animation}{f' {idleChoiceIndex}' if animation == 'idle' else ''}\" from expression set \"{expressionSet.getName()}.\"")
@@ -1400,6 +1454,16 @@ def loadTuberThread(path=None):
     load_thread.daemon = True
     load_thread.start()
 
+def toggleDebug():
+    global settingsText, debugMode
+    if(debugMode):
+        debugPrint("=== Debug mode disabled. ===")
+    debugMode = not debugMode
+    if(debugMode):
+        debugPrint("=== Debug mode ENABLED. ===")
+    settingsText[7].setText(f"{'DEBUG MODE ENABLED' if debugMode else 'Debug Mode disabled'}")
+    
+
 # Define the clickable text options
 settingsText = [
     ClickableText(f"Talk Threshold: ", (100, height-50), UniFontSmaller, WHITE, None),
@@ -1408,8 +1472,8 @@ settingsText = [
     ClickableText(f"ToonTuber Player {version}", (0, 40), UniFontSmaller, WHITE, None),
     ClickableText("program by JNS", (0, 60), UniFontSmaller, WHITE, None),
     ClickableText("original idea by ScottFalco", (0, 80), UniFontSmaller, WHITE, None),
-    ClickableText(f"Animation SFX Vol: {round(animationSFXVolume*100)}", (0, height-175), UniFontSmaller, WHITE, None),
-    ClickableText(f"{'DEBUG MODE ENABLED' if debugMode else ''}", (0, 100), UniFontSmaller, WHITE, None),
+    ClickableText(f"Animation SFX Vol: {round(animationSFXVolume*100) if not animationSFXMuted else '(MUTED)'}", (0, height-175), UniFontSmaller, WHITE, None),
+    ClickableText(f"{'DEBUG MODE ENABLED' if debugMode else 'Debug Mode disabled'}", (0, 100), UniFontSmaller, WHITE, toggleDebug),
 ]
 
 opening_options = [
@@ -1602,15 +1666,28 @@ newAudioDevice = ""
 disableHotkeyButtons()
 disableSettingsButtons()
 
+if(preferenceErrors != []):
+        currentScreen = "preferror"
+
+errortexts = [
+    ClickableText("The follwing errors occurred when loading preferences:", (25, 25), UniFont, WHITE, None),
+]
+i = 0
+for error in preferenceErrors:
+    errortexts.append(ClickableText(error, (25, 75 + (i*25)), UniFontSmaller, WHITE, None))
+    i += 1
+errortexts.append(ClickableText("Press any key or click to continue.", (25, 100 + (i*25)), UniFont, WHITE, None))
+
 # Main Pygame loop
 running = True
 while running:
     if(currentScreen == "opening" and os.path.exists(lastTuberLoaded)):
         loadTuberThread(lastTuberLoaded)
-    if(not updateFrameRunning and (currentScreen != "opening" and currentScreen != "loading")):
+    if(not updateFrameRunning and (currentScreen != "opening" and currentScreen != "loading" and currentScreen != "preferror")):
         updateFrameRunning = True
         render_thread.start()
         idleTimer_thread.start()
+        
     # Measure the time between frames and limit the FPS to 60
     delta_time = clock.tick(60) / 1000.0
     talkNotBlank = talk_textEntry.get_text() != "" 
@@ -1667,7 +1744,19 @@ while running:
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
                 changingMuteKeybind = False
-            
+
+        elif (event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN) and currentScreen == "preferror":
+            print("clicking mouse or pressing key")
+            # if last tuber loaded couldnt be found, prompt user to select json
+            if(not os.path.exists(lastTuberLoaded)):
+                # print("last tuber loaded not found")
+                # print("prompting user to select tuber json")
+                # print("current dir: " + os.getcwd())
+                tuberJson = filedialog.askopenfilename(initialdir = os.getcwd(),title = "Select Tuber JSON",filetypes = (("JSON files","*.json"),("all files","*.*")))
+                # print("tuber json selected: " + tuberJson)
+                if(tuberJson != ""):
+                    loadTuberThread(tuberJson)
+            currentScreen = "opening"
 
         # if the user clicks on a text option, do the action
         elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -1718,9 +1807,10 @@ while running:
                                                                     starting_option=lastAudioDevice,
                                                                     relative_rect=dropdownPos,
                                                                     manager=settings_UImanager)
+            
         elif event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
             animationSFXVolume = volumeSlider.get_current_value()
-            settingsText[6].text = f"Animation SFX Vol: {round(animationSFXVolume*100)}"
+            settingsText[6].text = f"Animation SFX Vol: {round(animationSFXVolume*100) if not animationSFXMuted else '(MUTED)'}"
             prefini.set("Settings", "volume", str(animationSFXVolume))
             with open("preferences.ini", "w") as ini:
                 prefini.write(ini)
@@ -1876,6 +1966,9 @@ while running:
 
         keybind_UImanager.draw_ui(screen)
 
+    elif(currentScreen == "preferror"):
+        darken_screen()
+        draw_text_options(errortexts)
 
     # Update the Pygame window
     pygame.display.flip()
