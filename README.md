@@ -64,7 +64,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 **(since the editor program doesn't exist yet)**
 
 ### Animation objects
-- *frames*:                ath(s) FROM the JSON file TO a single PNG, a sequence of PNGs, or a GIF.
+- *frames*:                path(s) FROM the JSON file TO a single PNG, a sequence of PNGs, or a GIF.
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/pngsequenceEx.png)
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/gifEx.png)
 
