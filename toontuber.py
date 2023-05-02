@@ -1166,19 +1166,21 @@ def createNewTuber():
 changingSettingsKeybind = False
 changingHotKeybind = False
 changingMuteKeybind = False
+changingSFXMuteKeybind = False
 
 def openKeybindScreen():
     global currentScreen
-    currentScreen = "settings"
+    currentScreen = "keybind"
     enableHotkeyButtons()
     disableHotkeyButtons()
 
 def leaveHotkeyScreen():
-    global currentScreen, changingSettingsKeybind, changingHotKeybind, changingMuteKeybind
+    global currentScreen, changingSettingsKeybind, changingHotKeybind, changingMuteKeybind, changingSFXMuteKeybind
     currentScreen = "settings"
     changingSettingsKeybind = False
     changingHotKeybind = False
     changingMuteKeybind = False
+    changingSFXMuteKeybind = False
     disableHotkeyButtons()
     enableSettingsButtons()
 
@@ -1193,6 +1195,10 @@ def beginHotKeybindChange():
 def beginMuteKeybindChange():
     global changingMuteKeybind
     changingMuteKeybind = True
+
+def beginSFXMuteKeybindChange():
+    global changingSFXMuteKeybind
+    changingSFXMuteKeybind = True
 
 colorPickerGUI = None
 
@@ -1541,9 +1547,14 @@ changeMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect
                                                 text=f'Mute Keybind (\"{muteKeyName}\")',
                                                 manager=keybind_UImanager)
 
+changeAnimMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (400, 50)),
+                                                text=f'Animation SFX Mute Keybind (\"{sfxMuteKeyName}\")',
+                                                manager=keybind_UImanager)
+
 leaveHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, height-100), (200, 50)),
                                                 text='Back',
                                                 manager=keybind_UImanager)
+                                                
 
 
 settingsButtonsEnabled = True
@@ -1570,19 +1581,21 @@ def disableSettingsButtons():
     settingsButtonsEnabled = False
 
 def enableHotkeyButtons():
-    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton
+    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton, changeAnimMuteKeybindButton
     changeSettingsKeybindButton.enable()
     changeHotkeyButton.enable()
     changeMuteKeybindButton.enable()
     leaveHotkeyButton.enable()
+    changeAnimMuteKeybindButton.enable()
     hotkeyButtonsEnabled = True
 
 def disableHotkeyButtons():
-    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton
+    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton, changeAnimMuteKeybindButton
     changeSettingsKeybindButton.disable()
     changeHotkeyButton.disable()
     changeMuteKeybindButton.disable()
     leaveHotkeyButton.disable()
+    changeAnimMuteKeybindButton.disable()
     hotkeyButtonsEnabled = False
 
 talk_textEntry = pygame_gui.elements.UITextEntryLine(
@@ -1707,7 +1720,7 @@ while running:
 
     typingInTextEntry = talk_textEntry.is_focused or peak_textEntry.is_focused
  
-    changingAnyKeybind = changingSettingsKeybind or changingHotKeybind or changingMuteKeybind
+    changingAnyKeybind = changingSettingsKeybind or changingHotKeybind or changingMuteKeybind or changingSFXMuteKeybind
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -1756,6 +1769,16 @@ while running:
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
                 changingMuteKeybind = False
+            elif(changingSFXMuteKeybind):
+                sfxMuteKeyName = pygame.key.name(event.key)
+
+                changeAnimMuteKeybindButton.text = f'Animation SFX Mute Keybind (\"{sfxMuteKeyName}\")'
+                changeAnimMuteKeybindButton.rebuild()
+
+                prefini.set("Settings", "sfxmutekey", f"\"{sfxMuteKeyName}\"" )
+                with open("preferences.ini", "w") as configfile:
+                    prefini.write(configfile)
+                changingSFXMuteKeybind = False
 
         elif (event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN) and currentScreen == "preferror":
             print("clicking mouse or pressing key")
@@ -1842,6 +1865,8 @@ while running:
                 beginHotKeybindChange()
             elif(event.ui_element == changeMuteKeybindButton):
                 beginMuteKeybindChange()
+            elif(event.ui_element == changeAnimMuteKeybindButton):
+                beginSFXMuteKeybindChange()
             elif(event.ui_element == changeKeybindButton):
                 openKeybindScreen()
             elif(event.ui_element == leaveHotkeyButton):
@@ -1958,7 +1983,7 @@ while running:
                            ClickableText(progressText, (50, 100), UniFont, WHITE, None),
                            ClickableText(currentlyLoadingFile, (50, 250), UniFont, WHITE, None)])
         
-    elif currentScreen == "settings":
+    elif currentScreen == "keybind":
         darken_screen()
         if(not hotkeyButtonsEnabled):
             enableHotkeyButtons()
@@ -1968,11 +1993,13 @@ while running:
 
         changingTxt = ""
         if(changingSettingsKeybind):
-            changingTxt = "Press a key to change SETTINGS keybind"
+            changingTxt = "Press a key to change \"SETTINGS\" keybind"
         elif(changingHotKeybind):
-            changingTxt = "Press a key to change HOTKEY keybind"
+            changingTxt = "Press a key to change \"HOTKEY IGNORE\" keybind"
         elif(changingMuteKeybind):
-            changingTxt = "Press a key to change MUTE keybind"
+            changingTxt = "Press a key to change \"MIC MUTE\" keybind"
+        elif(changingSFXMuteKeybind):
+            changingTxt = "Press a key to change \"SFX MUTE\" keybind"
 
         draw_text_options([ClickableText(changingTxt, (0, height-200), UniFont, WHITE, None)])
 
