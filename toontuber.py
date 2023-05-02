@@ -21,19 +21,19 @@ import configparser
 import datetime
 import traceback
 
-debugMode = False
+debugMode = True
 
 version = "v1.3.0"
 
 peakThreshold = 90
 talkThreshold = 50
 
+# used to decide the weight reduction of animations with a met requirement when multiple animations can be selected.
 nonrequiredWeight = 0.25
 
+# rgb values for the background color (starts as green, resets later)
 GREEN = (0, 255, 0)
 BGCOLOR = GREEN
-
-print(f"ToonTuber Player {version}")
 
 # play sound when crash happens so user is alerted
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -65,16 +65,22 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     username = os.getlogin()
 
     if(exc_type != KeyboardInterrupt):
+        # write the error report to a file
         with open(f"Player Crash Report {datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')}{f' ({errorFileID})' if errorFileID != 0 else ''}.txt", "w") as f:
+            # add text to the file before putting the exception details
             f.write("Oops! The player crashed! Sorry about that.\nThe text below is the error report. If you don't know what this means, please send this file to the developer, along with a description of what happened (which you can type here).\n\nWhat I was doing: \n\n")
             f.write(f"Unhandled exception: {exc_type} {exc_value}")
             for line in traceback.format_tb(exc_traceback):
+                # check if the line contains the username and remove it if it's there
                 if(username in line):
                     line = line.replace(username, "[username]")
+                # write the line to the file
                 f.write(line)
+            # after all the lines are written to the file, close the file
             f.close()
     # Quit Pygame
     pygame.quit()
+    # exit the whole program
     exit()
 
 # Set the exception handler
@@ -84,13 +90,14 @@ logging.basicConfig(filename='debug.log', filemode='w', format='%(name)s - %(lev
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-
 # helper function, comment out the "print" line to disable this function
 def debugPrint(str):
     if(debugMode):
         logging.debug(str)
         print(str)
     return
+
+print(f"ToonTuber Player {version}")
 
 ## GLOBAL VARIABLES
 
@@ -620,20 +627,22 @@ def load_animation_images(paths, fps):
     # create a list of Pygame images from the selected files
     global jsonPath, currentlyLoadingFile
     images = []
+    # loop through each provided path in the provided list
     for file_path in paths:
         singlePath = file_path
-        file_path = os.path.join(jsonPath, file_path)
+        file_path = os.path.join(jsonPath, "frames", file_path)
+        # debugPrint(file_path)
         if(os.path.isfile(file_path)):
             extension = os.path.splitext(file_path)[1]
             if(extension == ".png"):
                 debugPrint(f"Loading image {singlePath}")
                 currentlyLoadingFile = f"Loading image {singlePath}"
-                image = pygame.image.load(file_path)
+                image = pygame.image.load(os.path.join(jsonPath, file_path))
                 images.append(image)
             elif(extension == ".gif"):
                 debugPrint(f"Loading gif {singlePath}")
                 # currentlyLoadingFile = f"Loading gif {singlePath}"
-                gif = imageio.mimread(file_path)
+                gif = imageio.mimread(os.path.join(jsonPath, file_path))
                 fcount = 0
                 for frame in gif:
                     # debugPrint(f"Loading frame")
@@ -658,6 +667,8 @@ def load_animation_images(paths, fps):
 
 def playAnimationSound(soundPath):
     global animationSFXVolume, animationSFXMuted
+    debugPrint(f"Playing sound {soundPath}")
+    soundPath = os.path.join(jsonPath, "sounds", soundPath)
     sound = pygame.mixer.Sound(soundPath)
     sound.set_volume(animationSFXVolume if not animationSFXMuted else 0)
     sound.play(loops=0)
@@ -853,7 +864,7 @@ class ExpressionSet:
             self.hotkey = None
 
     def getSound(self):
-        return None if (self.sound == "" or self.sound == None) else os.path.join(jsonPath, self.sound)
+        return None if (self.sound == "" or self.sound == None) else self.sound
     def setSound(self, sound):
         self.sound = sound
 
@@ -937,7 +948,7 @@ class CannedAnimation:
     
     
     def getSound(self):
-        return None if (self.sound == "" or self.sound == None) else os.path.join(jsonPath, self.sound)
+        return None if (self.sound == "" or self.sound == None) else self.sound
     def setSound(self, sound):
         self.sound = sound
 
@@ -987,13 +998,11 @@ def update_render_thread():
                                         transition = "in"
                                         loadExpression(expressionList[expressionIndex[currentExpression]], "in")
                                         if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                            debugPrint("PLAYING SOUND!")
                                             playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                                     else:
                                         transition = ""
                                         loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                                         if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                            debugPrint("PLAYING SOUND!")
                                             playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                             else:
                                 if(expressionList[expressionIndex[currentExpression]].getTransitionOut().exists()):
@@ -1011,13 +1020,11 @@ def update_render_thread():
                                             transition = "in"
                                             loadExpression(expressionList[expressionIndex[currentExpression]], "in")
                                             if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                                debugPrint("PLAYING SOUND!")
                                                 playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                                         else:
                                             transition = ""
                                             loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                                             if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                                debugPrint("PLAYING SOUND!")
                                                 playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
 
                         elif(transition == "out"):
@@ -1033,14 +1040,12 @@ def update_render_thread():
                                     loadExpression(expressionList[expressionIndex[currentExpression]], "in")
                                     debugPrint(expressionList[expressionIndex[currentExpression]].getSound())
                                     if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                        debugPrint("PLAYING SOUND!")
                                         playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                                 else:
                                     transition = ""
                                     loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                                     debugPrint(expressionList[expressionIndex[currentExpression]].getSound())
                                     if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                        debugPrint("PLAYING SOUND!")
                                         playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                             elif(currentAnimationType == "canned"):
                                 # if the queued animation is a canned animation

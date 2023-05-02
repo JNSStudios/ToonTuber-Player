@@ -19,7 +19,7 @@
       "anims": {
         "Main": {
           "frames": [
-            "frames\\Jay-Basic.png"
+            "Jay-Basic.png"
           ],
           "fps": 24,
           "locking": false
@@ -30,14 +30,14 @@
           "idleAnims": [
             {
               "frames": [
-                "frames\\Jay-Basic-Idle1.gif"
+                "Jay-Basic-Idle1.gif"
               ],
               "fps": 24,
               "locking": false
             },
             {
               "frames": [
-                "frames\\Jay-Basic-Idle2.gif"
+                "Jay-Basic-Idle2.gif"
               ],
               "fps": 24,
               "locking": false
@@ -47,7 +47,7 @@
         "Talk": 
         {
           "frames": [
-            "frames\\Jay-Basic-Talk.gif"
+            "Jay-Basic-Talk.gif"
           ],
           "fps": 24,
           "locking": false
@@ -55,7 +55,7 @@
         "Peak":
         {
           "frames": [
-            "frames\\Jay-Basic-Peak.gif"
+            "Jay-Basic-Peak.gif"
           ],
           "fps": 24,
           "locking": false
@@ -63,14 +63,14 @@
         "TransitionIN":
         {
           "frames": [
-            "frames\\Jay-Basic-TrIn.gif"
+            "Jay-Basic-TrIn.gif"
           ],
           "fps": 24
         }, 
         "TransitionOUT": 
         {
           "frames": [
-            "frames\\Jay-Basic-TrOut.gif"
+            "Jay-Basic-TrOut.gif"
           ],
           "fps": 24
         } 
@@ -93,7 +93,7 @@
         "Main": 
         {
           "frames": [
-            "frames\\Jay-Happy.png"
+            "Jay-Happy.png"
           ],
           "fps": 24,
           "locking": false
@@ -105,7 +105,7 @@
           "idleAnims": [
             {
               "frames": [
-                "frames\\Jay-Happy-Idle.gif"
+                "Jay-Happy-Idle.gif"
               ],
               "fps": 24,
               "locking": false
@@ -115,7 +115,7 @@
         "Talk": 
         {
           "frames": [
-            "frames\\Jay-Happy-Talk.gif"
+            "Jay-Happy-Talk.gif"
           ],
           "fps": 24,
           "locking": false
@@ -123,7 +123,7 @@
         "Peak": 
         {
           "frames": [
-            "frames\\Jay-Happy-Peak.gif"
+            "Jay-Happy-Peak.gif"
           ],
           "fps": 24,
           "locking": false
@@ -131,14 +131,14 @@
         "TransitionIN": 
         {
           "frames": [
-            "frames\\Jay-Happy-TrIn.gif"
+            "Jay-Happy-TrIn.gif"
           ],
           "fps": 24
         }, 
         "TransitionOUT": 
         {
           "frames": [
-            "frames\\Jay-Happy-TrOut.gif"
+            "Jay-Happy-TrOut.gif"
           ],
           "fps": 24
         }
@@ -161,12 +161,12 @@
         "Main": 
         {
           "frames": [
-            "frames\\Jay Laughing0001.png",
-            "frames\\Jay Laughing0002.png",
-            "frames\\Jay Laughing0003.png",
-            "frames\\Jay Laughing0004.png",
-            "frames\\Jay Laughing0005.png",
-            "frames\\Jay Laughing0006.png"
+            "Jay Laughing0001.png",
+            "Jay Laughing0002.png",
+            "Jay Laughing0003.png",
+            "Jay Laughing0004.png",
+            "Jay Laughing0005.png",
+            "Jay Laughing0006.png"
           ],
           "fps": 24,
           "locking": false
@@ -180,10 +180,10 @@
         "Peak": 
         {
           "frames": [
-            "frames\\Jay Laughing0007.png",
-            "frames\\Jay Laughing0008.png",
-            "frames\\Jay Laughing0009.png",
-            "frames\\Jay Laughing0010.png"
+            "Jay Laughing0007.png",
+            "Jay Laughing0008.png",
+            "Jay Laughing0009.png",
+            "Jay Laughing0010.png"
           ],
           "fps": 24,
           "locking": false
@@ -191,19 +191,19 @@
         "TransitionIN": 
         {
           "frames": [
-            "frames\\Jay Laughing0015.png",
-            "frames\\Jay Laughing0016.png",
-            "frames\\Jay Laughing0017.png"
+            "Jay Laughing0015.png",
+            "Jay Laughing0016.png",
+            "Jay Laughing0017.png"
           ],
           "fps": 24
         }, 
         "TransitionOUT": 
         {
           "frames": [
-            "frames\\Jay Laughing0011.png",
-            "frames\\Jay Laughing0012.png",
-            "frames\\Jay Laughing0013.png",
-            "frames\\Jay Laughing0014.png"
+            "Jay Laughing0011.png",
+            "Jay Laughing0012.png",
+            "Jay Laughing0013.png",
+            "Jay Laughing0014.png"
           ],
           "fps": 24
         }
@@ -225,7 +225,7 @@
         "Main": 
         {
           "frames": [
-            "frames\\Jay-Hidden.png"
+            "Jay-Hidden.png"
           ],
           "fps": 24,
           "locking": true
@@ -243,14 +243,14 @@
         "TransitionIN": 
         {
           "frames": [
-            "frames\\Jay-Hidden.png"
+            "Jay-Hidden.png"
           ],
           "fps": 24
         }, 
         "TransitionOUT": 
         {
           "frames": [
-            "frames\\Jay-Hidden.png"
+            "Jay-Hidden.png"
           ],
           "fps": 24
         }
@@ -270,7 +270,7 @@
       "anims": {
           "Main": {
             "frames": [
-                "frames\\Jay-Miffed-Main.gif"
+                "Jay-Miffed-Main.gif"
             ],
             "fps": 24,
             "locking": false
@@ -281,7 +281,7 @@
             "idleAnims": [
               {
                 "frames": [
-                    "frames\\Jay-Miffed-Idle.gif"
+                    "Jay-Miffed-Idle.gif"
                 ],
                 "fps": 24,
                 "locking": false                
@@ -291,7 +291,7 @@
           "Talk": 
           {
             "frames": [
-              "frames\\Jay-Miffed-Talk.gif"
+              "Jay-Miffed-Talk.gif"
             ],
             "fps": 24,
             "locking": false
@@ -299,7 +299,7 @@
           "Peak":
           {
             "frames": [
-              "frames\\Jay-Miffed-Peak.gif"
+              "Jay-Miffed-Peak.gif"
             ],
             "fps": 24,
             "locking": false
@@ -307,14 +307,14 @@
           "TransitionIN":
           {
             "frames": [
-              "frames\\Jay-Miffed-TrIn.gif"
+              "Jay-Miffed-TrIn.gif"
             ],
             "fps": 24
           }, 
           "TransitionOUT": 
           {
             "frames": [
-              "frames\\Jay-Miffed-TrOut.gif"
+              "Jay-Miffed-TrOut.gif"
             ],
             "fps": 24
           } 
@@ -339,7 +339,7 @@
       "anim": 
       {
         "frames": [
-          "frames\\Jay-Appear.gif"
+          "Jay-Appear.gif"
         ],
         "fps": 2
       }
@@ -357,11 +357,11 @@
         null
       ],
       "result": "HIDDEN",
-      "sound": "sounds\\Jay-Disappear.wav",
+      "sound": "Jay-Disappear.wav",
       "anim": 
       {
         "frames": [
-          "frames\\Jay-Disappear.gif"
+          "Jay-Disappear.gif"
         ],
         "fps": 3
       }
