@@ -45,11 +45,12 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     
 
     # Print the exception information
+
     print("Unhandled exception:", exc_type, exc_value)
     logging.exception(str)
 
     if(not debugMode and exc_type != KeyboardInterrupt):
-        playsound("assets\error.wav")
+        playsound(os.path.join("assets", "error.wav"))
 
     # Call the default exception handler
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -60,11 +61,16 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     while(os.path.isfile(f"Player Crash Report {datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')}{f' ({errorFileID})' if errorFileID != 0 else ''}.txt")):
         errorFileID += 1
 
+    # get the username of the current user so we can filter it out of the file
+    username = os.getlogin()
+
+
     if(exc_type != KeyboardInterrupt):
         with open(f"Player Crash Report {datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')}{f' ({errorFileID})' if errorFileID != 0 else ''}.txt", "w") as f:
             f.write("Oops! The player crashed! Sorry about that.\nThe text below is the error report. If you don't know what this means, please send this file to the developer, along with a description of what happened (which you can type here).\n\nWhat I was doing: \n\n")
             f.write(f"Unhandled exception: {exc_type} {exc_value}")
             for line in traceback.format_tb(exc_traceback):
+                if(line has)
                 f.write(line)
             f.close()
     # Quit Pygame
@@ -606,7 +612,7 @@ idleTimer_thread.daemon = True
 
 # TUBER STUFF
 
-MISSING_IMAGE = pygame.image.load("assets\MissingImage.png")
+MISSING_IMAGE = pygame.image.load(os.path.join("assets", "MissingImage.png"))
 
 jsonPath = ""
 
@@ -1619,8 +1625,8 @@ clock = pygame.time.Clock()
 debugPrint("Creating mic meter sprites...")
 
 # Load the sprites
-mic_feedback = pygame.image.load("assets\micLevel.png").convert_alpha()
-mic_range = pygame.image.load("assets\micRange.png").convert_alpha()
+mic_feedback = pygame.image.load(os.path.join("assets", "micLevel.png")).convert_alpha()
+mic_range = pygame.image.load(os.path.join("assets", "micRange.png")).convert_alpha()
 
 #get original size of both sprites
 mic_feed_orig = mic_feedback.get_size()
@@ -1638,14 +1644,14 @@ mic_range = pygame.transform.smoothscale(mic_range, (mic_newWidth, mic_newHeight
 mic_fill_height_orig = mic_feedback.get_height()
 
 # create both threshold arrow images
-talkThresholdSprite = pygame.image.load("assets\ThresholdArrow.png").convert_alpha()
-peakThresholdSprite = pygame.image.load("assets\ThresholdArrow.png").convert_alpha()
+talkThresholdSprite = pygame.image.load(os.path.join("assets", "ThresholdArrow.png")).convert_alpha()
+peakThresholdSprite = pygame.image.load(os.path.join("assets", "ThresholdArrow.png")).convert_alpha()
 
 talkThreshPos = 0
 peakThreshPos = 0
 
 # create sprite for mic mute
-micMuteSprite = pygame.image.load("assets\micmuted.png").convert_alpha()
+micMuteSprite = pygame.image.load(os.path.join("assets", "micmuted.png")).convert_alpha()
 
 # scale sprite to fit height of mic meter
 micMuteSprite = pygame.transform.smoothscale(micMuteSprite, (mic_newWidth, mic_newHeight))
