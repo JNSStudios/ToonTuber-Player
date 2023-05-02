@@ -175,7 +175,10 @@ try:
     prefini.read("preferences.ini")
 except Exception as e:
     print(f"Error reading preferences.ini: {e}")
-    preferenceErrors.append(f"preferences.ini not found (Might be moved or deleted.)\nA new one was created with default values.\n(Ignore this if you just installed the player.)")
+    preferenceErrors.append("preferences.ini not found (Might be moved or deleted.)")
+    preferenceErrors.append("A new one was created with default values.")
+    preferenceErrors.append("(Ignore this if you just installed the player.)")
+    preferenceErrors.append("")
     print("Creating new preferences.ini file...")
     # create new blank file
     with open("preferences.ini", 'w') as f:
@@ -184,7 +187,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5}
+    prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5, "sfxmutekey": f"\"right alt\""}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -1147,7 +1150,6 @@ def openTuber():
 
 def createNewTuber():
     global currentScreen
-    currentScreen = "tuber"
     print("New Tuber")
 
 changingSettingsKeybind = False
