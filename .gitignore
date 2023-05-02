@@ -10,3 +10,4 @@ Player Crash Report*.txt
 *.log
 dist/
 build/
+*.zip
