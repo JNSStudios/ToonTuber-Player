@@ -64,7 +64,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     # get the username of the current user so we can filter it out of the file
     username = os.getlogin()
 
-    if(exc_type == KeyboardInterrupt):
+    if(exc_type != KeyboardInterrupt):
         with open(f"Player Crash Report {datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')}{f' ({errorFileID})' if errorFileID != 0 else ''}.txt", "w") as f:
             f.write("Oops! The player crashed! Sorry about that.\nThe text below is the error report. If you don't know what this means, please send this file to the developer, along with a description of what happened (which you can type here).\n\nWhat I was doing: \n\n")
             f.write(f"Unhandled exception: {exc_type} {exc_value}")
