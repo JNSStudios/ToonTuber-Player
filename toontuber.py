@@ -7,6 +7,7 @@ import keyboard
 from StreamDeck.DeviceManager import DeviceManager
 import imageio
 import logging
+from playsound import playsound
 
 # these should be built-in
 import threading
@@ -16,7 +17,6 @@ import json
 import os
 import random
 import sys
-import winsound
 import configparser
 import datetime
 import traceback
@@ -38,8 +38,6 @@ print(f"ToonTuber Player {version}")
 # play sound when crash happens so user is alerted
 def handle_exception(exc_type, exc_value, exc_traceback):
     global stream
-    # Quit Pygame
-    pygame.quit()
 
     stream.stop_stream()
     stream.close()
@@ -50,9 +48,8 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     print("Unhandled exception:", exc_type, exc_value)
     logging.exception(str)
 
-    # Play a sound when an exception occurs
     if(not debugMode and exc_type != KeyboardInterrupt):
-        winsound.PlaySound("assets\error.wav", winsound.SND_FILENAME)
+        playsound("assets\error.wav")
 
     # Call the default exception handler
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -70,6 +67,8 @@ def handle_exception(exc_type, exc_value, exc_traceback):
             for line in traceback.format_tb(exc_traceback):
                 f.write(line)
             f.close()
+    # Quit Pygame
+    pygame.quit()
     exit()
 
 # Set the exception handler
