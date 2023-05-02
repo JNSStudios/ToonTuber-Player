@@ -314,3 +314,8 @@ If you press another hotkey while the player is transitioning into another anima
 If an Expression or Canned Animation has a **sound** attached to it, the sound will immediately begin playing after the animation is loaded. It will play until it is finished. For Canned Animations, the sound will begin playing with the start of the Canned Animation. For Expressions, the sound will trigger when the animation is transitioned into (this works even if the animation has an "Instant Transition" attribute.)
 
 I recommend using a sound editor to exactly time the sound effect with your animation. (I use Audacity.)
+
+
+## Special Thanks and Collaborators
+
+- Thanks to **Piximator** for helping with macOS and crossplatform compatibility testing!
