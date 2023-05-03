@@ -21,12 +21,15 @@ import configparser
 import datetime
 import traceback
 
-debugMode = True
+debugMode = False
 
 version = "v1.3.0"
 
 peakThreshold = 90
 talkThreshold = 50
+
+# get the path to the script itself, useful for finding local files
+scriptPath = os.path.dirname(os.path.abspath(__file__))
 
 # used to decide the weight reduction of animations with a met requirement when multiple animations can be selected.
 nonrequiredWeight = 0.25
@@ -50,7 +53,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     logging.exception(str)
 
     if(not debugMode and exc_type != KeyboardInterrupt):
-        playsound(os.path.join("assets", "error.wav"))
+        playsound(os.path.join(scriptPath, "assets", "error.wav"))
 
     # Call the default exception handler
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -619,7 +622,7 @@ idleTimer_thread.daemon = True
 
 # TUBER STUFF
 
-MISSING_IMAGE = pygame.image.load(os.path.join("assets", "MissingImage.png"))
+MISSING_IMAGE = pygame.image.load(os.path.join(scriptPath, "assets", "MissingImage.png"))
 
 jsonPath = ""
 
@@ -1643,8 +1646,8 @@ clock = pygame.time.Clock()
 debugPrint("Creating mic meter sprites...")
 
 # Load the sprites
-mic_feedback = pygame.image.load(os.path.join("assets", "micLevel.png")).convert_alpha()
-mic_range = pygame.image.load(os.path.join("assets", "micRange.png")).convert_alpha()
+mic_feedback = pygame.image.load(os.path.join(scriptPath, "assets", "micLevel.png")).convert_alpha()
+mic_range = pygame.image.load(os.path.join(scriptPath, "assets", "micRange.png")).convert_alpha()
 
 #get original size of both sprites
 mic_feed_orig = mic_feedback.get_size()
@@ -1662,14 +1665,14 @@ mic_range = pygame.transform.smoothscale(mic_range, (mic_newWidth, mic_newHeight
 mic_fill_height_orig = mic_feedback.get_height()
 
 # create both threshold arrow images
-talkThresholdSprite = pygame.image.load(os.path.join("assets", "ThresholdArrow.png")).convert_alpha()
-peakThresholdSprite = pygame.image.load(os.path.join("assets", "ThresholdArrow.png")).convert_alpha()
+talkThresholdSprite = pygame.image.load(os.path.join(scriptPath, "assets", "ThresholdArrow.png")).convert_alpha()
+peakThresholdSprite = pygame.image.load(os.path.join(scriptPath, "assets", "ThresholdArrow.png")).convert_alpha()
 
 talkThreshPos = 0
 peakThreshPos = 0
 
 # create sprite for mic mute
-micMuteSprite = pygame.image.load(os.path.join("assets", "micmuted.png")).convert_alpha()
+micMuteSprite = pygame.image.load(os.path.join(scriptPath, "assets", "micmuted.png")).convert_alpha()
 
 # scale sprite to fit height of mic meter
 micMuteSprite = pygame.transform.smoothscale(micMuteSprite, (mic_newWidth, mic_newHeight))
