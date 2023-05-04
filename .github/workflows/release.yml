@@ -1,0 +1,37 @@
+# .github/workflows/release.yml
+name: Build Distributions
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  create-draft:
+    name: Create Draft Release
+    runs-on: ubuntu-latest
+    steps:
+      - id: draft-release
+        name: Draft Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+  build-packages:
+    name: Build System Packages on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: jpackage ...
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: ./build/*
+          draft: true
