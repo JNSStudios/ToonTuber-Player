@@ -150,6 +150,8 @@ audio_device_id = 1
 animationSFXVolume = 1
 animationSFXMuted = False
 
+mirror = False
+
 # Define some colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -203,7 +205,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5, "sfxmutekey": f"\"right alt\""}
+    prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5, "sfxmutekey": f"\"right alt\"", "mirror": "0"}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -302,10 +304,18 @@ except Exception as e:
     preferenceErrors.append("Animation SFX volume (Reset to 0.5)")
     animationSFXVolume = 0.5
 
-# write everything back to the file to ensure no data is lost. also helps with updating older versions of preferences.ini
+# mirror setting
+try:
+    mirror = bool(int(prefini["Settings"]["mirror"]))
+except Exception as e:
+    print("Error reading mirror from preferences.ini. Setting to False...")
+    preferenceErrors.append("Tuber Mirroring (Reset to Off)")
+
+# write everything back to the file to ensure no data is lost. 
+# also helps with updating older versions of preferences.ini
 prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\""}
 prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
-prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume, "sfxmutekey": f"\"{sfxMuteKeyName}\""}
+prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume, "sfxmutekey": f"\"{sfxMuteKeyName}\"", "mirror": f"{'1' if mirror else '0'}"}
 
 with open("preferences.ini", "w") as configfile:
     prefini.write(configfile)
@@ -1218,6 +1228,14 @@ def toggleAntiAliasing():
     with open("preferences.ini", "w") as f:
         prefini.write(f)
 
+def toggleMirroring():
+    global mirror, mirrorButton, prefini
+    mirror = not mirror
+    mirrorButton.set_text(f"Mirror Tuber ({'ON' if mirror else 'Off'})")
+    prefini.set("Settings", "mirror", f"{'1' if mirror else '0'}")
+    with open("preferences.ini", "w") as f: 
+        prefini.write(f)
+
 debugPrint("GUI classes created.\nCreating Tuber loading functions...")
 
 # tuber loading definitions
@@ -1516,19 +1534,25 @@ smoothPixelsButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 
                                                 text=f"Smooth Pixels ({'Yes' if antialiasing else 'No'})",
                                                 manager=settings_UImanager)
 
-changeKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (200, 50)),
+mirrorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (200, 50)),
+                                                text=f"Mirror Tuber ({'ON' if mirror else 'Off'})",
+                                                manager=settings_UImanager)
+
+
+changeKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (200, 50)),
                                                    text='Change Keybinds',
                                                    manager=settings_UImanager)
 
 # debugPrint(f"\n\n\n AUDIO DROPDOWN BEING CREATED NOW (using this {audioDeviceNames}\n also this as the last device {lastAudioDevice}).\n\n\n")
 
-dropdownPos = pygame.Rect((0, 325), (325, 50))
+dropdownPos = pygame.Rect((0, 375), (325, 50))
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                         starting_option=lastAudioDevice,
                                                         relative_rect=dropdownPos,
                                                         manager=settings_UImanager)
 
-volumeSlider = pygame_gui.elements.ui_horizontal_slider.UIHorizontalSlider(relative_rect=pygame.Rect((0, height - 150), (150, 25)),
+
+volumeSlider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((0, height - 150), (150, 25)),
                                                                           start_value=animationSFXVolume,
                                                                           value_range=(0, 1),
                                                                           manager=settings_UImanager)
@@ -1550,7 +1574,7 @@ changeMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect
                                                 text=f'Mute Keybind (\"{muteKeyName}\")',
                                                 manager=keybind_UImanager)
 
-changeAnimMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (400, 50)),
+sfxMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (400, 50)),
                                                 text=f'Animation SFX Mute Keybind (\"{sfxMuteKeyName}\")',
                                                 manager=keybind_UImanager)
 
@@ -1564,41 +1588,43 @@ settingsButtonsEnabled = True
 hotkeyButtonsEnabled = True
 
 def enableSettingsButtons():
-    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider, mirrorButton
     loadToonTuberButton.enable()
     changeBGColorButton.enable()
     smoothPixelsButton.enable()
     changeKeybindButton.enable()
     audioDeviceDropdown.enable()
     volumeSlider.enable()
+    mirrorButton.enable()
     settingsButtonsEnabled = True
 
 def disableSettingsButtons():
-    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider, mirrorButton
     loadToonTuberButton.disable()
     changeBGColorButton.disable()
     smoothPixelsButton.disable()
     changeKeybindButton.disable()
     audioDeviceDropdown.disable()
     volumeSlider.disable()
+    mirrorButton.disable()
     settingsButtonsEnabled = False
 
 def enableHotkeyButtons():
-    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton, changeAnimMuteKeybindButton
+    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton, sfxMuteKeybindButton
     changeSettingsKeybindButton.enable()
     changeHotkeyButton.enable()
     changeMuteKeybindButton.enable()
     leaveHotkeyButton.enable()
-    changeAnimMuteKeybindButton.enable()
+    sfxMuteKeybindButton.enable()
     hotkeyButtonsEnabled = True
 
 def disableHotkeyButtons():
-    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton, changeAnimMuteKeybindButton
+    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton, sfxMuteKeybindButton
     changeSettingsKeybindButton.disable()
     changeHotkeyButton.disable()
     changeMuteKeybindButton.disable()
     leaveHotkeyButton.disable()
-    changeAnimMuteKeybindButton.disable()
+    sfxMuteKeybindButton.disable()
     hotkeyButtonsEnabled = False
 
 talk_textEntry = pygame_gui.elements.UITextEntryLine(
@@ -1775,8 +1801,8 @@ while running:
             elif(changingSFXMuteKeybind):
                 sfxMuteKeyName = pygame.key.name(event.key)
 
-                changeAnimMuteKeybindButton.text = f'Animation SFX Mute Keybind (\"{sfxMuteKeyName}\")'
-                changeAnimMuteKeybindButton.rebuild()
+                sfxMuteKeybindButton.text = f'Animation SFX Mute Keybind (\"{sfxMuteKeyName}\")'
+                sfxMuteKeybindButton.rebuild()
 
                 prefini.set("Settings", "sfxmutekey", f"\"{sfxMuteKeyName}\"" )
                 with open("preferences.ini", "w") as configfile:
@@ -1868,12 +1894,14 @@ while running:
                 beginHotKeybindChange()
             elif(event.ui_element == changeMuteKeybindButton):
                 beginMuteKeybindChange()
-            elif(event.ui_element == changeAnimMuteKeybindButton):
+            elif(event.ui_element == sfxMuteKeybindButton):
                 beginSFXMuteKeybindChange()
             elif(event.ui_element == changeKeybindButton):
                 openKeybindScreen()
             elif(event.ui_element == leaveHotkeyButton):
                 leaveHotkeyScreen()
+            elif(event.ui_element == mirrorButton):
+                toggleMirroring()
 
         settings_UImanager.process_events(event)
         keybind_UImanager.process_events(event)
@@ -1901,6 +1929,9 @@ while running:
         if(currentFrame >= len(tuberFrames)):
             currentFrame = (currentFrame % len(tuberFrames))
         currentImage = tuberFrames[currentFrame]
+
+        if(mirror):
+            currentImage = pygame.transform.flip(currentImage, True, False)
         
         render = currentImage.convert_alpha()
         # scale tuber image to fill screen
@@ -2011,6 +2042,7 @@ while running:
     elif(currentScreen == "preferror"):
         darken_screen()
         draw_text_options(errortexts)
+        
 
     # Update the Pygame window
     pygame.display.flip()
