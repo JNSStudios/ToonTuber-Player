@@ -1,0 +1,9 @@
+PyInstaller
+pygame
+pygame-gui
+PyAudio
+numpy
+keyboard
+streamdeck
+imageio
+playsound

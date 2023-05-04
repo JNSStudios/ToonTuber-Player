@@ -11,9 +11,7 @@ jobs:
     name: Create Draft Release
     runs-on: ubuntu-latest
     steps:
-      - id: draft-release
-        name: Draft Release
-        uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v1
         with:
           draft: true
   build-packages:
@@ -30,7 +28,9 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      - run: jpackage ...
+          cache: 'pip' # caching pip dependencies
+      - run: pip install -r requirements.txt
+      - run: pyinstaller --onefile .\toontuber.py
       - uses: softprops/action-gh-release@v1
         with:
           files: ./build/*
