@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, macOS-latest, ubuntu-latest]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -45,12 +45,6 @@ jobs:
           pyinstaller --onefile toontuber.py
         shell: bash
         working-directory: ${{ github.workspace }}
-
-      - name: Print out directory on Windows
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          ls
-          ls dist\
       
       - name: Upload executable
         uses: actions/upload-artifact@v2
