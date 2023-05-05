@@ -29,6 +29,8 @@ version = "v1.3.0"
 peakThreshold = 90
 talkThreshold = 50
 
+pa = pyaudio.PyAudio()
+
 # get the path to the script itself, useful for finding local files
 scriptPath = os.path.dirname(os.path.abspath(__file__))
 
@@ -337,8 +339,6 @@ sample_rate = 44100  # number of samples per second
 
 volRollingAverage = []
 volRollingAverageLength = 10
-
-pa = pyaudio.PyAudio()
 
 audioDeviceList = {}
 
