@@ -7,4 +7,4 @@ numpy
 keyboard
 streamdeck
 imageio
-tkinter<=8.6.12
+tkinter
