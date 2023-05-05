@@ -19,13 +19,13 @@ This program is FREE and OPEN-SOURCE, so anyone can use it and change it as thei
 ## How it works
 ToonTubers are created by organizing a set of animations (either *PNG(s)* or *GIFs*) and referencing them in *JSON* data files. 
 
-(NOTE: As of right now, **the only way to create these JSON files is MANUALLY.** I do want to add some sort of graphical program for constructing these to make the user experience smoother, but for now this will have to do. I have provided a "referenceTuber.json" users can refer to for the creation of their own.)
+(NOTE: As of right now, **the only way to create these JSON files is MANUALLY.** I do want to add some sort of graphical program for constructing these to make the user experience smoother, but for now this will have to do. I have provided a "Template Tuber" folder that users can refer to for the creation of their own.)
 
 When the program begins, the program reads from a "preferences.ini" file to get select information preserved from previous sessions. This includes the last JSON file loaded, the last microphone used, and the talk volume and peak volume threshold values.
 
 If the program is unable to load the last JSON file for any reason, the program will prompt the user to either create a new ToonTuber (**coming soon**) or load an existing one's JSON file.
 
-When a tuber is loaded, all the images are imported and organized into Animation objects, which are then further organized into Canned Animation objects and Expression Sets. The exact structure of each type is described below, as well as how they are represented within the JSON file. You can use these JSON representations to build your own by copying and pasting it in, and by referencing the "referenceTuber.json" file
+When a tuber is loaded, all the images are imported and organized into Animation objects, which are then further organized into Canned Animation objects and Expression Sets. The exact structure of each type is described below, as well as how they are represented within the JSON file. You can use these JSON representations to build your own by copying and pasting it in, and by referencing the "Template Tuber"'s JSON file.
 
 ## Program features
  - Press "p" key (or other assigned key) to open the Settings screen
@@ -46,7 +46,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 ## What you will need:
    - for running the source Python code:
-      - Python 3.10
+      - Python 3.10 or later
       - an IDE to run the code (I use VSCode with Python extensions)
       - import the following libraries using "pip":
          - pygame (pip install pygame)
@@ -64,20 +64,20 @@ When a tuber is loaded, all the images are imported and organized into Animation
 **(since the editor program doesn't exist yet)**
 
 ### Animation objects
-- *frames*:                ath(s) FROM the JSON file TO a single PNG, a sequence of PNGs, or a GIF.
+- *frames*:                names of the images used as the frames of animations (can be a single PNG, a sequence of PNGs, or a GIF). These images **MUST be inside the "frames" folder inside the Tuber folder** in order for the program to be able to find them. 
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/pngsequenceEx.png)
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/gifEx.png)
 
-- *frames per second*:     the framerate at which the images should be played. If you're using a GIF, the framerate will be taken from that, but it is still recommended to enter the framerate manually just to be safe
+- *frames per second*:     the framerate at which the images should be played. If you're using a GIF, the framerate will be taken from that, but it is still recommended to enter the framerate manually just to be safe.
 
 - *locking*:               if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is ALWAYS set to True for Transition animations and Canned Animations, and are not necessary to add in the JSON when setting transition or canned animations.
 
     (**JSON**):
     ```
         "frames": [
-            type the path from the JSON file to the image(s) here,
-            you can copy the path from your file browser and paste it here. (single backslashes may need to be replaced with double backslashes),
-            ex: "frames\\Character-Basic-Main.gif"
+            type the names of the image(s) here,
+            use multiple by separating them with commas like this,
+            ex: "Character-Basic-Main.gif"
         ],
         "fps": number,
         "locking": true or false (no need to type this in if it's a canned animation or transition animation)
@@ -118,7 +118,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *instant*:         If this value is true, this expression will instantly jump to the main animation, skipping over the transitions from the previous animations. If it's false, the transitions will play.
 
-- *sound*:           A relative file path from the json file to a sound file (either .wav or .mp3). This sound will play when the expression begins (either during the transition in, or when the main animation first appears if either no transition exists or the "instant" value is true.) Type the word "null" (without quotation marks) if you do not want a sound to play. 
+- *sound*:           The name of a sound file (either .wav or .mp3). This sound will play when the expression begins (either during the transition in, or when the main animation first appears if either no transition exists or the "instant" value is true.) Type the word "null" (without quotation marks) if you do not want a sound to play. The sound file **MUST be inside of the "sounds" folder inside of the Tuber folder** in order for the program to be able to find it.
 
 - *animations*:      A **specific list of 6 Animation objects**:
     
@@ -160,7 +160,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
             list all the names of the Expression sets that PREVENT this one from playing (or null)
         ],
         "instant": true or false (if true, the animation will play instantly, without a transition animation)
-        "sound": either type the relative path to the sound file, or type null if you don't want a sound to play,
+        "sound": either type the name of the sound file, or type null if you don't want a sound to play,
         "anims": {
             "Main": {
                 Animation JSON Object (**REQUIRED**)
@@ -200,7 +200,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *instant*:         If this value is true, the current animation's transition will be skipped and the canned animation will begin immediately. If it's false, the current animation will transition out before playing the canned animation.
 
-- *sound*:            A relative path to a sound file that will play once the animation is triggered. Can be null if you don't want one.
+- *sound*:            The name of a sound file that will play once the animation is triggered. Can be null if you don't want one. Again, the sound file **MUST be inside of the "sounds" folder inside of the Tuber folder.**
 
 - *animation*:        The Animation object that will be played when this Canned Animation is triggered.
 
@@ -222,7 +222,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
       ],
       "result": type the name of the resulting Expression Set surrounded by quotation marks,
       "instant: true or false (if true, the animation will play instantly, without a transition animation),
-      "sound": type the relative path to the sound file surrounded by quotation marks (or null) (similar to adding a frame of Animation),
+      "sound": type the name of the sound file surrounded by quotation marks (or null) (similar to adding a frame of Animation),
       "anim": 
       {
         A SINGLE Animation JSON Object ("locking" parameter not necessary for Canned)
@@ -276,6 +276,18 @@ When a tuber is loaded, all the images are imported and organized into Animation
         ]
     }
     ```
+### ToonTuber Folder Structure
+
+A Tuber folder follows this structure:
+```
+Tuber
+├── frames                  # Folder for all Animation frames 
+│   └── ...                     # pngs and gifs
+├── sounds                  # Folder for all Sounds
+│   └── ...                     # mp3, wav, or oggs
+└── tuber.json              # The JSON file (doesn't have to be this exact name)
+```
+You have to have two folders, "frames" and "sounds," for storing the animation frames and sounds. The program will look in these EXACT folder names when loading the animation frames and sounds (case sensitive). The JSON file can be named anything you want, but it must be a JSON file. The user selects the JSON file to load, and the program will then use the folder that the selected JSON file is inside to find the "frames" and "sounds" folders.
 
 ## How ToonTubers are Controlled/Played Back
 When loading a ToonTuber JSON, the "Main" animation of the **first** Expression listed in the file is what the player will play first. 
@@ -314,7 +326,6 @@ If you press another hotkey while the player is transitioning into another anima
 If an Expression or Canned Animation has a **sound** attached to it, the sound will immediately begin playing after the animation is loaded. It will play until it is finished. For Canned Animations, the sound will begin playing with the start of the Canned Animation. For Expressions, the sound will trigger when the animation is transitioned into (this works even if the animation has an "Instant Transition" attribute.)
 
 I recommend using a sound editor to exactly time the sound effect with your animation. (I use Audacity.)
-
 
 ## Special Thanks and Collaborators
 

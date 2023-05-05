@@ -7,7 +7,7 @@ import keyboard
 from StreamDeck.DeviceManager import DeviceManager
 import imageio
 import logging
-from playsound import playsound
+from notifypy import Notify 
 
 # these should be built-in
 import threading
@@ -28,12 +28,15 @@ version = "v1.3.0"
 peakThreshold = 90
 talkThreshold = 50
 
+# get the path to the script itself, useful for finding local files
+scriptPath = os.path.dirname(os.path.abspath(__file__))
+
+# used to decide the weight reduction of animations with a met requirement when multiple animations can be selected.
 nonrequiredWeight = 0.25
 
+# rgb values for the background color (starts as green, resets later)
 GREEN = (0, 255, 0)
 BGCOLOR = GREEN
-
-print(f"ToonTuber Player {version}")
 
 # play sound when crash happens so user is alerted
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -50,7 +53,13 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     logging.exception(str)
 
     if(not debugMode and exc_type != KeyboardInterrupt):
-        playsound(os.path.join("assets", "error.wav"))
+        crashnotif = Notify()
+        crashnotif.title = "TOONTUBER PLAYER HAS CRASHED"
+        crashnotif.message = "A crash report was saved. Please restart Player."
+        crashnotif.icon = os.path.join(scriptPath, "assets", "crashnotificon.png")
+        crashnotif.audio = os.path.join(scriptPath, "assets", "error.wav")
+        crashnotif.application_name = " 🛑 ATTN! ToonTuber Player 🛑"
+        crashnotif.send()
 
     # Call the default exception handler
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
@@ -64,17 +73,23 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     # get the username of the current user so we can filter it out of the file
     username = os.getlogin()
 
-
     if(exc_type != KeyboardInterrupt):
+        # write the error report to a file
         with open(f"Player Crash Report {datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')}{f' ({errorFileID})' if errorFileID != 0 else ''}.txt", "w") as f:
+            # add text to the file before putting the exception details
             f.write("Oops! The player crashed! Sorry about that.\nThe text below is the error report. If you don't know what this means, please send this file to the developer, along with a description of what happened (which you can type here).\n\nWhat I was doing: \n\n")
             f.write(f"Unhandled exception: {exc_type} {exc_value}")
             for line in traceback.format_tb(exc_traceback):
-                if(line has)
+                # check if the line contains the username and remove it if it's there
+                if(username in line):
+                    line = line.replace(username, "[username]")
+                # write the line to the file
                 f.write(line)
+            # after all the lines are written to the file, close the file
             f.close()
     # Quit Pygame
     pygame.quit()
+    # exit the whole program
     exit()
 
 # Set the exception handler
@@ -84,13 +99,14 @@ logging.basicConfig(filename='debug.log', filemode='w', format='%(name)s - %(lev
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-
 # helper function, comment out the "print" line to disable this function
 def debugPrint(str):
     if(debugMode):
         logging.debug(str)
         print(str)
     return
+
+print(f"ToonTuber Player {version}")
 
 ## GLOBAL VARIABLES
 
@@ -139,6 +155,8 @@ audio_device_id = 1
 
 animationSFXVolume = 1
 animationSFXMuted = False
+
+mirror = False
 
 # Define some colors
 WHITE = (255, 255, 255)
@@ -193,7 +211,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5, "sfxmutekey": f"\"right alt\""}
+    prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5, "sfxmutekey": f"\"right alt\"", "mirror": "0"}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -292,10 +310,18 @@ except Exception as e:
     preferenceErrors.append("Animation SFX volume (Reset to 0.5)")
     animationSFXVolume = 0.5
 
-# write everything back to the file to ensure no data is lost. also helps with updating older versions of preferences.ini
+# mirror setting
+try:
+    mirror = bool(int(prefini["Settings"]["mirror"]))
+except Exception as e:
+    print("Error reading mirror from preferences.ini. Setting to False...")
+    preferenceErrors.append("Tuber Mirroring (Reset to Off)")
+
+# write everything back to the file to ensure no data is lost. 
+# also helps with updating older versions of preferences.ini
 prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\""}
 prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
-prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume, "sfxmutekey": f"\"{sfxMuteKeyName}\""}
+prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume, "sfxmutekey": f"\"{sfxMuteKeyName}\"", "mirror": f"{'1' if mirror else '0'}"}
 
 with open("preferences.ini", "w") as configfile:
     prefini.write(configfile)
@@ -612,7 +638,7 @@ idleTimer_thread.daemon = True
 
 # TUBER STUFF
 
-MISSING_IMAGE = pygame.image.load(os.path.join("assets", "MissingImage.png"))
+MISSING_IMAGE = pygame.image.load(os.path.join(scriptPath, "assets", "MissingImage.png"))
 
 jsonPath = ""
 
@@ -620,20 +646,22 @@ def load_animation_images(paths, fps):
     # create a list of Pygame images from the selected files
     global jsonPath, currentlyLoadingFile
     images = []
+    # loop through each provided path in the provided list
     for file_path in paths:
         singlePath = file_path
-        file_path = os.path.join(jsonPath, file_path)
+        file_path = os.path.join(jsonPath, "frames", file_path)
+        # debugPrint(file_path)
         if(os.path.isfile(file_path)):
             extension = os.path.splitext(file_path)[1]
             if(extension == ".png"):
                 debugPrint(f"Loading image {singlePath}")
                 currentlyLoadingFile = f"Loading image {singlePath}"
-                image = pygame.image.load(file_path)
+                image = pygame.image.load(os.path.join(jsonPath, file_path))
                 images.append(image)
             elif(extension == ".gif"):
                 debugPrint(f"Loading gif {singlePath}")
                 # currentlyLoadingFile = f"Loading gif {singlePath}"
-                gif = imageio.mimread(file_path)
+                gif = imageio.mimread(os.path.join(jsonPath, file_path))
                 fcount = 0
                 for frame in gif:
                     # debugPrint(f"Loading frame")
@@ -658,6 +686,8 @@ def load_animation_images(paths, fps):
 
 def playAnimationSound(soundPath):
     global animationSFXVolume, animationSFXMuted
+    debugPrint(f"Playing sound {soundPath}")
+    soundPath = os.path.join(jsonPath, "sounds", soundPath)
     sound = pygame.mixer.Sound(soundPath)
     sound.set_volume(animationSFXVolume if not animationSFXMuted else 0)
     sound.play(loops=0)
@@ -853,7 +883,7 @@ class ExpressionSet:
             self.hotkey = None
 
     def getSound(self):
-        return None if (self.sound == "" or self.sound == None) else os.path.join(jsonPath, self.sound)
+        return None if (self.sound == "" or self.sound == None) else self.sound
     def setSound(self, sound):
         self.sound = sound
 
@@ -937,7 +967,7 @@ class CannedAnimation:
     
     
     def getSound(self):
-        return None if (self.sound == "" or self.sound == None) else os.path.join(jsonPath, self.sound)
+        return None if (self.sound == "" or self.sound == None) else self.sound
     def setSound(self, sound):
         self.sound = sound
 
@@ -987,13 +1017,11 @@ def update_render_thread():
                                         transition = "in"
                                         loadExpression(expressionList[expressionIndex[currentExpression]], "in")
                                         if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                            debugPrint("PLAYING SOUND!")
                                             playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                                     else:
                                         transition = ""
                                         loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                                         if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                            debugPrint("PLAYING SOUND!")
                                             playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                             else:
                                 if(expressionList[expressionIndex[currentExpression]].getTransitionOut().exists()):
@@ -1011,13 +1039,11 @@ def update_render_thread():
                                             transition = "in"
                                             loadExpression(expressionList[expressionIndex[currentExpression]], "in")
                                             if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                                debugPrint("PLAYING SOUND!")
                                                 playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                                         else:
                                             transition = ""
                                             loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                                             if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                                debugPrint("PLAYING SOUND!")
                                                 playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
 
                         elif(transition == "out"):
@@ -1033,14 +1059,12 @@ def update_render_thread():
                                     loadExpression(expressionList[expressionIndex[currentExpression]], "in")
                                     debugPrint(expressionList[expressionIndex[currentExpression]].getSound())
                                     if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                        debugPrint("PLAYING SOUND!")
                                         playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                                 else:
                                     transition = ""
                                     loadExpression(expressionList[expressionIndex[currentExpression]], "main")
                                     debugPrint(expressionList[expressionIndex[currentExpression]].getSound())
                                     if(expressionList[expressionIndex[currentExpression]].getSound() != None):
-                                        debugPrint("PLAYING SOUND!")
                                         playAnimationSound(expressionList[expressionIndex[currentExpression]].getSound())
                             elif(currentAnimationType == "canned"):
                                 # if the queued animation is a canned animation
@@ -1161,19 +1185,21 @@ def createNewTuber():
 changingSettingsKeybind = False
 changingHotKeybind = False
 changingMuteKeybind = False
+changingSFXMuteKeybind = False
 
 def openKeybindScreen():
     global currentScreen
-    currentScreen = "settings"
+    currentScreen = "keybind"
     enableHotkeyButtons()
     disableHotkeyButtons()
 
 def leaveHotkeyScreen():
-    global currentScreen, changingSettingsKeybind, changingHotKeybind, changingMuteKeybind
+    global currentScreen, changingSettingsKeybind, changingHotKeybind, changingMuteKeybind, changingSFXMuteKeybind
     currentScreen = "settings"
     changingSettingsKeybind = False
     changingHotKeybind = False
     changingMuteKeybind = False
+    changingSFXMuteKeybind = False
     disableHotkeyButtons()
     enableSettingsButtons()
 
@@ -1189,6 +1215,10 @@ def beginMuteKeybindChange():
     global changingMuteKeybind
     changingMuteKeybind = True
 
+def beginSFXMuteKeybindChange():
+    global changingSFXMuteKeybind
+    changingSFXMuteKeybind = True
+
 colorPickerGUI = None
 
 def changeBGColor():
@@ -1202,6 +1232,14 @@ def toggleAntiAliasing():
     smoothPixelsButton.set_text(f"Smooth Pixels ({'Yes' if antialiasing else 'No'})")
     prefini.set("Settings", "antialiasing", f"{'1' if antialiasing else '0'}")
     with open("preferences.ini", "w") as f:
+        prefini.write(f)
+
+def toggleMirroring():
+    global mirror, mirrorButton, prefini
+    mirror = not mirror
+    mirrorButton.set_text(f"Mirror Tuber ({'ON' if mirror else 'Off'})")
+    prefini.set("Settings", "mirror", f"{'1' if mirror else '0'}")
+    with open("preferences.ini", "w") as f: 
         prefini.write(f)
 
 debugPrint("GUI classes created.\nCreating Tuber loading functions...")
@@ -1502,19 +1540,25 @@ smoothPixelsButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 
                                                 text=f"Smooth Pixels ({'Yes' if antialiasing else 'No'})",
                                                 manager=settings_UImanager)
 
-changeKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (200, 50)),
+mirrorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (200, 50)),
+                                                text=f"Mirror Tuber ({'ON' if mirror else 'Off'})",
+                                                manager=settings_UImanager)
+
+
+changeKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (200, 50)),
                                                    text='Change Keybinds',
                                                    manager=settings_UImanager)
 
 # debugPrint(f"\n\n\n AUDIO DROPDOWN BEING CREATED NOW (using this {audioDeviceNames}\n also this as the last device {lastAudioDevice}).\n\n\n")
 
-dropdownPos = pygame.Rect((0, 325), (325, 50))
+dropdownPos = pygame.Rect((0, 375), (325, 50))
 audioDeviceDropdown = pygame_gui.elements.UIDropDownMenu(options_list=audioDeviceNames,
                                                         starting_option=lastAudioDevice,
                                                         relative_rect=dropdownPos,
                                                         manager=settings_UImanager)
 
-volumeSlider = pygame_gui.elements.ui_horizontal_slider.UIHorizontalSlider(relative_rect=pygame.Rect((0, height - 150), (150, 25)),
+
+volumeSlider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((0, height - 150), (150, 25)),
                                                                           start_value=animationSFXVolume,
                                                                           value_range=(0, 1),
                                                                           manager=settings_UImanager)
@@ -1536,48 +1580,57 @@ changeMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect
                                                 text=f'Mute Keybind (\"{muteKeyName}\")',
                                                 manager=keybind_UImanager)
 
+sfxMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (400, 50)),
+                                                text=f'Animation SFX Mute Keybind (\"{sfxMuteKeyName}\")',
+                                                manager=keybind_UImanager)
+
 leaveHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, height-100), (200, 50)),
                                                 text='Back',
                                                 manager=keybind_UImanager)
+                                                
 
 
 settingsButtonsEnabled = True
 hotkeyButtonsEnabled = True
 
 def enableSettingsButtons():
-    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider, mirrorButton
     loadToonTuberButton.enable()
     changeBGColorButton.enable()
     smoothPixelsButton.enable()
     changeKeybindButton.enable()
     audioDeviceDropdown.enable()
     volumeSlider.enable()
+    mirrorButton.enable()
     settingsButtonsEnabled = True
 
 def disableSettingsButtons():
-    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider, mirrorButton
     loadToonTuberButton.disable()
     changeBGColorButton.disable()
     smoothPixelsButton.disable()
     changeKeybindButton.disable()
     audioDeviceDropdown.disable()
     volumeSlider.disable()
+    mirrorButton.disable()
     settingsButtonsEnabled = False
 
 def enableHotkeyButtons():
-    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton
+    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton, sfxMuteKeybindButton
     changeSettingsKeybindButton.enable()
     changeHotkeyButton.enable()
     changeMuteKeybindButton.enable()
     leaveHotkeyButton.enable()
+    sfxMuteKeybindButton.enable()
     hotkeyButtonsEnabled = True
 
 def disableHotkeyButtons():
-    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton
+    global changeSettingsKeybindButton, changeHotkeyButton, changeMuteKeybindButton, hotkeyButtonsEnabled, leaveHotkeyButton, sfxMuteKeybindButton
     changeSettingsKeybindButton.disable()
     changeHotkeyButton.disable()
     changeMuteKeybindButton.disable()
     leaveHotkeyButton.disable()
+    sfxMuteKeybindButton.disable()
     hotkeyButtonsEnabled = False
 
 talk_textEntry = pygame_gui.elements.UITextEntryLine(
@@ -1625,8 +1678,8 @@ clock = pygame.time.Clock()
 debugPrint("Creating mic meter sprites...")
 
 # Load the sprites
-mic_feedback = pygame.image.load(os.path.join("assets", "micLevel.png")).convert_alpha()
-mic_range = pygame.image.load(os.path.join("assets", "micRange.png")).convert_alpha()
+mic_feedback = pygame.image.load(os.path.join(scriptPath, "assets", "micLevel.png")).convert_alpha()
+mic_range = pygame.image.load(os.path.join(scriptPath, "assets", "micRange.png")).convert_alpha()
 
 #get original size of both sprites
 mic_feed_orig = mic_feedback.get_size()
@@ -1644,14 +1697,14 @@ mic_range = pygame.transform.smoothscale(mic_range, (mic_newWidth, mic_newHeight
 mic_fill_height_orig = mic_feedback.get_height()
 
 # create both threshold arrow images
-talkThresholdSprite = pygame.image.load(os.path.join("assets", "ThresholdArrow.png")).convert_alpha()
-peakThresholdSprite = pygame.image.load(os.path.join("assets", "ThresholdArrow.png")).convert_alpha()
+talkThresholdSprite = pygame.image.load(os.path.join(scriptPath, "assets", "ThresholdArrow.png")).convert_alpha()
+peakThresholdSprite = pygame.image.load(os.path.join(scriptPath, "assets", "ThresholdArrow.png")).convert_alpha()
 
 talkThreshPos = 0
 peakThreshPos = 0
 
 # create sprite for mic mute
-micMuteSprite = pygame.image.load(os.path.join("assets", "micmuted.png")).convert_alpha()
+micMuteSprite = pygame.image.load(os.path.join(scriptPath, "assets", "micmuted.png")).convert_alpha()
 
 # scale sprite to fit height of mic meter
 micMuteSprite = pygame.transform.smoothscale(micMuteSprite, (mic_newWidth, mic_newHeight))
@@ -1702,7 +1755,7 @@ while running:
 
     typingInTextEntry = talk_textEntry.is_focused or peak_textEntry.is_focused
  
-    changingAnyKeybind = changingSettingsKeybind or changingHotKeybind or changingMuteKeybind
+    changingAnyKeybind = changingSettingsKeybind or changingHotKeybind or changingMuteKeybind or changingSFXMuteKeybind
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -1751,6 +1804,16 @@ while running:
                 with open("preferences.ini", "w") as configfile:
                     prefini.write(configfile)
                 changingMuteKeybind = False
+            elif(changingSFXMuteKeybind):
+                sfxMuteKeyName = pygame.key.name(event.key)
+
+                sfxMuteKeybindButton.text = f'Animation SFX Mute Keybind (\"{sfxMuteKeyName}\")'
+                sfxMuteKeybindButton.rebuild()
+
+                prefini.set("Settings", "sfxmutekey", f"\"{sfxMuteKeyName}\"" )
+                with open("preferences.ini", "w") as configfile:
+                    prefini.write(configfile)
+                changingSFXMuteKeybind = False
 
         elif (event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN) and currentScreen == "preferror":
             print("clicking mouse or pressing key")
@@ -1837,10 +1900,14 @@ while running:
                 beginHotKeybindChange()
             elif(event.ui_element == changeMuteKeybindButton):
                 beginMuteKeybindChange()
+            elif(event.ui_element == sfxMuteKeybindButton):
+                beginSFXMuteKeybindChange()
             elif(event.ui_element == changeKeybindButton):
                 openKeybindScreen()
             elif(event.ui_element == leaveHotkeyButton):
                 leaveHotkeyScreen()
+            elif(event.ui_element == mirrorButton):
+                toggleMirroring()
 
         settings_UImanager.process_events(event)
         keybind_UImanager.process_events(event)
@@ -1868,6 +1935,9 @@ while running:
         if(currentFrame >= len(tuberFrames)):
             currentFrame = (currentFrame % len(tuberFrames))
         currentImage = tuberFrames[currentFrame]
+
+        if(mirror):
+            currentImage = pygame.transform.flip(currentImage, True, False)
         
         render = currentImage.convert_alpha()
         # scale tuber image to fill screen
@@ -1953,7 +2023,7 @@ while running:
                            ClickableText(progressText, (50, 100), UniFont, WHITE, None),
                            ClickableText(currentlyLoadingFile, (50, 250), UniFont, WHITE, None)])
         
-    elif currentScreen == "settings":
+    elif currentScreen == "keybind":
         darken_screen()
         if(not hotkeyButtonsEnabled):
             enableHotkeyButtons()
@@ -1963,11 +2033,13 @@ while running:
 
         changingTxt = ""
         if(changingSettingsKeybind):
-            changingTxt = "Press a key to change SETTINGS keybind"
+            changingTxt = "Press a key to change \"SETTINGS\" keybind"
         elif(changingHotKeybind):
-            changingTxt = "Press a key to change HOTKEY keybind"
+            changingTxt = "Press a key to change \"HOTKEY IGNORE\" keybind"
         elif(changingMuteKeybind):
-            changingTxt = "Press a key to change MUTE keybind"
+            changingTxt = "Press a key to change \"MIC MUTE\" keybind"
+        elif(changingSFXMuteKeybind):
+            changingTxt = "Press a key to change \"SFX MUTE\" keybind"
 
         draw_text_options([ClickableText(changingTxt, (0, height-200), UniFont, WHITE, None)])
 
@@ -1976,6 +2048,7 @@ while running:
     elif(currentScreen == "preferror"):
         darken_screen()
         draw_text_options(errortexts)
+        
 
     # Update the Pygame window
     pygame.display.flip()
