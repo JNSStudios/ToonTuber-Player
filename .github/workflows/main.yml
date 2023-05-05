@@ -27,6 +27,12 @@ jobs:
         run: |
           pip install pipwin
           pipwin install pyaudio
+          
+      - name: Install Portaudio dependency for macOS
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: |
+          brew install portaudio
+          pip install pyaudio
 
 
       - name: Install dependencies
@@ -37,6 +43,8 @@ jobs:
       - name: Build executable
         run: |
           pyinstaller --onefile toontuber.py
+          if: ${{ matrix.os == 'windows-latest" }}
+          run: ls
         shell: bash
         working-directory: ${{ github.workspace }}
 
