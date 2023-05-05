@@ -44,4 +44,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: toontuber-${{ matrix.os }}
-          path: dist/toontuber
+          path: ${{ matrix.os == 'windows-latest' && 'dist\\toontuber' || 'dist/toontuber' }}
+
