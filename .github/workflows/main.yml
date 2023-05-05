@@ -27,6 +27,12 @@ jobs:
         run: |
           pip install pipwin
           pipwin install pyaudio
+          
+      - name: Install Portaudio dependency for macOS
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: |
+          brew install portaudio
+          pip install pyaudio
 
 
       - name: Install dependencies
