@@ -43,6 +43,8 @@ jobs:
       - name: Build executable
         run: |
           pyinstaller --onefile toontuber.py
+          if: ${{ matrix.os == 'windows-latest" }}
+          run: ls
         shell: bash
         working-directory: ${{ github.workspace }}
 
