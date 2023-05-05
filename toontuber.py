@@ -8,6 +8,7 @@ from StreamDeck.DeviceManager import DeviceManager
 import imageio
 import logging
 from notifypy import Notify 
+import noisereduce as nr
 
 # these should be built-in
 import threading

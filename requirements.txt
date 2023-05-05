@@ -7,3 +7,4 @@ numpy
 keyboard
 streamdeck
 imageio
+noisereduce
