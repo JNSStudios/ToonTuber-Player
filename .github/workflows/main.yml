@@ -23,6 +23,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install PortAudio
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install -y the_package
+
+
       - name: Build executable
         run: |
           pyinstaller --onefile toontuber.py
