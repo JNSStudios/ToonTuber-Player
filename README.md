@@ -56,7 +56,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
          - keyboard (pip install keyboard)
          - streamdeck (pip install streamdeck)
          - imageio (pip install imageio)
-         - playsound (pip install playsound)
+         - notify-py (pip install notify-py)
       
    - if you are running this as a compiled EXE file, you should be all set!
 

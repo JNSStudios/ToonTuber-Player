@@ -6,7 +6,6 @@ import numpy as np
 import keyboard
 from StreamDeck.DeviceManager import DeviceManager
 import imageio
-import logging
 from notifypy import Notify 
 
 # these should be built-in
@@ -20,6 +19,8 @@ import sys
 import configparser
 import datetime
 import traceback
+import logging
+
 
 debugMode = False
 
