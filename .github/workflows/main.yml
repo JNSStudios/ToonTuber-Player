@@ -20,7 +20,7 @@ jobs:
 
       - name: Install PortAudio dependency for Ubuntu
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: sudo apt-get -y portaudio19-dev1
+        run: sudo apt-get install portaudio19-dev
 
       - name: Install PortAudio dependency for Windows
         if: ${{ matrix.os == 'windows-latest' }}
