@@ -46,7 +46,6 @@ jobs:
         with:
           name: toontuber-${{ matrix.os }}
           path: dist/toontuber
-          
+
       - name: Print message
         run: echo "COMPLETE!"
-    if: startsWith(github.ref, 'refs/tags/v')
