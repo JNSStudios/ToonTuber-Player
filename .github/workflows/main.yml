@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, macOS-latest, ubuntu-latest]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -40,20 +40,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Build executable
+      - name: Build executable for Windows
+        if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          pyinstaller --onefile toontuber.py
+          pyinstaller --onefile --windowed --add-data "assets;assets" --icon "assets/toontuber app icon.ico" --name "ToonTuber-Player v_._._" toontuber.py
         shell: bash
         working-directory: ${{ github.workspace }}
 
-      - name: Print out directory on Windows
-        if: ${{ matrix.os == 'windows-latest' }}
+      - name: Build executable for macOS or Ubuntu
+        if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          ls
-          ls dist\
+          pyinstaller --onefile --windowed --add-data "assets:assets" --icon "assets/toontuber app icon.ico" --name "ToonTuber-Player v_._._" toontuber.py
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        
+        
       
       - name: Upload executable
         uses: actions/upload-artifact@v2
         with:
           name: toontuber-${{ matrix.os }}
-          path: ${{ matrix.os == 'windows-latest' && 'dist\toontuber.exe' || 'dist/toontuber' }}
+          path: ${{ matrix.os == 'windows-latest' && 'dist\ToonTuber-Player v_._._.exe' || 'dist/ToonTuber-Player v_._._' }}
