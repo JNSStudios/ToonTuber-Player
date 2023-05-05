@@ -42,7 +42,7 @@ jobs:
 
       - name: Build executable
         run: |
-          pyinstaller --onefile toontuber.py
+          pyinstaller --onefile --windowed --add-data "assets;assets" --icon "assets/toontuber app icon.ico" --name "ToonTuber-Player v_._._ (${{ matrix.os }})" toontuber.py
         shell: bash
         working-directory: ${{ github.workspace }}
       
