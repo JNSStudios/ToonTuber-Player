@@ -13,16 +13,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Print message
+        run: echo "Starting program"
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.11.3'
+
+      - name: Print message 2
+        run: echo "Python set up"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Print message 3
+        run: echo "Dependancies installed"
 
       - name: Build executable
         run: |
@@ -30,9 +38,15 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}
 
+      - name: Print message 4
+        run: echo "Executable compiled"
+
       - name: Upload executable
         uses: actions/upload-artifact@v2
         with:
           name: toontuber-${{ matrix.os }}
           path: dist/toontuber
+          
+      - name: Print message
+        run: echo "COMPLETE!"
     if: startsWith(github.ref, 'refs/tags/v')
