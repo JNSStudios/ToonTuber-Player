@@ -1,11 +1,8 @@
 name: Build Executables
 
 on:
-  push:
-    tags:
-      -'*'
   workflow_dispatch:
-  
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
