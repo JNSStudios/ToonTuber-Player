@@ -1,5 +1,4 @@
 PyInstaller
-nuitka
 pygame
 pygame-gui
 PyAudio
