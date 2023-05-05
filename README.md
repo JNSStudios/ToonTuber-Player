@@ -46,7 +46,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 ## What you will need:
    - for running the source Python code:
-      - Python 3.10
+      - Python 3.10 or later
       - an IDE to run the code (I use VSCode with Python extensions)
       - import the following libraries using "pip":
          - pygame (pip install pygame)

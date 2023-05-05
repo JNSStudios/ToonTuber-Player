@@ -7,7 +7,7 @@ import keyboard
 from StreamDeck.DeviceManager import DeviceManager
 import imageio
 import logging
-from playsound import playsound
+from notifypy import Notify 
 
 # these should be built-in
 import threading
@@ -53,7 +53,13 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     logging.exception(str)
 
     if(not debugMode and exc_type != KeyboardInterrupt):
-        playsound(os.path.join(scriptPath, "assets", "error.wav"))
+        crashnotif = Notify()
+        crashnotif.title = "TOONTUBER PLAYER HAS CRASHED"
+        crashnotif.message = "A crash report was saved. Please restart Player."
+        crashnotif.icon = os.path.join(scriptPath, "assets", "crashnotificon.png")
+        crashnotif.audio = os.path.join(scriptPath, "assets", "error.wav")
+        crashnotif.application_name = " 🛑 ATTN! ToonTuber Player 🛑"
+        crashnotif.send()
 
     # Call the default exception handler
     sys.__excepthook__(exc_type, exc_value, exc_traceback)

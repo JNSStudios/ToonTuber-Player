@@ -6,4 +6,4 @@ numpy
 keyboard
 streamdeck
 imageio
-playsound
+notify-py
