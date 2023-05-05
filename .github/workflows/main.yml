@@ -40,11 +40,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Build executable
+      - name: Build executable for Windows
+        if: ${{ matrix.os == 'windows-latest' }}
         run: |
           pyinstaller --onefile --windowed --add-data "assets;assets" --icon "assets/toontuber app icon.ico" --name "ToonTuber-Player v_._._ (${{ matrix.os }})" toontuber.py
         shell: bash
         working-directory: ${{ github.workspace }}
+
+      - name: Build executable for macOS
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: |
+          pyinstaller --onefile --windowed --add-data "assets;assets" --icon "assets/toontuber app icon.ico" --name "ToonTuber-Player v_._._ (${{ matrix.os }})" toontuber.py
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        
+      - name: Build executable for Ubuntu
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          pyinstaller --onefile --windowed --add-data "assets:assets" --icon "assets/toontuber app icon.ico" --name "ToonTuber-Player v_._._ (${{ matrix.os }})" toontuber.py
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        
+        
       
       - name: Upload executable
         uses: actions/upload-artifact@v2
