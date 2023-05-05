@@ -49,12 +49,10 @@ jobs:
       - name: Print out directory on Windows and navigate
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          ls
           cd dist\
-          ls
       
       - name: Upload executable
         uses: actions/upload-artifact@v2
         with:
           name: toontuber-${{ matrix.os }}
-          path: ${{ matrix.os == 'windows-latest' && 'dist\toontuber' || 'dist/toontuber' }}
+          path: ${{ matrix.os == 'windows-latest' && 'toontuber' || 'dist/toontuber' }}
