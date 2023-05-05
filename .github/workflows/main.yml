@@ -46,7 +46,7 @@ jobs:
         shell: bash
         working-directory: ${{ github.workspace }}
 
-      - name: Print out directory on Windows and navigate
+      - name: Print out directory on Windows
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           ls
