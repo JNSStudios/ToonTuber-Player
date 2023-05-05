@@ -49,7 +49,8 @@ jobs:
       - name: Print out directory on Windows and navigate
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          cd dist\
+          ls
+          ls dist\
       
       - name: Upload executable
         uses: actions/upload-artifact@v2
