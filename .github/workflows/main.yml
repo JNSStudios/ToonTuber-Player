@@ -12,8 +12,8 @@ jobs:
     steps:
     
       - name: Check OS (end if NOT windows)
-          run: exit 1
-          if: ${{ matrix.os != 'windows-latest' }}
+        run: exit 1
+        if: ${{ matrix.os != 'windows-latest' }}
       
       - name: Checkout code
         uses: actions/checkout@v2
