@@ -18,9 +18,15 @@ jobs:
         with:
           python-version: '3.11.3'
 
-      - name: Install PortAudio
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get install -y the_package
+      - name: Install PortAudio dependency for Ubuntu
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sudo apt-get -y portaudio19-dev1
+
+      - name: Install PortAudio dependency for Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          pip install pipwin
+          pipwin install pyaudio
 
 
       - name: Install dependencies
