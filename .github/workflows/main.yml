@@ -58,4 +58,6 @@ jobs:
         with:
           name: toontuber-${{ matrix.os }}
           path: ${{ matrix.os == 'windows-latest' && 'dist\toontuber' || 'dist/toontuber' }}
+        if: ${{ matrix.os == 'windows-latest' }}
+
 
