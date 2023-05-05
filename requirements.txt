@@ -1,10 +1,10 @@
 PyInstaller
-notify-py
+nuitka
 pygame
 pygame-gui
 PyAudio
 numpy
 keyboard
 streamdeck
-imageio
-noisereduce
+pillow
+notify-py

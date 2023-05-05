@@ -5,7 +5,7 @@ import pyaudio
 import numpy as np
 import keyboard
 from StreamDeck.DeviceManager import DeviceManager
-import imageio
+from PIL import Image
 from notifypy import Notify 
 
 # these should be built-in
@@ -22,7 +22,7 @@ import traceback
 import logging
 
 
-debugMode = False
+debugMode = True
 
 version = "v1.3.0"
 
@@ -43,10 +43,7 @@ BGCOLOR = GREEN
 def handle_exception(exc_type, exc_value, exc_traceback):
     global stream
 
-    stream.stop_stream()
-    stream.close()
     pa.terminate()
-    
 
     # Print the exception information
 
@@ -643,7 +640,7 @@ MISSING_IMAGE = pygame.image.load(os.path.join(scriptPath, "assets", "MissingIma
 
 jsonPath = ""
 
-def load_animation_images(paths, fps):
+def load_animation_images(paths):
     # create a list of Pygame images from the selected files
     global jsonPath, currentlyLoadingFile
     images = []
@@ -662,28 +659,32 @@ def load_animation_images(paths, fps):
             elif(extension == ".gif"):
                 debugPrint(f"Loading gif {singlePath}")
                 # currentlyLoadingFile = f"Loading gif {singlePath}"
-                gif = imageio.mimread(os.path.join(jsonPath, file_path))
-                fcount = 0
-                for frame in gif:
-                    # debugPrint(f"Loading frame")
+                gif = Image.open(os.path.join(jsonPath, file_path))
+                # .mimread(os.path.join(jsonPath, file_path))
+                print("# GIF FRAMES:", gif.n_frames)
+                for frame_index in range(gif.n_frames):
+                    debugPrint(f"Loading frame {frame_index}")
                     # convert the image to a Pygame surface
                     # count the number of bytes in frame.tobytes() and print it out
-                    currentlyLoadingFile = f"Loading gif {singlePath} frames ({fcount}/{len(gif)})"
-                    try:
-                        pygameFrame = pygame.image.frombuffer(frame.tobytes(), frame.shape[1::-1], "RGBA")
-                    except Exception as e:
-                        print(e)
-                        exit()
+                    currentlyLoadingFile = f"Loading gif {singlePath} frames ({frame_index}/{gif.n_frames})"
+
+                    gif.seek(frame_index)
+                    frame = gif.convert("RGBA")
+                    pygameFrame = pygame.image.fromstring(frame.tobytes(), frame.size, frame.mode).convert_alpha()
+
+                    # save gif frame (with transparency) as a pygame image
+                    # pygameFrame = pygame.image.fromstring(frame.tobytes(), frame.size, frame.mode).convert_alpha() 
+                    # print("ABOUT OT DO THING")
+                    # print("BYTES:\n", len(frame.tobytes()))
+                    # print("SHAPE:\n", frame.shape[1::-1])
+                    # print("MODE:\n", frame.tobytes()[0:10])
+                    # print out what the frombuffer method is LOOKING FOR
+                    # pygameFrame = pygame.image.frombuffer(frame.tobytes(), (frame.shape[1::-1]), 'RGBA')
                     images.append(pygameFrame)
-                    fcount += 1
-                if('fps' in gif[0].meta):
-                    fps = gif[0].meta['fps']
-                elif('duration' in gif[0].meta):
-                    fps = 1000 / gif[0].meta['duration']
-                return (images, fps)
+                return images
         else:
             images.append(MISSING_IMAGE)
-    return (images, fps)
+    return images
 
 def playAnimationSound(soundPath):
     global animationSFXVolume, animationSFXMuted
@@ -700,7 +701,8 @@ class Animation:
             self.fps = None
             self.locking = None
         else:
-            (self.frames, self.fps) = load_animation_images(frames, fps)
+            self.frames = load_animation_images(frames)
+            self.fps = fps                  # int
             self.locking = locking          # bool
 
     def __str__(self):

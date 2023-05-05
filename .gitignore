@@ -12,3 +12,6 @@ dist/
 build/
 *.zip
 *.lnk
+*.dist/
+*.build/
+*.onefile-build/

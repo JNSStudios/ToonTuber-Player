@@ -55,7 +55,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
          - numpy (pip install numpy)
          - keyboard (pip install keyboard)
          - streamdeck (pip install streamdeck)
-         - imageio (pip install imageio)
+         - Pillow (pip install pillow)
          - notify-py (pip install notify-py)
       
    - if you are running this as a compiled EXE file, you should be all set!
@@ -68,7 +68,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/pngsequenceEx.png)
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/gifEx.png)
 
-- *frames per second*:     the framerate at which the images should be played. If you're using a GIF, the framerate will be taken from that, but it is still recommended to enter the framerate manually just to be safe.
+- *frames per second*:     the framerate at which the images should be played. This applies to ALL file types. (Example: even if you're using a GIF, the framerate will still be determined from this value, as GIFs can have differing durations between frames.)
 
 - *locking*:               if this is set to **true**, the animation **must** finish playing before a different animation can be played. This is ALWAYS set to True for Transition animations and Canned Animations, and are not necessary to add in the JSON when setting transition or canned animations.
 
