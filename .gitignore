@@ -12,4 +12,3 @@ dist/
 build/
 *.zip
 *.lnk
-setup.py
