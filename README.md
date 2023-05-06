@@ -238,6 +238,8 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *last_modified*:                 The date the ToonTuber was last modified (this will be added automatically by the editor program)
 
+- *player_version*:                The version of the ToonTuber Player that this ToonTuber was created for.
+
 - *random_duplicate_reduction*:    A number between 0 and 1. This is the percentage of the time that the player will attempt to reduce the chance of playing the same idle animation multiple times in a row. (IE: If this number is 0, the player will NOT try to prevent the same idle from playing twice in a row. If this number is 1, the player will ALWAYS try to prevent the same idle from playing twice in a row. This does not affect Expressions with one or no idles.)
 
 - *expressions*:                   A list of Expression Set objects. **Remember that transition animations in expressions do NOT need a "locking" parameter, as the program will AUTOMATICALLY lock all transition animations.**
@@ -251,6 +253,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
         "creator": "type your username and/or real name here",
         "created": "don't worry about this, it'll be overwritten by the editor program",
         "last_modified": "same with this one",
+        "player_version": "IMPORTANT: type the version of ToonTuber Player that this Tuber is intended for",
         "random_duplicate_reduction": 0 to 1,
         "expressions": [
             {

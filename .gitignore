@@ -1,17 +1,9 @@
-ToonTubers/Jay ToonTuber/
-Jay ToonTuber/
-non-essential assets/
-output/
-past releases/
-preferences.ini
-Player Crash Report*.txt
+*/
+!assets/
+!ToonTubers/
+*.ini
+*.txt
 *.exe
 *.spec
 *.log
-dist/
-build/
-*.zip
 *.lnk
-*.dist/
-*.build/
-*.onefile-build/

@@ -22,9 +22,35 @@ import traceback
 import logging
 
 
-debugMode = True
+debugMode = False
 
 version = "v1.3.0"
+
+def compareVersions(verA, verB):
+    # check if last used version is different from current version
+    verA = verA.split(".")
+    verB = verB.split(".")
+
+    # remove the starting v from the first spots
+    verA[0] = verA[0].replace("v", "")
+    verB[0] = verB[0].replace("v", "")
+
+    # convert to ints
+    verA = [int(x) for x in verA]
+    verB = [int(x) for x in verB]
+
+    # returns -1 if A is less than B, returns 0 if equal, returns 1 if A is greater than B
+    for i in range(0, len(verA)):
+        if(verA[i] < verB[i]):
+            return -1
+        elif(verA[i] > verB[i]):
+            return 1
+    return 0
+
+
+
+lastVersionINI = ""
+lastVersionTUBER = ""
 
 peakThreshold = 90
 talkThreshold = 50
@@ -106,6 +132,25 @@ def debugPrint(str):
         print(str)
     return
 
+# create popup to user, with optional clickable options
+def popup(title, message):
+    popup = tk.Tk()
+    popup.title(title)
+    popup.geometry("500x175")
+
+    # Create a label with the message
+    label = tk.Label(popup, text=message)
+    label.pack(pady=10)
+
+    # Create a button to close the window
+    button = tk.Button(popup, text="OK", command=popup.destroy)
+    button.pack()
+
+    # Halt the program until the window is closed
+    popup.mainloop()
+
+
+
 print(f"ToonTuber Player {version}")
 
 ## GLOBAL VARIABLES
@@ -176,7 +221,7 @@ screen = pygame.display.set_mode((width, height))
 settings_UImanager = pygame_gui.UIManager((width, height))
 keybind_UImanager = pygame_gui.UIManager((width, height))
 
-# Set the window name (NOTE: changing the caption might screw up existing Window Captures in OBS. Best not to change this.)
+# Set the window name (NOTE: changing the caption might screw up existing Window Captures in OBS. Might be best not to change this.)
 pygame.display.set_caption("ToonTuber Player")
 
 # Opening screen
@@ -209,7 +254,7 @@ except Exception as e:
         pass
 
     prefini = configparser.ConfigParser()
-    prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE"}
+    prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE", "lastversion": version}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
     prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5, "sfxmutekey": f"\"right alt\"", "mirror": "0"}
     with open("preferences.ini", "w") as f:
@@ -217,6 +262,25 @@ except Exception as e:
     print("preferences.ini created with default values.")
 
 # read from each element in preferences.ini and have failsafes for each
+
+# last used version
+try:
+    lastUsedVersion = prefini["LastUsed"]["lastversion"].strip("\"")
+except Exception as e:
+    print(f"Error reading last used version from preferences.ini. Setting to {version}...")
+    preferenceErrors.append(f"Last used version. (Reset to {version})")
+    lastUsedVersion = version
+
+# compare each part of the version number
+verCompare = compareVersions(version, lastUsedVersion)
+if(verCompare == -1):
+    # current version is older
+    popup("Preferences file from OLDER version", f"Your preferences file is from an OLDER version of ToonTuber Player ({lastUsedVersion}).\n\nPressing \'OK\" will update the preferences to THIS version ({version}),\nwhich MAY or MAY NOT result in some of your settings getting RESET.\n\nIf you have any custom settings, you may want to\nback up your preferences.ini file before continuing.")
+elif(verCompare == 1):
+    # current version is newer
+    popup("Preferences file from NEWER version", f"Your preferences file is from a NEWER version of ToonTuber Player ({lastUsedVersion}).\n\nPressing \"OK\" will revert this file to THIS version ({version}),\nwhich MAY or MAY NOT result in some of your settings getting RESET.\n\nPlease back up your current preferences.ini file before continuing.")
+
+
 # last loaded tuber
 try:
     lastTuberLoaded = prefini["LastUsed"]["lastLoaded"].strip("\"")
@@ -319,7 +383,7 @@ except Exception as e:
 
 # write everything back to the file to ensure no data is lost. 
 # also helps with updating older versions of preferences.ini
-prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\""}
+prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\"", "lastversion": f"\"{version}\""}
 prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
 prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume, "sfxmutekey": f"\"{sfxMuteKeyName}\"", "mirror": f"{'1' if mirror else '0'}"}
 
@@ -367,7 +431,7 @@ def getAudioDevices(initial=False):
         lastAudioDevice = audioDeviceNames[0]
     # debugPrint(f"\n\n\n HERE IS THE LIST OF DETECTED DEVICES: {audioDeviceNames}\n\n\n")
 
-prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\""}
+prefini.set("LastUsed", "lastmic", f"\"{lastAudioDevice}\"")
 with open("preferences.ini", "w") as configfile:
     prefini.write(configfile)
 
@@ -661,9 +725,7 @@ def load_animation_images(paths):
                 # currentlyLoadingFile = f"Loading gif {singlePath}"
                 gif = Image.open(os.path.join(jsonPath, file_path))
                 # .mimread(os.path.join(jsonPath, file_path))
-                print("# GIF FRAMES:", gif.n_frames)
                 for frame_index in range(gif.n_frames):
-                    debugPrint(f"Loading frame {frame_index}")
                     # convert the image to a Pygame surface
                     # count the number of bytes in frame.tobytes() and print it out
                     currentlyLoadingFile = f"Loading gif {singlePath} frames ({frame_index}/{gif.n_frames})"
@@ -1346,9 +1408,6 @@ def loadTuber(path):
     currentScreen = "loading"
     with open(path) as json_file:
         data = json.load(json_file)
-    debugPrint(f"Loading {data['name']}...")
-    # print(data)
-    # print("Loading tuber: " + data["name"])
 
     # reset all of the tuber variables
     tuberName = ""
@@ -1363,6 +1422,24 @@ def loadTuber(path):
     cannedAnimationIndex = {}
     idleChoiceIndex = -1
 
+    # check the version this tuber is made for
+    tuberName = data["name"]
+    tuberVersion = data["player_version"]
+    comp = compareVersions(tuberVersion, version)
+
+    if(comp != 0):
+        popup("Tuber Version Warning", f"The Toontuber \"{tuberName}\" is intended for version {tuberVersion} of ToonTuber Player,\nbut you are running version {version}. \n\nThis may result in unexpected behavior and/or crashing.\nConsult {version}'s README for information on how that version's JSONs should look.\n\nPress \"OK\" to continue loading the ToonTuber anyway.")
+
+
+    # save last loaded tuber data
+    prefini.set("LastUsed", "lastloaded", f"\"{path}\"")
+    with open("preferences.ini", "w") as configfile:
+        prefini.write(configfile)
+
+    debugPrint(f"Loading {data['name']}...")
+    # print(data)
+    # print("Loading tuber: " + data["name"])
+
     # loading screen info colelction
     expressionCount = len(data["expressions"])
     cannedCount = len(data["canned_anims"])
@@ -1371,8 +1448,6 @@ def loadTuber(path):
     progressText = "Loading initial data..."
 
     # load the tuber's data
-
-    tuberName = data["name"]
     creator = data["creator"]
     created = data["created"]
     modified = data["last_modified"]
@@ -1380,6 +1455,7 @@ def loadTuber(path):
     # an RDR of 0 means it will NEVER try to stop the same idle from playing multiple times in a row, 
     # 1 means it will ALWAYS prevent repetition
     # decimals are allowed
+
     name1 = ""
     debugPrint(f"Loading {expressionCount} expressions and {cannedCount} canned animations...")
     expDone = 0
@@ -1485,11 +1561,9 @@ def loadTuber(path):
     # print(hotkeyDictionary)
     loadExpression(expressionList[expressionIndex[name1]], "main")
     # print(f"Path = {path}")
-    prefini.set("LastUsed", "lastloaded", f"\"{path}\"")
-    settingsText[2].setText(f"Current Tuber: {tuberName} by {creator}")
-    with open("preferences.ini", "w") as configfile:
-        prefini.write(configfile)
 
+
+    settingsText[2].setText(f"Current Tuber: {tuberName} by {creator}")
     currentScreen = "tuber"
     print("Loaded Tuber: " + tuberName)
     return
@@ -1819,7 +1893,6 @@ while running:
                 changingSFXMuteKeybind = False
 
         elif (event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN) and currentScreen == "preferror":
-            print("clicking mouse or pressing key")
             # if last tuber loaded couldnt be found, prompt user to select json
             if(not os.path.exists(lastTuberLoaded)):
                 # print("last tuber loaded not found")
@@ -1829,7 +1902,9 @@ while running:
                 # print("tuber json selected: " + tuberJson)
                 if(tuberJson != ""):
                     loadTuberThread(tuberJson)
-            currentScreen = "opening"
+                    currentScreen = "loading"
+            else:
+                currentScreen = "opening"
 
         # if the user clicks on a text option, do the action
         elif event.type == pygame.MOUSEBUTTONDOWN:
