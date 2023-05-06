@@ -116,7 +116,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 - *blockers*:        A list of Expression Set names. This functions similar to the "requires" list, but it will prevent this Expression from playing if the Expression that is currently playing is within this list. (IE: If you have a "Happy," and "Sad" Expression, you can prevent the "Sad" Expression from triggering when "Happy" is playing.) Typing the word "null" (without the quotation marks) will mean no Expressions will block this one.
 
-- *instant*:         If this value is true, this expression will instantly jump to the main animation, skipping over the transitions from the previous animations. If it's false, the transitions will play.
+- *instant*:         If this value is true, the player will immediately jump to this expression instead of playing the "Transition Out" animation of the previous animation. If it's false, the transitions will play.
 
 - *sound*:           The name of a sound file (either .wav or .mp3). This sound will play when the expression begins (either during the transition in, or when the main animation first appears if either no transition exists or the "instant" value is true.) Type the word "null" (without quotation marks) if you do not want a sound to play. The sound file **MUST be inside of the "sounds" folder inside of the Tuber folder** in order for the program to be able to find it.
 
