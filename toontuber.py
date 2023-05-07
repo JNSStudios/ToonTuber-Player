@@ -7,6 +7,7 @@ import keyboard
 from StreamDeck.DeviceManager import DeviceManager
 from PIL import Image
 from notifypy import Notify 
+import noisereduce as nr
 
 # these should be built-in
 import threading
@@ -46,8 +47,6 @@ def compareVersions(verA, verB):
         elif(verA[i] > verB[i]):
             return 1
     return 0
-
-
 
 lastVersionINI = ""
 lastVersionTUBER = ""
@@ -148,8 +147,6 @@ def popup(title, message):
 
     # Halt the program until the window is closed
     popup.mainloop()
-
-
 
 print(f"ToonTuber Player {version}")
 
@@ -256,7 +253,7 @@ except Exception as e:
     prefini = configparser.ConfigParser()
     prefini["LastUsed"] = {"lastLoaded": "NONE", "lastMic": "NONE", "lastversion": version}
     prefini["Thresholds"] = {"talkThresh": "50", "peakThresh": "90"}
-    prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5, "sfxmutekey": f"\"right alt\"", "mirror": "0"}
+    prefini["Settings"] = {"settingskey": "p", "bgcolor": (0, 255, 0, 255), "antialiasing": 0, "ignorehotkey":"right ctrl", "mutekey": "right shift", "volume": 0.5, "sfxmutekey": f"\"right alt\"", "mirror": "0", "suppression": "0"}
     with open("preferences.ini", "w") as f:
         prefini.write(f)
     print("preferences.ini created with default values.")
@@ -381,11 +378,18 @@ except Exception as e:
     print("Error reading mirror from preferences.ini. Setting to False...")
     preferenceErrors.append("Tuber Mirroring (Reset to Off)")
 
+# noise suppression setting
+try:
+    suppression = bool(int(prefini["Settings"]["suppression"]))
+except Exception as e:
+    print("Error reading suppression from preferences.ini. Setting to False...")
+    preferenceErrors.append("Noise Suppression (Reset to Off)")
+
 # write everything back to the file to ensure no data is lost. 
 # also helps with updating older versions of preferences.ini
 prefini["LastUsed"] = {"lastLoaded": lastTuberLoaded, "lastmic": f"\"{lastAudioDevice}\"", "lastversion": f"\"{version}\""}
 prefini["Thresholds"] = {"talkThresh": talkThreshold, "peakThresh": peakThreshold}
-prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume, "sfxmutekey": f"\"{sfxMuteKeyName}\"", "mirror": f"{'1' if mirror else '0'}"}
+prefini["Settings"] = {"settingskey": f"\"{settingsKeybindName}\"", "bgcolor": BGCOLOR, "antialiasing": int(antialiasing), "ignorehotkey": f"\"{ignoreHotkeyBindName}\"", "mutekey": f"\"{muteKeyName}\"", "volume": animationSFXVolume, "sfxmutekey": f"\"{sfxMuteKeyName}\"", "mirror": f"{'1' if mirror else '0'}", "suppression": f"{'1' if suppression else '0'}"}
 
 with open("preferences.ini", "w") as configfile:
     prefini.write(configfile)
@@ -397,9 +401,11 @@ debugPrint("preferences.ini read.\nInitializing audio data stuff...")
 
 # audio stuff
 rms = 0
-avgVol = 0
+micVolume = 0
 chunk_size = 256  # number of audio samples per chunk
 sample_rate = 44100  # number of samples per second
+
+suppression = False
 
 volRollingAverage = []
 volRollingAverageLength = 10
@@ -437,26 +443,59 @@ with open("preferences.ini", "w") as configfile:
 
 getAudioDevices(True)
 
+def int16_to_float(audio_data):
+    return audio_data.astype(np.float32) / np.iinfo(np.int16).max
+
+
+
 def audio_callback(in_data, frame_count, time_info, status):
-    global rms, avgVol
+    global rms, micVolume, rms, chunk_size, sample_rate
 
     if(muted):
-        avgVol = 0
+        micVolume = 0
         return (None, pyaudio.paContinue)
     # convert audio data to a numpy array
     audio = np.frombuffer(in_data, dtype=np.int16)
 
+    # convert to a bigger data type before squaring to prevent overflow
+    audio = audio.astype(np.int32)
+
+    preNR = audio[:chunk_size]
+    postNR = nr.reduce_noise(y=preNR, sr=sample_rate)
+
     # calculate the root mean square (RMS) amplitude
-    rmsNEW = np.sqrt(np.mean(np.square(np.nan_to_num(audio))) + 1e-6)
-    if(not np.isnan(rmsNEW)):
-        rms = round(rmsNEW)
+
+
+    scalefactor = 250
+    ogVOL = min(scalefactor * (np.sqrt(np.mean(np.square(audio)) + 1e-6)) /32767, 100)
+    supVOL = min(scalefactor * (np.sqrt(np.mean(np.square(postNR)) + 1e-6)) / 32767, 100)
+
+    # reduce it to 100 if its greater
+
+
+
+    # calculate the root mean square (RMS) amplitude
+    # rmsNEW = np.sqrt(np.mean(np.square(np.nan_to_num(audio))) + 1e-6)
+    if(not np.isnan(ogVOL)):
+        ogVOL = round(ogVOL)
     else:
-        rms = 100
+        ogVOL = 100
+
+    if(not np.isnan(supVOL)):
+        supVOL = round(supVOL)
+    else:
+        supVOL = 100
     
-    volRollingAverage.append(rms)
-    if(len(volRollingAverage) > volRollingAverageLength):
-        volRollingAverage.pop(0)
-    avgVol = sum(volRollingAverage) / len(volRollingAverage)
+    # print(f"B4: {ogVOL}    NR: {supVOL}")
+
+
+    # volRollingAverage.append(rms)
+    # if(len(volRollingAverage) > volRollingAverageLength):
+    #     volRollingAverage.pop(0)
+    # avgVol = sum(volRollingAverage) / len(volRollingAverage)
+
+
+    micVolume = ogVOL if not suppression else supVOL
     # print(avgVol)
     
     # return None and continue streaming
@@ -1038,7 +1077,7 @@ class CannedAnimation:
 
 # METHOD TO PLAY AND SWITCH ANIMATIONS
 def update_render_thread():
-    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, avgVol, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, currentScreen
+    global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, micVolume, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, currentScreen
     while True:
         if(currentScreen == "opening" or currentScreen == "loading"):
             continue
@@ -1166,18 +1205,18 @@ def update_render_thread():
                                 loadCanned(cannedAnimationList[cannedAnimationIndex[currentExpression]])
                 # peak and talk\
                 elif(currentAnimationType == "expression"):
-                    if(avgVol >= peakThreshold 
+                    if(micVolume >= peakThreshold 
                         and expressionList[expressionIndex[currentExpression]].getPeak().exists() 
                         and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
                         # peak animation is set, and we're not locked
                         loadExpression(expressionList[expressionIndex[currentExpression]], "peak")
-                    elif(avgVol >= talkThreshold 
+                    elif(micVolume >= talkThreshold 
                         and expressionList[expressionIndex[currentExpression]].getTalk().exists() 
                         and currentAnimation is not expressionList[expressionIndex[currentExpression]].getTalk() 
                         and currentAnimation is not expressionList[expressionIndex[currentExpression]].getPeak()):
                         # talk animation is set, and we're not locked
                         loadExpression(expressionList[expressionIndex[currentExpression]], "talk")
-                    elif( avgVol < talkThreshold 
+                    elif( micVolume < talkThreshold 
                         and (currentAnimation is expressionList[expressionIndex[currentExpression]].getTalk() 
                             or currentAnimation is expressionList[expressionIndex[currentExpression]].getPeak())):
                         loadExpression(expressionList[expressionIndex[currentExpression]], "main")
@@ -1305,6 +1344,14 @@ def toggleMirroring():
     mirrorButton.set_text(f"Mirror Tuber ({'ON' if mirror else 'Off'})")
     prefini.set("Settings", "mirror", f"{'1' if mirror else '0'}")
     with open("preferences.ini", "w") as f: 
+        prefini.write(f)
+
+def toggleSuppression():
+    global suppression, prefini, noiseSuppressionButton
+    suppression = not suppression
+    noiseSuppressionButton.set_text(f"Noise Suppression ({'ON' if suppression else 'Off'})")
+    prefini.set("Settings", "suppression", f"{'1' if suppression else '0'}")
+    with open("preferences.ini", "w") as f:
         prefini.write(f)
 
 debugPrint("GUI classes created.\nCreating Tuber loading functions...")
@@ -1665,13 +1712,17 @@ leaveHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, h
                                                 text='Back',
                                                 manager=keybind_UImanager)
                                                 
+noiseSuppressionButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((200, height-160), (210, 40)),
+                                                   text=f"Noise Suppression ({'On' if suppression else 'Off'})",
+                                                   manager=settings_UImanager)
+(250, height-55), (50, 25)
 
 
 settingsButtonsEnabled = True
 hotkeyButtonsEnabled = True
 
 def enableSettingsButtons():
-    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider, mirrorButton
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider, mirrorButton, noiseSuppressionButton
     loadToonTuberButton.enable()
     changeBGColorButton.enable()
     smoothPixelsButton.enable()
@@ -1679,10 +1730,11 @@ def enableSettingsButtons():
     audioDeviceDropdown.enable()
     volumeSlider.enable()
     mirrorButton.enable()
+    noiseSuppressionButton.enable()
     settingsButtonsEnabled = True
 
 def disableSettingsButtons():
-    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider, mirrorButton
+    global loadToonTuberButton, changeBGColorButton, smoothPixelsButton, changeKeybindButton, audioDeviceDropdown, settingsButtonsEnabled, volumeSlider, mirrorButton, noiseSuppressionButton
     loadToonTuberButton.disable()
     changeBGColorButton.disable()
     smoothPixelsButton.disable()
@@ -1690,6 +1742,7 @@ def disableSettingsButtons():
     audioDeviceDropdown.disable()
     volumeSlider.disable()
     mirrorButton.disable()
+    noiseSuppressionButton.disable()
     settingsButtonsEnabled = False
 
 def enableHotkeyButtons():
@@ -1986,6 +2039,9 @@ while running:
                 leaveHotkeyScreen()
             elif(event.ui_element == mirrorButton):
                 toggleMirroring()
+            elif(event.ui_element == noiseSuppressionButton):
+                toggleSuppression()
+
 
         settings_UImanager.process_events(event)
         keybind_UImanager.process_events(event)
@@ -2053,7 +2109,7 @@ while running:
         # these values assume that the top left corner of the sprite is 0,0
         # therefore, the bottom right of the sprite is the width and height
         
-        micFill_clipHeight = round((mic_feedback.get_height() * (avgVol/100)))
+        micFill_clipHeight = round((mic_feedback.get_height() * (micVolume/100)))
         clip_rect = pygame.Rect(0, mic_feedback.get_height() - micFill_clipHeight, mic_feedback.get_width(), micFill_clipHeight)
         mic_fill_clipped = pygame.Surface((clip_rect.width, clip_rect.height), pygame.SRCALPHA)
         mic_fill_clipped.blit(mic_feedback, (0, 0), clip_rect)
