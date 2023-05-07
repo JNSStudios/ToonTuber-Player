@@ -379,6 +379,7 @@ except Exception as e:
     preferenceErrors.append("Tuber Mirroring (Reset to Off)")
 
 # noise suppression setting
+suppression = False
 try:
     suppression = bool(int(prefini["Settings"]["suppression"]))
 except Exception as e:
@@ -404,8 +405,6 @@ rms = 0
 micVolume = 0
 chunk_size = 256  # number of audio samples per chunk
 sample_rate = 44100  # number of samples per second
-
-suppression = False
 
 volRollingAverage = []
 volRollingAverageLength = 10
