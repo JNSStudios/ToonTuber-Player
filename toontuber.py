@@ -22,10 +22,18 @@ import datetime
 import traceback
 import logging
 
-
 debugMode = False
 
 version = "v1.3.0"
+
+# OS-SPECIFIC STUFF
+
+# macOS stuff
+if sys.platform == 'darwin':
+    os.environ['SDL_VIDEODRIVER'] = 'x11'
+
+
+# Other helper methods and info
 
 def compareVersions(verA, verB):
     # check if last used version is different from current version
