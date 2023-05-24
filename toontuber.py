@@ -6,7 +6,7 @@ import numpy as np
 import keyboard
 from StreamDeck.DeviceManager import DeviceManager
 from PIL import Image
-from notifypy import Notify 
+import notifypy
 import noisereduce as nr
 
 # these should be built-in
@@ -86,7 +86,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     logging.exception(str)
 
     if(not debugMode and exc_type != KeyboardInterrupt):
-        crashnotif = Notify()
+        crashnotif = notifypy.Notify()
         crashnotif.title = "TOONTUBER PLAYER HAS CRASHED"
         crashnotif.message = "A crash report was saved. Please restart Player."
         crashnotif.icon = os.path.join(scriptPath, "assets", "crashnotificon.png")
@@ -550,7 +550,7 @@ debugPrint("Audio data stuff initialized.\nInitializing input reader thread...")
 def pushHotKey(key):
     global latestKeyPressed, lastKeyPressed, keyHeld, currentAnimation, expressionList, cannedAnimationList, currentExpression, queuedExpression, transition, queuedAnimationType, currentAnimationType, changingSettingsKeybind, ignoreHotkey, currentScreen, nonrequiredWeight, typingInTextEntry
     # ignore hotkeys if the user is changing a keybind, or if the user is ignoring hotkeys
-    if(changingSettingsKeybind or ignoreHotkey or currentScreen == "loading" or typingInTextEntry):
+    if(changingSettingsKeybind or ignoreHotkey or currentScreen == "loading" or currentScreen == "keybind" or typingInTextEntry):
         return 
     
     # print(hotkeyDictionary)
@@ -692,11 +692,18 @@ except Exception as e:
     debugPrint("NO StreamDecks were found.")
 
 # keyboard reading thread
+allKeysPressed = []
+
 def keyboard_input_thread():
     global currentScreen, muteKeyName, settingsKeybindName, ignoreHotkeyBindName, changingAnyKeybind, ignoreHotkey, muted, animationSFXMuted, settingsText
     while True:
         event = keyboard.read_event()
+        keyIDTuple = (event.name, event.scan_code)
         if event.event_type == "down":
+            # add key to list if its not already there
+            if(keyIDTuple not in allKeysPressed):
+                allKeysPressed.append(keyIDTuple)
+            
             if(event.name == ignoreHotkeyBindName):
                 ignoreHotkey = not ignoreHotkey
             elif(event.name == muteKeyName):
@@ -707,7 +714,13 @@ def keyboard_input_thread():
             else:
                 pushHotKey(event.scan_code)
         elif event.event_type == "up":
-            releaseHotKey(event.scan_code)     
+            # remove 
+            if(keyIDTuple in allKeysPressed):
+                allKeysPressed.remove(keyIDTuple)
+            releaseHotKey(event.scan_code)
+        # clear allKeysPressed if no keys are being pressed 
+        # if(keyboard.)
+
             
 keyboard_thread = threading.Thread(target=keyboard_input_thread)
 keyboard_thread.daemon = True
@@ -1086,7 +1099,7 @@ class CannedAnimation:
 def update_render_thread():
     global currentFrame, framerate, image_timer, locked, transition, queuedExpression, currentExpression, talkThreshold, peakThreshold, micVolume, idleClockCounter, idleTimer, currentAnimationType, queuedAnimationType, idling, timeUntilNextIdle, currentScreen
     while True:
-        if(currentScreen == "opening" or currentScreen == "loading"):
+        if(currentScreen == "opening" or currentScreen == "loading" or currentScreen == "keybind"):
             continue
         timeElapsed = fpsClock.tick(framerate) / 1000.0  # Get the time passed since last frame
         image_timer += timeElapsed
@@ -1677,7 +1690,11 @@ mirrorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), 
 
 
 changeKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (200, 50)),
-                                                   text='Change Keybinds',
+                                                   text='Keybind Settings',
+                                                   manager=settings_UImanager)
+
+noiseSuppressionButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((200, height-160), (210, 40)),
+                                                   text=f"Noise Suppression ({'On' if suppression else 'Off'})",
                                                    manager=settings_UImanager)
 
 # debugPrint(f"\n\n\n AUDIO DROPDOWN BEING CREATED NOW (using this {audioDeviceNames}\n also this as the last device {lastAudioDevice}).\n\n\n")
@@ -1694,35 +1711,31 @@ volumeSlider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect(
                                                                           value_range=(0, 1),
                                                                           manager=settings_UImanager)
 
+
 # openEditorButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 425), (200, 50)),
 #                                              text='Open Editor',
 #                                              manager=settings_UImanager)
 
 
-changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 175), (300, 50)),
+changeSettingsKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 50), (400, 50)),
                                                 text=f'Settings Keybind (\"{settingsKeybindName}\")',
                                                 manager=keybind_UImanager)
 
-changeHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 225), (400, 50)),
-                                                text=f'HotkeyIgnore Keybind (\"{ignoreHotkeyBindName}\")',
+changeHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 100), (400, 50)),
+                                                text=f'Hotkey Ignore Keybind (\"{ignoreHotkeyBindName}\")',
                                                 manager=keybind_UImanager)
 
-changeMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 275), (300, 50)),
+changeMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 150), (400, 50)),
                                                 text=f'Mute Keybind (\"{muteKeyName}\")',
                                                 manager=keybind_UImanager)
 
-sfxMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 325), (400, 50)),
+sfxMuteKeybindButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, 200), (400, 50)),
                                                 text=f'Animation SFX Mute Keybind (\"{sfxMuteKeyName}\")',
                                                 manager=keybind_UImanager)
 
 leaveHotkeyButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((0, height-100), (200, 50)),
                                                 text='Back',
                                                 manager=keybind_UImanager)
-                                                
-noiseSuppressionButton = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((200, height-160), (210, 40)),
-                                                   text=f"Noise Suppression ({'On' if suppression else 'Off'})",
-                                                   manager=settings_UImanager)
-(250, height-55), (50, 25)
 
 
 settingsButtonsEnabled = True
@@ -1901,7 +1914,7 @@ while running:
             # print("toggling settings")
             currentScreen = "tuber" if currentScreen == "settings" else "settings"
         elif event.type == pygame.KEYDOWN and currentScreen == "keybind":
-            print("keybind pressed on keybind screen")
+            # print("keybind pressed on keybind screen")
             if(changingSettingsKeybind):
                 # print(event.key)
                 settingsKeybind = event.key
@@ -2170,7 +2183,19 @@ while running:
             enableHotkeyButtons()
         if(settingsButtonsEnabled):
             disableSettingsButtons()
-        draw_text_options([ClickableText("Select a keybind", (50, 50), UniFont, WHITE, None)])
+        draw_text_options([ClickableText("Change player keybind", (10, 10), UniFont, WHITE, None), 
+                           ClickableText("Key IDs:", (10, 260), UniFont, WHITE, None)])
+        
+        # print out the keys and their IDs below the "key id" text
+        if(allKeysPressed is not None):
+            keyIDTextHeight = 300
+            txtPrint = []
+            for keyTuple in allKeysPressed:
+                key, id = keyTuple
+                txtPrint.append(ClickableText(f"Key \"{key}\" has an ID of {id}", (10, keyIDTextHeight), UniFont, WHITE, None))
+                keyIDTextHeight += 25
+            draw_text_options(txtPrint)
+
 
         changingTxt = ""
         if(changingSettingsKeybind):

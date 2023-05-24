@@ -37,7 +37,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
      - A slider to change the animation sound effect volume
  - Press hotkeys assigned by the Tuber JSON to play the related animation (even if the window is out of focus!)
    (**NOTE:** While the Player window will continue to run when minimized, OBS cannot capture it while it's minimized. This is unfortunately an issue that I have no control over.)
- - Press "right ctrl" key (or other assigned key) to toggle ignoring hotkeys (useful for when you want to type in chat without triggering animations)
+ - Press "right ctrl" key (or other assigned key) to toggle ignoring hotkeys (useful for when you want to type something without triggering animations)
  - Press "right shift" key (or other assigned key) to toggle muting the microphone (useful for when you want to mute your mic within the program)
  - If the program crashes, an error report is saved in the same folder. A loud error sound will also play so the user will know that the program crashed even if they cannot see it.
  - Animations can have sound effects attached to them. WAV, MP3, and OGG files are supported. (note: if you are streaming or recording while using this program, you will likely have to add an Application Audio Capture source in OBS to capture the sound effects, as they are played within the window.)
@@ -46,7 +46,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 
 ## What you will need:
    - for running the source Python code:
-      - Python 3.10 or later
+      - Python 3.10 or later (this program was written in Python 3.10.11)
       - an IDE to run the code (I use VSCode with Python extensions)
       - import the following libraries using "pip":
          - pygame (pip install pygame)
@@ -110,7 +110,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
 ### Expression Set objects
 - *name*:            The name of the Expression
 
-- *hotkeys*:         The numbers representing the IDs of the key(s) you have to press in order to trigger this expression. Use the "**hotkey IDs**" program that displays the ID of the keys you press to figure out what to put for this data. Separate numbers with commas. If you do not want a hotkey for an expression set, you can type the word "null" (without the quotation marks).
+- *hotkeys*:         The numbers representing the IDs of the key(s) you have to press in order to trigger this expression. Look in the **"Keybind Settings" screen** in the Player to view the Key IDs of the keys you press to figure out what to put for this data. Separate IDs with commas to have multiple keys trigger the same expression. If you do not want a hotkey for an expression set, you can type the word "null" (without the quotation marks).
 
 - *requires*:        A list of Expression Set names. You can have multiple of them, but *only one of them needs to currently be playing in order for this one to play next*. (IE: If I have three Expressions called "Happy," "Laughing," and "Wheezing," I can tell the "Wheezing" animation to require the "Happy" or "Laughing" animations here. If either of those animations are playing when the "Wheezing" animation is requested, it will play "Wheezing" next. Otherwise, it won't trigger the animation.) If you do not want an animation to require anything, type the word "null" (without the quotation marks).
 
@@ -151,7 +151,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     ```
         "name": type the name of the animation surrounded by quotation marks,
         "hotkeys": [
-            for each hotkey desired, type the numbers shown by the "hotkey IDs" program, surrounded by quotation marks. Separate them with commas. If you don't want a hotkey, type null.
+            for each hotkey desired, type the numbers shown by the "Keybind Settings" screen in the player. If you want to have multiple hotkeys, separate the IDs with commas. If you don't want a hotkey, type null.
         ],
         "requires": [
             list all the names of the Expression Sets that ALLOW this one to play (or null)
@@ -212,7 +212,7 @@ When a tuber is loaded, all the images are imported and organized into Animation
     ```
       "name": type the name of the animation surrounded by quotation marks,
       "hotkeys": [
-        for each hotkey desired, type the numbers shown by the "hotkey IDs" program, surrounded by quotation marks. Separate them with commas. If you don't want a hotkey, type null.
+        for each hotkey desired, type the numbers shown by the "Keybind Settings" screen in the player. If you want to have multiple hotkeys, separate the IDs with commas. If you don't want a hotkey, type null.
       ], 
       "requires": [
         list all the names of the Expression Sets that ALLOW this one to play (or null)
