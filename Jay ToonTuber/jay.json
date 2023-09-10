@@ -1,0 +1,928 @@
+{
+  "name": "Jay",
+  "creator": "JNS",
+  "created": "2023-03-25T6:23:21Z",
+  "last_modified": "2023-03-25T6:23:21Z",
+  "player_version": "v1.3.0",
+  "random_duplicate_reduction": 0.75,
+  "expressions": [
+    {
+      "name": "Main",
+      "hotkeys": [
+        57,
+        82
+      ],
+      "requires": [
+        null
+      ],
+      "blockers": [
+        "HIDDEN"
+      ],
+      "instant": false,
+      "sound": null,
+      "anims": {
+        "Main": {
+          "frames": [
+            "Jay-Basic.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+          "randomSecMin": 2,
+          "randomSecMax": 5,
+          "idleAnims": [
+            {
+              "frames": [
+                "Jay-Basic-Idle1.gif"
+              ],
+              "fps": 24,
+              "locking": false
+            },
+            {
+              "frames": [
+                "Jay-Basic-Idle2.gif"
+              ],
+              "fps": 24,
+              "locking": false
+            }
+          ]
+        },
+        "Talk": 
+        {
+          "frames": [
+            "Jay-Basic-Talk.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak":
+        {
+          "frames": [
+            "Jay-Basic-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN":
+        {
+          "frames": [
+            "Jay-Basic-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Basic-TrOut.gif"
+          ],
+          "fps": 24
+        }
+      }
+    },
+    {
+      "name": "Happy",
+      "hotkeys": [
+        79,
+        35
+      ],
+      "requires": [
+        null
+      ],
+      "blockers": [
+        "HIDDEN"
+      ],
+      "instant": false,
+      "sound": null,
+      "anims": 
+      {
+        "Main": 
+        {
+          "frames": [
+            "Jay-Happy.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": 
+        {
+          "randomSecMin": 1,
+          "randomSecMax": 6,
+          "idleAnims": [
+            {
+              "frames": [
+                "Jay-Happy-Idle.gif"
+              ],
+              "fps": 24,
+              "locking": false
+            }
+          ]
+        },
+        "Talk": 
+        {
+          "frames": [
+            "Jay-Happy-Talk.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak": 
+        {
+          "frames": [
+            "Jay-Happy-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN": 
+        {
+          "frames": [
+            "Jay-Happy-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Happy-TrOut.gif"
+          ],
+          "fps": 24
+        }
+      }
+    },
+    {
+      "name": "Laughing",
+      "hotkeys": [
+        79,
+        35
+      ], 
+      "requires": [
+        "Happy"
+      ],
+      "blockers": [
+        "HIDDEN"
+      ],
+      "instant": false,
+      "sound": null,
+      "anims": 
+      {
+        "Main": 
+        {
+          "frames": [
+            "Jay-Laughing-Main.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+          
+        },
+        "Talk": {
+          
+        },
+        "Peak": 
+        {
+          "frames": [
+            "Jay-Laughing-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN": 
+        {
+          "frames": [
+            "Jay-Laughing-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Laughing-TrOut.gif"
+          ],
+          "fps": 24
+        }
+      }
+    }, 
+    {
+      "name": "HIDDEN",
+      "hotkeys": [
+        null
+      ],
+      "requires": [
+        null
+      ],
+      "blockers": [
+        null
+      ],
+      "instant": false,
+      "sound": null,
+      "anims": 
+      {
+        "Main": 
+        {
+          "frames": [
+            "Jay-Hidden.png"
+          ],
+          "fps": 24,
+          "locking": true
+        },
+        "Idles": {
+
+        },
+        "Talk": {
+          
+        },
+        "Peak": 
+        {
+
+        },
+        "TransitionIN": 
+        {
+          "frames": [
+            "Jay-Hidden.png"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Hidden.png"
+          ],
+          "fps": 24
+        }
+      }
+    },
+    {
+      "name": "Miffed",
+      "hotkeys": [
+        50,
+        80
+      ],
+      "requires": [
+          null
+      ],
+      "blockers": [
+          "HIDDEN"
+      ],
+      "instant": false,
+      "sound": null,
+      "anims": {
+          "Main": {
+            "frames": [
+                "Jay-Miffed-Main.gif"
+            ],
+            "fps": 24,
+            "locking": false
+          },
+          "Idles": {
+            "randomSecMin": 2,
+            "randomSecMax": 10,
+            "idleAnims": [
+              {
+                "frames": [
+                    "Jay-Miffed-Idle.gif"
+                ],
+                "fps": 24,
+                "locking": false                
+              }
+            ]
+          },
+          "Talk": 
+          {
+            "frames": [
+              "Jay-Miffed-Talk.gif"
+            ],
+            "fps": 24,
+            "locking": false
+          },
+          "Peak":
+          {
+            "frames": [
+              "Jay-Miffed-Peak.gif"
+            ],
+            "fps": 24,
+            "locking": false
+          },
+          "TransitionIN":
+          {
+            "frames": [
+              "Jay-Miffed-TrIn.gif"
+            ],
+            "fps": 24
+          }, 
+          "TransitionOUT": 
+          {
+            "frames": [
+              "Jay-Miffed-TrOut.gif"
+            ],
+            "fps": 24
+          } 
+      }
+  },
+  {
+    "name": "Pissed",
+    "hotkeys": [
+      50,
+      80
+    ],
+    "requires": [
+        "Miffed"
+    ],
+    "blockers": [
+        "HIDDEN"
+    ],
+    "instant": false,
+    "sound": null,
+    "anims": {
+        "Main": {
+          "frames": [
+              "Jay-Pissed-Main.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+          
+        },
+        "Talk": 
+        {
+          "frames": [
+            "Jay-Pissed-Talk.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak":
+        {
+          "frames": [
+            "Jay-Pissed-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN":
+        {
+          "frames": [
+            "Jay-Pissed-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Pissed-TrOut.gif"
+          ],
+          "fps": 24
+        } 
+    }
+  },
+  {
+    "name": "Scared",
+    "hotkeys": [
+      31,
+      81
+    ],
+    "requires": [
+        null
+    ],
+    "blockers": [
+        "HIDDEN"
+    ],
+    "instant": false,
+    "sound": null,
+    "anims": {
+        "Main": {
+          "frames": [
+              "Jay-Scared-Main.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+            "randomSecMin": 1,
+            "randomSecMax": 6,
+            "idleAnims": [
+              {
+                "frames": [
+                  "Jay-Scared-Idle.gif"
+                ],
+                "fps": 24,
+                "locking": false
+              }
+            ]
+        },
+        "Talk": 
+        {
+          "frames": [
+            "Jay-Scared-Talk.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak":
+        {
+          "frames": [
+            "Jay-Scared-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN":
+        {
+          "frames": [
+            "Jay-Scared-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Scared-TrOut.gif"
+          ],
+          "fps": 24
+        } 
+    }
+  },
+  {
+    "name": "Terrified",
+    "hotkeys": [
+      31,
+      81
+    ],
+    "requires": [
+        "Scared"
+    ],
+    "blockers": [
+        "HIDDEN"
+    ],
+    "instant": false,
+    "sound": null,
+    "anims": {
+        "Main": {
+          "frames": [
+              "Jay-Terrified-Main.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+            
+        },
+        "Talk": 
+        {
+          "frames": [
+            "Jay-Terrified-Talk.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak":
+        {
+          "frames": [
+            "Jay-Terrified-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN":
+        {
+          "frames": [
+            "Jay-Terrified-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Terrified-TrOut.gif"
+          ],
+          "fps": 24
+        } 
+    }
+  },
+  {
+    "name": "Awkward",
+    "hotkeys": [
+      74,
+      12
+    ],
+    "requires": [
+        null
+    ],
+    "blockers": [
+        "HIDDEN",
+        "Disappear"
+    ],
+    "instant": true,
+    "sound": "bamboo-bonk.mp3",
+    "anims": {
+        "Main": {
+          "frames": [
+              "Jay-Flipnote.gif"
+          ],
+          "fps": 6,
+          "locking": false
+        },
+        "Idles": {
+            
+        },
+        "Talk": 
+        {
+          
+        },
+        "Peak":
+        {
+          
+        },
+        "TransitionIN":
+        {
+          
+        }, 
+        "TransitionOUT": 
+        {
+         
+        } 
+    }
+  },
+  {
+    "name": "Upset",
+    "hotkeys": [
+      22,
+      75
+    ],
+    "requires": [
+        null
+    ],
+    "blockers": [
+        "HIDDEN"
+    ],
+    "instant": false,
+    "sound": null,
+    "anims": {
+        "Main": {
+          "frames": [
+              "Jay-Upset-Main.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+          "randomSecMin": 1,
+          "randomSecMax": 6,
+          "idleAnims": [
+            {
+              "frames": [
+                "Jay-Upset-Idle.gif"
+              ],
+              "fps": 24,
+              "locking": false
+            }
+          ]
+        },
+        "Talk": 
+        {
+          "frames": [
+            "Jay-Upset-Talk.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak":
+        {
+          "frames": [
+            "Jay-Upset-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN":
+        {
+          "frames": [
+            "Jay-Upset-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Upset-TrOut.gif"
+          ],
+          "fps": 24
+        } 
+    }
+  },
+  {
+    "name": "Sobbing",
+    "hotkeys": [
+      22,
+      75
+    ],
+    "requires": [
+        "Upset"
+    ],
+    "blockers": [
+        "HIDDEN"
+    ],
+    "instant": false,
+    "sound": null,
+    "anims": {
+        "Main": {
+          "frames": [
+              "Jay-Sobbing-Main.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+          "randomSecMin": 1,
+          "randomSecMax": 6,
+          "idleAnims": [
+            {
+              "frames": [
+                "Jay-Sobbing-Idle1.gif"
+              ],
+              "fps": 24,
+              "locking": true
+            },
+            {
+              "frames": [
+                "Jay-Sobbing-Idle2.gif"
+              ],
+              "fps": 24,
+              "locking": true
+            }
+          ]
+        },
+        "Talk": 
+        {
+          "frames": [
+            "Jay-Sobbing-Talk.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak":
+        {
+          "frames": [
+            "Jay-Sobbing-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN":
+        {
+          "frames": [
+            "Jay-Sobbing-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Sobbing-TrOut.gif"
+          ],
+          "fps": 24
+        } 
+    }
+  },
+  {
+    "name": "Confused",
+    "hotkeys": [
+      32,
+      76
+    ],
+    "requires": [
+        null
+    ],
+    "blockers": [
+        "HIDDEN"
+    ],
+    "instant": false,
+    "sound": null,
+    "anims": {
+        "Main": {
+          "frames": [
+              "Jay-Confused-Main.png"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+          "randomSecMin": 2,
+          "randomSecMax": 10,
+          "idleAnims": [
+            {
+              "frames": [
+                "Jay-Confused-Idle.gif"
+              ],
+              "fps": 24,
+              "locking": false
+            }
+          ]
+        },
+        "Talk": 
+        {
+          "frames": [
+            "Jay-Confused-Talk.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak":
+        {
+          "frames": [
+            "Jay-Confused-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN":
+        {
+          "frames": [
+            "Jay-Confused-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Confused-TrOut.gif"
+          ],
+          "fps": 24
+        } 
+    }
+  },
+  {
+    "name": "Disgusted",
+    "hotkeys": [
+      32,
+      76
+    ],
+    "requires": [
+        "Confused"
+    ],
+    "blockers": [
+        "HIDDEN"
+    ],
+    "instant": false,
+    "sound": null,
+    "anims": {
+        "Main": {
+          "frames": [
+              "Jay-Disgusted-Main.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Idles": {
+          "randomSecMin": 2,
+          "randomSecMax": 10,
+          "idleAnims": [
+            {
+              "frames": [
+                "Jay-Disgusted-Idle1.gif"
+              ],
+              "fps": 24,
+              "locking": false
+            }, 
+            {
+              "frames": [
+                "Jay-Disgusted-Idle2.gif"
+              ],
+              "fps": 24,
+              "locking": false
+            }
+          ]
+        },
+        "Talk": 
+        {
+          "frames": [
+            "Jay-Disgusted-Talk.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "Peak":
+        {
+          "frames": [
+            "Jay-Disgusted-Peak.gif"
+          ],
+          "fps": 24,
+          "locking": false
+        },
+        "TransitionIN":
+        {
+          "frames": [
+            "Jay-Disgusted-TrIn.gif"
+          ],
+          "fps": 24
+        }, 
+        "TransitionOUT": 
+        {
+          "frames": [
+            "Jay-Disgusted-TrOut.gif"
+          ],
+          "fps": 24
+        } 
+    }
+  }
+
+  ],
+  "canned_anims": [
+    {
+      "name": "Appear",
+      "hotkeys": [
+        83,
+        13
+      ],
+      "requires": [
+        "HIDDEN"
+      ],
+      "blockers": [
+        null
+      ],
+      "result": "Main",
+      "sound": null,
+      "instant": false,
+      "anim": 
+      {
+        "frames": [
+          "Jay-Appear.gif"
+        ],
+        "fps": 24
+      }
+    },
+    {
+      "name": "Disappear",
+      "hotkeys": [
+        83,
+        13
+      ],
+      "requires": [
+        null
+      ],
+      "blockers": [
+        "HIDDEN"
+      ],
+      "result": "HIDDEN",
+      "sound": "disappear.mp3",
+      "instant": false,
+      "anim": 
+      {
+        "frames": [
+          "Jay-Disappear.gif"
+        ],
+        "fps": 24
+      }
+    },
+    {
+      "name": "Flipnote Exit",
+      "hotkeys": [
+        74,
+        12
+      ],
+      "requires": [
+        "Awkward"
+      ],
+      "blockers": [
+        null
+      ],
+      "result": "Main",
+      "sound": "flipnote-exit.mp3",
+      "instant": null,
+      "anim": 
+      {
+        "frames": [
+          "Jay-Flipnote-Exit0.png",
+          "Jay-Flipnote-Exit0.png",
+          "Jay-Flipnote-Exit1.png",
+          "Jay-Flipnote-Exit1.png",
+          "Jay-Flipnote-Exit2.png",
+          "Jay-Flipnote-Exit4.png",
+          "Jay-Flipnote-Exit5.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit7.png",
+          "Jay-Flipnote-Exit7.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit7.png",
+          "Jay-Flipnote-Exit7.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit6.png",
+          "Jay-Flipnote-Exit7.png"
+        ],
+        "fps": 14
+      }
+    }
+  ]
+}

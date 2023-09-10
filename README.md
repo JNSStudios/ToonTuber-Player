@@ -60,6 +60,33 @@ When a tuber is loaded, all the images are imported and organized into Animation
       
    - if you are running this as a compiled EXE file, you should be all set!
 
+## Project Files and Structure
+
+- **assets/** - contains the images and sounds used in the program, as well as the image examples in this README.
+
+- **Template Tuber/** - an example folder for how a ToonTuber should be structured. For more details, view the "Tuber Example README" inside this folder.
+
+- **Jay ToonTuber/** - my own personal ToonTuber that I created for developing this program. Use it to play around with it and see how it works!
+
+- **debug.py** - A Python class that contains debugging-related methods. If the Player is run in debug mode, it will print out debugging information to the console and to a log file.
+
+- **file_reading.py** - A Python class that contains methods for reading and writing to files. Primarily used for the JSON files that ToonTubers use. 
+
+- **LICENSE** - This project uses the GNU General Public License. See the LICENSE file for more details.
+
+- **player.py** - Contains the visual display that the user sees.
+
+- **README.md** - this file.
+
+- **requirements.txt** - a list of all the Python libraries that this program uses. Use this to install all the libraries at once.
+
+- **setup.py** - similar use as "requirements.txt," but this is used for compiling the program into an EXE file.
+
+- **toontuber.py** - a Class file that contains all the methods and structures pertaining to the ToonTuber system.
+
+- **toontuberEditor.py** - `NOT FINISHED YET,` but this would be the program that would allow users to create their own ToonTubers without having to manually edit the JSON files, using a GUI.
+
+
 ## A guide to making your own ToonTuber JSON
 **(since the editor program doesn't exist yet)**
 

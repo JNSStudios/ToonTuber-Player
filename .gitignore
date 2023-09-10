@@ -1,6 +1,7 @@
 */
 !assets/
 !Template Tuber/
+!Jay ToonTuber/
 *.ini
 *.txt
 *.exe
