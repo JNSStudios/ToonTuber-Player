@@ -9,9 +9,6 @@ A Python-based application that simplifies the creation and use of ToonTubers, a
 ToonTubers are animated cartoon avatars that add personality to your online presence, bridging the gap between static "PNG-Tubers" and complex "VTubers." Created by **ScottFalco**, they use animation frames to display expressions and movements, reacting to your voice or triggered by hotkeys.  
 
 ScottFalco’s original system, outlined in his [tutorial video](https://www.youtube.com/watch?v=i-yW-3dI1oE), required multiple programs and OBS configurations. ToonTuber-Player streamlines this process into a single program, inspired by tools like [veadotube mini](https://olmewe.itch.io/veadotube-mini), for easier setup and use.  
-Here's a potential **Features** section for your project:
-
----
 
 # Features  
 
