@@ -1,20 +1,40 @@
 # ToonTuber-Player
-A standalone program designed to recreate, consolidate, and optimize the ToonTuber system created by ScottFalco. 
+A Python-based application that simplifies the creation and use of ToonTubers, a unique animated avatar system pioneered by YouTube creator ScottFalco. This standalone program eliminates the need for complex, multi-software setups, allowing creators to focus on expressing themselves without technical hassle.
 
 [Find the latest release here](https://github.com/JNSStudios/ToonTuber-Player/releases)
 
 ![](https://github.com/JNSStudios/ToonTuber-Player/blob/main/assets/PlayerScreenshot.png)
 
-# What is a ToonTuber?
-ToonTubers were originally created by YouTuber ScottFalco as "a middle-ground between PNGTubers and VTubers, for when PNGTubers are too limited and, maybe you just don't like the smoothness of a VTuber." 
+# What is a ToonTuber?  
+ToonTubers are animated cartoon avatars that add personality to your online presence, bridging the gap between static "PNG-Tubers" and complex "VTubers." Created by **ScottFalco**, they use animation frames to display expressions and movements, reacting to your voice or triggered by hotkeys.  
 
-ToonTubers consist of a set of animation frames that play back to create expressions and movement. These animations can be triggered with a hotkey or button, and react to you speaking and/or yelling. It's like having a hand-animated character as your avatar!
+ScottFalco’s original system, outlined in his [tutorial video](https://www.youtube.com/watch?v=i-yW-3dI1oE), required multiple programs and OBS configurations. ToonTuber-Player streamlines this process into a single program, inspired by tools like [veadotube mini](https://olmewe.itch.io/veadotube-mini), for easier setup and use.  
+Here's a potential **Features** section for your project:
 
-ScottFalco released [his original tutorial](https://www.youtube.com/watch?v=i-yW-3dI1oE) for creating a ToonTuber on Feburary 4th, 2023, and his original setup required multiple programs (one of which became paywalled) and possibly needed you to mess with a bunch of files for OBS in order for the encoder to work correctly. As this system wasn't perfect (ScottFalco said so himself, he called this system a "public beta"), I decided to create my own ToonTuber player (inspired by [veadotube mini](https://olmewe.itch.io/veadotube-mini)) using Python. 
+---
 
-With ToonTuber Player, all you need is the one program which you can then do a Window Capture of in OBS!
+# Features  
 
-This program is FREE and OPEN-SOURCE, so anyone can use it and change it as their heart desires. The goal is to make it so the user doesn't need to mess with as much technical stuff, and all they have to provide is their animations. 
+### All-in-One Program  
+No need for multiple software tools—everything you need is consolidated into a single standalone program.  
+
+### Customizable Avatars  
+Easily upload your own animations, including PNG sequences or GIFs, for unique, expressive characters.  
+
+### Voice and Hotkey Integration  
+- Animations react to your voice, playing different frames for speaking or yelling.  
+- Trigger specific expressions or movements with customizable hotkeys.  
+
+### Streamer-Friendly Design  
+- Compatible with OBS via Window Capture (no complicated OBS configurations required).  
+- Animations can include sound effects, with support for WAV, MP3, and OGG files.  
+
+### User Control  
+- Change settings like background color, microphone input, and hotkeys through a simple interface.  
+- Options to mute the microphone or temporarily disable hotkeys.  
+
+### Open-Source and Extensible  
+Free and open-source, allowing users to modify or enhance the tool as needed.  
 
 ## How it works
 ToonTubers are created by organizing a set of animations (either *PNG(s)* or *GIFs*) and referencing them in *JSON* data files. 
